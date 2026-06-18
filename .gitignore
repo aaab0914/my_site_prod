@@ -1,0 +1,96 @@
+.venv/
+venv/
+.pwsh/
+.bash/
+
+# 数据库文件
+*.sqlite3
+db.sqlite3
+
+# Python 缓存
+__pycache__/
+*.pyc
+
+# IDE 配置
+.idea/
+.vscode/
+
+# 环境变量
+.env
+
+# 静态文件收集
+staticfiles/
+
+# 环境变量文件
+.env
+.env.local
+.env.*.local
+
+# 数据库文件
+*.db
+*.sqlite3
+
+# 敏感数据导出 (如果必须用，建议先加密)
+*data.json
+*secret*.json
+
+# 用户列表等
+users.txt
+members.csv
+
+mysite_data.jsonmysite_data.json
+users.txt
+
+# 忽略日志文件
+access.log
+*.log
+
+# 日志文件
+logs/
+access.log
+*.log
+analyze_logs.py
+
+Shell_Commands/
+media/
+Others
+
+# 数据库和运行时数据
+data/db/
+*.log
+access.log*
+
+# 静态文件（收集后的目录）
+staticfiles/
+media/
+collected_static/
+
+# 环境变量
+.env
+.env.local
+.env.prod
+
+# Python 缓存
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# 虚拟环境
+.venv/
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# IDE 配置
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# 系统文件
+.DS_Store
+Thumbs.db

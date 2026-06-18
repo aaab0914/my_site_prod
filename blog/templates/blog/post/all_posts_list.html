@@ -1,0 +1,93 @@
+{% extends "blog/base.html" %}
+{% load blog_tags %}
+
+{% block title %}My_Site's Blog{% endblock %}
+
+{% block content %}
+    <h1>My_Site's Blog</h1>
+
+    <!-- Display tag filter heading if a tag is selected -->
+    {% if tag %}
+        <h2>Posts tagged with "{{ tag.name }}"</h2>
+    {% endif %}
+
+    <!-- Article list section -->
+    <div class="post-list">
+        <!-- Loop through each post in the paginated posts queryset -->
+        {% for post in posts %}
+            <div class="post-item" style="margin-bottom: 30px; border-bottom: 1px solid #eee; padding-bottom: 20px;">
+
+                <!-- Display cover image if it exists -->
+                {% if post.cover_image %}
+                    <div style="margin-bottom: 10px;">
+                        <!--
+                          post.cover_image.url: Absolute URL to the uploaded image file
+                          Django automatically serves media files when DEBUG=True
+                        -->
+                        <img src="{{ post.cover_image.url }}" alt="{{ post.title }}"
+                             style="max-width: 100%; height: auto; border-radius: 8px;">
+                    </div>
+                {% endif %}
+
+                <!-- Post title linked to its detail page -->
+                <h2>
+                    <a href="{{ post.get_absolute_url }}">{{ post.title }}</a>
+                </h2>
+
+                <!-- Display tags associated with this post -->
+                <p class="tags">
+                    Tags:
+                    {% for tag in post.tags.all %}
+                        {% if tag.slug %}
+                            <!--
+                              Each tag links to a filtered list of posts with that tag
+                              Requires a URL named 'blog:post_list_by_tag' in urls.py
+                              Example: /blog/tag/django/
+                            -->
+                            <a href="{% url "blog:post_list_by_tag" tag.slug %}" class="tag-button">
+                                {{ tag.name }}
+                            </a>
+                        {% else %}
+                            <!-- Fallback if tag has no slug (unlikely in proper Django setup) -->
+                            {{ tag.name }}
+                        {% endif %}
+                        <!-- Add comma separator for all but the last tag -->
+                        {% if not forloop.last %}, {% endif %}
+                    {% endfor %}
+                </p>
+
+                <!-- Post publication date and author -->
+                <p class="date">
+                    Published {{ post.publish }} by
+                    <!--
+                      Link to user profile page by username
+                      Requires a URL named 'users:profile_by_username' in urls.py
+                      Example: /users/profile/admin/
+                    -->
+                    <a href="{% url 'users:profile_by_username' post.author.username %}" class="author-button">
+                        {{ post.author }}
+                    </a>
+                </p>
+
+                <!--
+                  Post body truncated to 30 words for the list view
+                  |markdown: Converts Markdown to HTML (requires a custom template filter)
+                  |safe: Marks the HTML as safe to render (use carefully with user content)
+                  |truncatewords_html:30: Limits to 30 words while preserving HTML tags
+                -->
+                <p>
+                    {{ post.body|markdown|safe|truncatewords_html:30 }}
+                </p>
+            </div>
+        {% endfor %}
+    </div>
+
+    <!--
+      Pagination controls displayed below the post list
+      Includes the page object (posts) as context
+      The pagination.html template handles previous/next page links
+    -->
+    <div style="margin-top: 20px; text-align: center; clear: both;">
+        {% include "blog/pagination.html" with page=posts %}
+    </div>
+{% endblock %}

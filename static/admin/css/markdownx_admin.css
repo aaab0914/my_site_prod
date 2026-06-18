@@ -1,0 +1,56 @@
+/* 修复 Django Admin 中 Markdownx 预览框的布局问题 */
+.markdownx-preview {
+    display: block;
+    width: 100%;
+    min-height: 150px;
+    padding: 15px;  /* 增加内边距，让文字不再贴边 */
+    margin-top: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background-color: #f8f9fa;
+    overflow: auto;
+    clear: both;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;  /* 优化字体 */
+    line-height: 1.6;  /* 增加行高，让文字更易读 */
+    font-size: 14px;
+}
+
+/* 让预览框中的标题更明显 */
+.markdownx-preview h1 {
+    font-size: 24px;
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+
+.markdownx-preview h2 {
+    font-size: 20px;
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+
+.markdownx-preview h3 {
+    font-size: 18px;
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+
+/* 让列表项有合适的缩进 */
+.markdownx-preview ul, .markdownx-preview ol {
+    padding-left: 20px;
+}
+
+/* 让代码块有合适的背景色 */
+.markdownx-preview code {
+    background-color: #e9ecef;
+    padding: 2px 4px;
+    border-radius: 3px;
+    font-family: Consolas, 'Courier New', monospace;
+}
+
+/* 让代码块（多行）更明显 */
+.markdownx-preview pre {
+    background-color: #e9ecef;
+    padding: 10px;
+    border-radius: 4px;
+    overflow-x: auto;
+}

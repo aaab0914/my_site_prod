@@ -1,0 +1,21 @@
+{% extends "blog/base.html" %}
+
+{% block title %}Logout{% endblock %}
+
+{% block content %}
+
+<div style="max-width: 400px; margin: 40px auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px; background: #f9f9f9; text-align: center;">
+
+  <h2 style="margin-bottom: 20px;">
+      You have been logged out
+  </h2>
+
+    <p>Thank you for visiting. Come back soon!</p>
+    <p style="margin-top: 20px;">
+        <a href="{% url 'blog:all_posts_list' %}" style="display: inline-block; padding: 8px 16px;
+        background: #00abff; color: white; text-decoration: none; border-radius: 4px;">
+          Return to Home</a>
+    </p>
+
+</div>
+{% endblock %}

@@ -1,0 +1,17 @@
+<h2>Add a New Comment</h2>
+{% if user.is_authenticated %}
+    <form action="{% url "blog:post_comment" post.id %}" method="post" enctype="multipart/form-data">
+        <div class="left">
+            {{ form.body.as_field_group }}
+        </div>
+        <div class="left">
+            {{ form.image.as_field_group }}
+        </div>
+        {% csrf_token %}
+        <p><input type="submit" value="Add Comment"></p>
+    </form>
+{% else %}
+    <p style="color: #888; font-style: italic;">
+        Please <a href="{% url 'users:login' %}">login</a> to add a comment.
+    </p>
+{% endif %}

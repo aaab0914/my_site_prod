@@ -1,0 +1,25 @@
+{% extends 'blog/base.html' %}
+
+{% block title %}
+    Edit Your Comment
+{% endblock title %}
+
+{% block content %}
+  <h1>
+      Edit Your Comment
+  </h1>
+
+  <div class="comment_edit_form">
+      <form method="post">
+          {% csrf_token %}
+          {{ form.as_p }}
+          <button type="submit" class="btn btn-primary">Save Change</button>
+      </form>
+  </div>
+
+  <p>
+        <a href="{% url 'blog:post_detail' post.publish.year post.publish.month post.publish.day post.slug %}">
+            Cancel and return to post
+        </a>
+    </p>
+{% endblock %}

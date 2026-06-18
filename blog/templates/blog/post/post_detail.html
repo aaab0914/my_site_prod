@@ -1,0 +1,75 @@
+{% extends "blog/base.html" %}
+{% load blog_tags %}
+
+{% block title %}{{ post.title }}{% endblock %}
+
+{% block content %}
+    <h1>{{ post.title }}</h1>
+
+    <!-- 添加封面图片显示 -->
+    {% if post.cover_image %}
+        <div style="margin-bottom: 20px;">
+            <img src="{{ post.cover_image.url }}" alt="{{ post.title }}"
+                 style="max-width: 100%; height: auto; border-radius: 8px;">
+        </div>
+    {% endif %}
+
+    <p class="date">
+        Published {{ post.publish }} by {{ post.author }}
+    </p>
+
+    <!-- 文章正文 -->
+    <div class="post-body">
+        {{ post.get_markdown_body|safe }}
+    </div>
+
+    <!-- 删除按钮容器（右下角） -->
+    <div class="post-delete-container">
+        {% if user.is_authenticated and user == post.author or user.is_superuser %}
+            <a href="{% url 'blog:post_delete' post.pk %}" class="delete-btn">Delete Post</a>
+        {% endif %}
+    </div>
+
+    <!-- 仅登录用户可见的评论 -->
+    {% if user.is_authenticated %}
+        {% with comments.count as total_comments %}
+            <h2>
+                {{ total_comments }} Comment{{ total_comments|pluralize }}
+            </h2>
+        {% endwith %}
+
+        {% for comment in comments %}
+            <div class="comment">
+                <p class="info">
+                    Comment {{ forloop.counter }} by {{ comment.name }}
+                    {{ comment.created }}
+                    {% if user.is_authenticated and user.username == comment.name or user.is_superuser %}
+                        <a href="{% url 'blog:edit_comment' post.slug comment.id %}" class="edit-link">Edit</a>
+                        <a href="{% url 'blog:comment_delete' post.slug comment.id %}" class="delete-link" style="color: #cc0000; margin-left: 10px;">Delete</a>
+                    {% endif %}
+                </p>
+                {% if comment.image %}
+                    <div class="comment-image">
+                        <img src="{{ comment.image.url }}" alt="Comment image" style="max-width: 200px; border-radius: 4px;">
+                    </div>
+                {% endif %}
+                {{ comment.body|linebreaks }}
+            </div>
+        {% endfor %}
+    {% else %}
+        <p style="color: #888; font-style: italic; margin-top: 20px;">
+            Please <a href="{% url 'users:login' %}">login</a> to view comments.
+        </p>
+    {% endif %}
+
+    <h2>Similar Posts</h2>
+    {% for post in similar_posts %}
+        <p>
+            <a href="{{ post.get_absolute_url }}">{{ post.title }}</a>
+        </p>
+    {% empty %}
+        <p>There are no Similar Posts yet.</p>
+    {% endfor %}
+
+    {% include "blog/comment/add_comment.html" %}
+{% endblock %}

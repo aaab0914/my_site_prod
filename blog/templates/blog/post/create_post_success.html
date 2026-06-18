@@ -1,0 +1,9 @@
+{% extends "blog/base.html" %}
+
+{% block title %}Post Created{% endblock %}
+
+{% block content %}
+    <h1>Post Created Successfully!</h1>
+    <p>Your post "{{ post.title }}" has been created and is pending review.</p>
+    <a href="{% url 'blog:post_list' %}">Back to Blog List</a>
+{% endblock %}

@@ -1,0 +1,38 @@
+{% extends "blog/base.html" %}
+
+{% block title %}Edit Profile{% endblock %}
+
+{% block content %}
+<div class="profile-edit-container" style="max-width: 500px; margin: 40px auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px; background: #f9f9f9;">
+    <h2 style="text-align: center; margin-bottom: 20px;">Edit Profile</h2>
+
+    {% if messages %}
+        <ul style="list-style: none; padding: 0; margin: 10px 0;">
+            {% for message in messages %}
+                <li style="padding: 10px; margin: 5px 0; border-radius: 4px;
+                           background: {% if message.tags == 'error' %}#ffcccc{% else %}#d4edda{% endif %};
+                           color: {% if message.tags == 'error' %}#cc0000{% else %}#155724{% endif %};">
+                    {{ message }}
+                </li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        {{ form.as_p }}
+
+        {% if remaining_days > 0 %}
+            <p style="color: #888; font-size: 0.9em; margin-top: 10px;">
+                ⏱️ You can change your avatar in <strong>{{ remaining_days }} day(s)</strong>.
+            </p>
+        {% else %}
+            <p style="color: #28a745; font-size: 0.9em; margin-top: 10px;">
+                ✅ You can change your avatar now.
+            </p>
+        {% endif %}
+
+        <button type="submit" style="width: 100%; padding: 10px; background: #00abff; color: white; border: none; border-radius: 4px; font-size: 16px; cursor: pointer;">Save Changes</button>
+    </form>
+</div>
+{% endblock %}

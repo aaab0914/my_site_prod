@@ -1,0 +1,12 @@
+{% extends 'blog/base.html' %}
+
+{% block content %}
+<div class="container mt-5">
+  <h2>upload mp3 file</h2>
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit" class="btn vtn-primart">upload</button>
+  </form>
+</div>
+{% endblock %}

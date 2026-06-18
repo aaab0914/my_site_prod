@@ -1,0 +1,38 @@
+{% extends 'blog/base.html' %}
+
+{% block title %}
+Delete Account
+{% endblock title %}
+
+{% block content %}
+  <h2>
+    Delete Account
+  </h2>
+
+  <p>
+    Warning: This action cannot be undone!
+  </p>
+  <p>
+    You are about to permanently delete Your Account. All Your Post, Comment,
+    and Personal Data will be removed form the database.
+  </p>
+
+  <form method="post">
+    {% csrf_token %}
+    <p>
+      <label>
+        <input type="checkbox" name="confirm_delete" required>
+        I understand that this action cannot be undone
+      </label>
+    </p>
+    <button type="submit">
+      Permanently Delete My Account
+    </button>
+  </form>
+
+  <p>
+    <a href="{% url 'blog:all_posts_list' %}">
+      Cancel and return to Home
+    </a>
+  </p>
+{% endblock content %}

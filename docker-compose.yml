@@ -1,0 +1,49 @@
+services:
+  # PostgreSQL 数据库
+  db:
+    image: postgres:16
+    restart: always
+    environment:
+      POSTGRES_DB: my_site_db
+      POSTGRES_USER: my_site_user
+      POSTGRES_PASSWORD: Coffee.1
+    volumes:
+      - ./data/db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U my_site_user -d my_site_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Django 应用 (Gunicorn)
+  web:
+    build: .
+    restart: always
+    environment:
+      DB_NAME: my_site_db
+      DB_USER: my_site_user
+      DB_PASSWORD: Coffee.1
+      DB_HOST: db
+      DB_PORT: 5432
+      DEBUG: "False"
+    volumes:
+      - .:/code
+      - ./staticfiles:/code/staticfiles
+      - ./media:/code/media
+    depends_on:
+      db:
+        condition: service_healthy
+    command: gunicorn --workers 3 --bind 0.0.0.0:8000 my_site.wsgi:application
+
+  # Nginx 反向代理
+  nginx:
+    image: nginx:1.25
+    restart: always
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf
+      - ./staticfiles:/static
+      - ./media:/media
+    ports:
+      - "80:80"
+    depends_on:
+      - web

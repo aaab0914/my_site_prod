@@ -1,0 +1,24 @@
+{% extends "blog/base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2>音频列表</h2>
+    <div class="row">
+        {% for audio in audios %}
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">{{ audio.title }}</h5>
+                    <p class="card-text text-muted">上传者: {{ audio.uploaded_by.username }}</p>
+                    <!-- 核心：HTML5 原生音频播放器 -->
+                    <audio controls style="width: 100%;">
+                        <source src="{{ audio.audio_file.url }}" type="audio/mpeg">
+                        您的浏览器不支持音频播放。
+                    </audio>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,37 @@
+{% extends "blog/base.html" %}
+
+{% block title %}Change Username{% endblock %}
+
+{% block content %}
+<div style="max-width: 500px; margin: 40px auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px; background: #f9f9f9;">
+    <h2 style="text-align: center; margin-bottom: 20px;">Change Username</h2>
+
+    {% if messages %}
+        <ul style="list-style: none; padding: 0; margin: 10px 0;">
+            {% for message in messages %}
+                <li style="padding: 10px; margin: 5px 0; border-radius: 4px;
+                           background: {% if message.tags == 'error' %}#ffcccc{% else %}#d4edda{% endif %};
+                           color: {% if message.tags == 'error' %}#cc0000{% else %}#155724{% endif %};">
+                    {{ message }}
+                </li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+
+    <form method="post">
+        {% csrf_token %}
+        <p>
+            <label for="id_username">New Username:</label>
+            {{ form.username }}
+            {% if form.username.errors %}
+                <div style="color: #cc0033;">{{ form.username.errors }}</div>
+            {% endif %}
+        </p>
+        <button type="submit" style="width: 100%; padding: 10px; background: #00abff; color: white; border: none; border-radius: 4px; font-size: 16px; cursor: pointer;">Update Username</button>
+    </form>
+
+    <p style="text-align: center; margin-top: 15px;">
+        <a href="{% url 'users:profile' %}">Cancel and return to profile</a>
+    </p>
+</div>
+{% endblock %}

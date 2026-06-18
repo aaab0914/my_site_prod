@@ -1,0 +1,31 @@
+{% extends "blog/base.html" %}
+
+{% block title %}
+Log in
+{% endblock title %}
+
+{% block content %}
+
+<div class="login-container" style="max-width: 400px; margin: 40px auto; padding: 20px;
+border: 1px solid #ddd; border-radius: 8px; background: #f9f9f9;">
+
+  <h2 style="text-align: center; margin-bottom: 20px;">
+    Log in
+  </h2>
+
+  <form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit" style="width: 100%; padding: 10px; background: #00abff;
+     color: white; border: none; border-radius: 4px; font-size: 16px; cursor: pointer;">
+      Login
+    </button>
+  </form>
+
+  <p style="text-align: center;margin-top: 15px;">
+    Don't have an account?
+    <a href="{% url 'users:register' %}">Register Here</a>
+  </p>
+
+</div>
+{% endblock content %}

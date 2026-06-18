@@ -1,0 +1,279 @@
+/* ========================================
+   基础样式
+   ======================================== */
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    font-family: helvetica, sans-serif;
+    display: flex;           /* 【修改点1】开启 Flex 布局，让内容自动撑满高度 */
+    min-height: 100vh;       /* 确保页面占满整个屏幕高度 */
+    flex-direction: row;     /* 让内容和侧边栏横向排列 */
+}
+
+a {
+    color: #00abff;
+    text-decoration: none;
+}
+
+h1 {
+    font-weight: normal;
+    border-bottom: 1px solid #bbb;
+    padding: 0 0 10px 0;
+}
+
+h2 {
+    font-weight: normal;
+    margin: 30px 0 0;
+}
+
+p.date {
+    color: #ccc;
+    font-family: georgia, serif;
+    font-size: 12px;
+    font-style: italic;
+}
+
+/* ========================================
+   布局（Flex 布局版）
+   ======================================== */
+
+#content {
+    width: 70%;              /* 右侧要留 30% 给侧边栏 */
+    padding: 0 0 0 30px;
+    float: none;             /* 移除传统浮动 */
+}
+
+#sidebar {
+    width: 30%;
+    padding: 10px;
+    background: #efefef;
+    height: 100%;            /* 【修改点2】高度等于内容高度，而不是强行撑满一屏 */
+    box-sizing: border-box;
+    float: none;             /* 移除传统浮动 */
+}
+
+/* ========================================
+   分页
+   ======================================== */
+
+.pagination {
+    margin: 40px 0;
+    font-weight: bold;
+    clear: both;
+    text-align: center;
+}
+
+.pagination a {
+    color: #00abff;
+    text-decoration: none;
+    padding: 0 5px;
+}
+
+.pagination a:hover {
+    text-decoration: underline;
+}
+
+.pagination .current {
+    font-weight: bold;
+    color: #333;
+    padding: 0 5px;
+}
+
+.pagination .disabled {
+    color: #ccc;
+    cursor: not-allowed;
+    padding: 0 5px;
+}
+
+.pagination .disabled:hover {
+    text-decoration: none;
+}
+
+/* ========================================
+   表单
+   ======================================== */
+
+label {
+    float: left;
+    clear: both;
+    color: #333;
+    margin-bottom: 4px;
+}
+
+input, textarea {
+    clear: both;
+    float: left;
+    margin: 0 0 10px;
+    background: #ededed;
+    border: 0;
+    padding: 6px 10px;
+    font-size: 12px;
+}
+
+input[type=submit] {
+    font-weight: bold;
+    background: #00abff;
+    color: #fff;
+    padding: 10px 20px;
+    font-size: 14px;
+    text-transform: uppercase;
+}
+
+.errorlist {
+    color: #cc0033;
+    float: left;
+    clear: both;
+    padding-left: 10px;
+}
+
+/* ========================================
+   评论
+   ======================================== */
+
+.comment {
+    padding: 10px;
+}
+
+.comment:nth-child(even) {
+    background: #efefef;
+}
+
+.comment .info {
+    font-weight: bold;
+    font-size: 12px;
+    color: #666;
+}
+
+/* ========================================
+   按钮样式
+   ======================================== */
+
+/* 删除按钮容器 - 右下角 */
+.post-delete-container {
+    text-align: right;
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+
+/* 删除按钮样式 */
+.delete-btn {
+    display: inline-block;
+    background-color: #ff4444;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 4px;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.delete-btn:hover {
+    background-color: #cc0000;
+    text-decoration: none;
+}
+
+/* 作者按钮样式 */
+.author-button {
+    display: inline-block;
+    padding: 2px 8px;
+    background-color: #00abff;
+    color: white;
+    text-decoration: none;
+    border-radius: 4px;
+    font-size: 12px;
+    transition: background-color 0.2s;
+}
+
+.author-button:hover {
+    background-color: #0088cc;
+}
+
+/* Tag 按钮样式 */
+.tag-button {
+    display: inline-block;
+    padding: 2px 8px;
+    margin: 0 2px;
+    background-color: #00abff;
+    color: white;
+    text-decoration: none;
+    border-radius: 4px;
+    font-size: 12px;
+    transition: background-color 0.2s;
+}
+
+.tag-button:hover {
+    background-color: #0088cc;
+}
+
+/* ========================================
+   移动端响应式适配 (追加在文件最底部)
+   ======================================== */
+
+/* 手机端（最大宽度 768px，涵盖所有手机和竖屏平板） */
+@media screen and (max-width: 768px) {
+
+    /* 1. 将 body 的 flex 布局改为垂直列 */
+    body {
+        flex-direction: column; /* 手机上是上下排列 */
+        padding: 0 15px;        /* 手机两侧加一点内边距，防止贴边 */
+        box-sizing: border-box;
+    }
+
+    /* 2. 左侧内容区：宽度占满 100% */
+    #content {
+        width: 100%;
+        padding: 15px 0;  /* 调整手机上的内边距 */
+        float: none;      /* 必须取消浮动 */
+    }
+
+    /* 3. 侧边栏：宽度占满 100%，且放在最下面 */
+    #sidebar {
+        width: 100%;
+        padding: 15px;
+        height: auto;     /* 取消固定高度，自动跟随内容 */
+        float: none;      /* 必须取消浮动 */
+        margin-top: 20px; /* 在手机上和内容区拉开一点距离 */
+        box-sizing: border-box;
+    }
+
+    /* 4. 标题文字：让 H1 和 H2 字号稍微缩小一点，以免手机上折行 */
+    h1 {
+        font-size: 22px;
+    }
+    h2 {
+        font-size: 18px;
+    }
+
+    /* 5. 输入框和按钮：在手机上撑满宽度 */
+    input, textarea, select {
+        width: 100%;
+        box-sizing: border-box;
+    }
+    input[type=submit] {
+        width: auto; /* 提交按钮保持正常大小 */
+        padding: 12px 20px;
+    }
+
+    /* 6. 分页按钮：手机上居中显示 */
+    .pagination {
+        text-align: center;
+        padding: 10px 0;
+    }
+
+    /* 7. 评论框：取消偶数列灰色背景在手机上的扎眼感 */
+    .comment:nth-child(even) {
+        background: transparent;
+        border-bottom: 1px solid #efefef;
+    }
+}
+
+/* 限制文章内图片的最大宽度，防止撑破手机屏幕 */
+#content img {
+    max-width: 100%;
+    height: auto;
+}
