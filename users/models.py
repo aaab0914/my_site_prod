@@ -24,6 +24,11 @@ from django.core.exceptions import ValidationError
 # ValidationError: Exception raised when data validation fails
 
 
+def validate_image_size(image):
+    if image.size > 3 * 1024 * 1024:
+        raise ValidationError('图片大小不能超过3MB')
+
+
 # ========================================
 # Models
 # ========================================

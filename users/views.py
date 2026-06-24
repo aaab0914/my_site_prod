@@ -38,7 +38,6 @@ from .forms import (
 
 from blog.models import Post, Comment
 
-
 # Post: Blog post model
 # Comment: Blog comment model
 
@@ -60,6 +59,9 @@ def register(request):
     Returns:
         HTTP response: Registration page or redirect to blog home
     """
+    if request.user.is_authenticated:
+        return redirect('blog:all_posts_list')
+
     if request.method == 'POST':
         # User submitted registration data
         form = UserRegisterForm(request.POST)
@@ -69,7 +71,7 @@ def register(request):
             # Log the new user in immediately
             login(request, user)
             messages.success(request, 'Register Successful!')
-            return redirect('blog:all_posts')
+            return redirect('blog:all_posts_list')
     else:
         # First visit to the page - show empty form
         form = UserRegisterForm()
@@ -98,6 +100,9 @@ def login_view(request):
     Returns:
         HTTP response: Login page or redirect to blog home
     """
+    if request.user.is_authenticated:
+        return redirect('blog:all_posts_list')
+
     if request.method == 'POST':
         # User submitted login credentials
         form = UserLoginForm(request, data=request.POST)
@@ -105,7 +110,6 @@ def login_view(request):
             # Credentials are valid - get the authenticated user
             user = form.get_user()
             login(request, user)
-            messages.success(request, f'Welcome back, {user.username}!')
             return redirect('blog:all_posts_list')
     else:
         # First visit to the page - show empty form
@@ -331,3 +335,4 @@ def username_change(request):
             form.fields[field].widget = forms.HiddenInput()
 
     return render(request, 'users/username_change.html', {'form': form})
+

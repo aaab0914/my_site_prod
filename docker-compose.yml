@@ -8,7 +8,9 @@ services:
       POSTGRES_USER: my_site_user
       POSTGRES_PASSWORD: Coffee.1
     volumes:
-      - ./data/db:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5550:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U my_site_user -d my_site_db"]
       interval: 10s
@@ -25,15 +27,15 @@ services:
       DB_PASSWORD: Coffee.1
       DB_HOST: db
       DB_PORT: 5432
-      DEBUG: "False"
+      RUNNING_IN_DOCKER: "true"
     volumes:
       - .:/code
       - ./staticfiles:/code/staticfiles
       - ./media:/code/media
+      - backups_volume:/code/backups
     depends_on:
       db:
         condition: service_healthy
-    command: gunicorn --workers 3 --bind 0.0.0.0:8000 my_site.wsgi:application
 
   # Nginx 反向代理
   nginx:
@@ -45,5 +47,11 @@ services:
       - ./media:/media
     ports:
       - "80:80"
+
     depends_on:
-      - web
+      web:
+        condition: service_started
+
+volumes:
+  postgres_data:
+  backups_volume:

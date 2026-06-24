@@ -17,7 +17,7 @@ from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 # EmptyPage: Exception raised when accessing a page outside the valid range
 # PageNotAnInteger: Exception raised when the page number is not an integer
 
-from django.views.generic import ListView
+from django.views.generic import ListView, DeleteView, UpdateView
 # ListView: Class-based view for displaying a list of objects
 from django.contrib import messages
 
@@ -58,45 +58,8 @@ from django.contrib.auth.decorators import login_required
 # login_required: Decorator that restricts a view to authenticated users only
 
 from django.utils.text import slugify
-from django.urls import reverse_lazy
+from django.urls import reverse, reverse_lazy
 from django.views.generic.edit import DeleteView
-
-# from django.contrib.auth.decorators import login_required
-# slugify: Converts a string into a URL-friendly slug
-
-
-# ========================================
-# 类视图
-# ========================================
-
-# class PostListView(ListView):
-#     """
-#     Class-based view for listing posts (alternative implementation to function-based post_list).
-#
-#     This view automatically:
-#     - Queries Post.published.all() (only published posts)
-#     - Paginates results (10 posts per page)
-#     - Passes 'posts' as context variable to template
-#     - Uses 'blog/post/all_posts_list.html' template
-#
-#     URL pattern example: path('', PostListView.as_view(), name='post_list')
-#     """
-#
-#     # QuerySet to retrieve only published posts (using custom manager)
-#     # Post.published is a custom manager that filters status=PUBLISHED
-#     queryset = Post.published.all()
-#
-#     # Name of the context variable available in the template
-#     # Template will use {% for post in posts %} instead of {% for post in object_list %}
-#     context_object_name = 'posts'
-#
-#     # Number of posts to display per page
-#     # Creates pagination with 10 posts on each page
-#     paginate_by = 10
-#
-#     # Template file used to render the list of posts
-#     template_name = 'blog/post/all_posts_list.html'
-
 
 # ========================================
 # 函数视图
@@ -231,15 +194,19 @@ def post_detail(request, year, month, day, post_slug):
     """
 
     # Retrieve the published post matching all criteria
-    # This ensures the URL (with date and slug) uniquely identifies the post
-    post = get_object_or_404(
-        Post,
-        status=Post.Status.PUBLISHED,  # Only published posts
-        slug=post_slug,  # Match the slug
-        publish__year=year,  # Match publication year
-        publish__month=month,  # Match publication month
-        publish__day=day  # Match publication day
-    )
+    # If multiple posts match, select the latest one
+    posts = Post.objects.filter(
+        status=Post.Status.PUBLISHED,
+        slug=post_slug,
+        publish__year=year,
+        publish__month=month,
+        publish__day=day
+    ).order_by('-publish')
+
+    post = posts.first()
+    if not post:
+        from django.http import Http404
+        raise Http404(f"Post not found")
 
     # Get all active comments for this post (approved comments only)
     comments = post.comments.filter(active=True)
@@ -390,7 +357,6 @@ def audio_upload(request):
             audio = form.save(commit=False)
             audio.uploaded_by = request.user
             audio.save()
-            messages.success(request, 'Success upload audio')
             return redirect('blog:audio_list')
     else:
         form = AudioUploadForm()
@@ -398,7 +364,7 @@ def audio_upload(request):
 
 def audio_list(request):
     audios = AudioPost.objects.all().order_by('-created')
-    return render(request, 'blog/audio/audio_list.html', {'audios': audios})
+    return render(request, 'blog/audio/audio_list.html', {'audios': audios, 'user': request.user})
 
 @login_required
 def post_create(request):
@@ -706,6 +672,31 @@ def comment_delete(request, post_slug, comment_id):
 
     # GET request: display the delete confirmation template
     return render(request, 'blog/comment/delete_comment.html', {'comment': comment})
+
+class AudioPostDeleteView(DeleteView):
+    model = AudioPost
+    template_name = 'blog/audio/audio_post_delete.html'
+    success_url = reverse_lazy('blog:audio_post_delete_success')
+    context_object_name = 'audiopost'
+
+    def dispatch(self, request, *args, **kwargs):
+        obj = self.get_object()
+        if obj.uploaded_by != request.user and not request.user.is_superuser:
+            raise PermissionDenied('You are not allowed to delete this audio post.')
+        return super().dispatch(request, *args, **kwargs)
+
+class AudioPostEditView(LoginRequiredMixin, UpdateView):
+    model = AudioPost
+    template_name = 'blog/audio/audio_post_edit.html'
+    fields = ['music_name', 'audio_file', 'description']
+    context_object_name = 'audiopost'
+    success_url = reverse_lazy('blog:audio_post_list')
+
+    def dispatch(self, request, *args, **kwargs):
+        obj = self.get_object()
+        if obj.uploaded_by != request.user and not request.user.is_superuser:
+            raise PermissionDenied('You are not allowed to edit this audio post.')
+        return super().dispatch(request, *args, **kwargs)
 
 # ┌─────────────────────────────────────────────────────────────────────────────┐
 # │                             RELATIONSHIP DIAGRAM                           │

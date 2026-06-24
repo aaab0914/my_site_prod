@@ -14,7 +14,7 @@ from .feeds import LatestPostsFeed, UserPostsFeed
 # LatestPostsFeed: The RSS feed class for the blog (global feed)
 # UserPostsFeed: The RSS feed class for individual users (user-specific feed)
 
-from .views import PostDeleteView
+from .views import PostDeleteView, AudioPostEditView, AudioPostDeleteView
 # PostDeleteView: Class-based view for deleting a post (requires authentication and permission)
 
 from . import api_views
@@ -197,6 +197,9 @@ urlpatterns = [
     path('api/tags/<slug:slug>/', api_views.tag_detail_api, name='api_tag_detail'),
     path('audio/upload/', views.audio_upload, name='audio_upload'),
     path('audio/list/', views.audio_list, name='audio_list'),
+    path('audio/edit/<int:pk>/', AudioPostEditView.as_view(), name='audio_post_edit'),
+    path('audio/delete/<int:pk>/', AudioPostDeleteView.as_view(), name='audio_post_delete'),
+    path('audio/delete/success/', views.post_delete_success, name='audio_post_delete_success'),
 ]
 
 # ┌─────────────────────────────────────────────────────────────────────────────┐

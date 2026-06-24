@@ -14,8 +14,10 @@ class LoginRequiredMiddleware:
         # 允许未登录用户访问的路径列表
         self.allowed_paths = [
             '/blog/',
+            '/blog/audio/list/',
             '/users/login/',
             '/users/register/',
+            '/admin/',
         ]
 
     def __call__(self, request):
@@ -24,7 +26,7 @@ class LoginRequiredMiddleware:
             return self.get_response(request)
 
         # 如果用户未登录，检查请求路径是否在允许列表中
-        if request.path in self.allowed_paths:
+        if request.path in self.allowed_paths or request.path.startswith('/admin'):
             return self.get_response(request)
 
         # 否则，跳转到登录页面

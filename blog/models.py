@@ -23,18 +23,11 @@ from taggit.managers import TaggableManager
 # Provides add(), remove(), and filtering capabilities for tags
 
 from django.utils.text import slugify
-# slugify: Function to convert a string into a URL-friendly slug
-# Example: "Hello World!" → "hello-world"
+from django.utils.html import escape
 
 from markdownx.models import MarkdownxField
-# MarkdownxField: Custom model field for Markdown content with live preview
-# Stores Markdown text and provides an admin widget for editing
 
 import markdown
-
-
-# markdown: Library for converting Markdown syntax to HTML
-# Used in get_markdown_body() to render Markdown content
 
 
 # =====================
@@ -245,18 +238,12 @@ class Post(models.Model):
 
     # ----- MODEL BEHAVIOR -----
 
+    def clean(self):
+        if self.pk and self.status == self.Status.PUBLISHED and not self.tags.exists():
+            from django.core.exceptions import ValidationError
+            raise ValidationError('发布的文章必须包含至少一个标签(tag)。')
+
     def save(self, *args, **kwargs):
-        """
-        Override the save method to auto-populate slug from title.
-
-        When a new post is created without a slug, this method automatically
-        generates a slug based on the title using Django's slugify() function.
-
-        Example: title = "My Amazing Post" → slug = "my-amazing-post"
-
-        :param args: Variable positional arguments passed to parent save()
-        :param kwargs: Variable keyword arguments passed to parent save()
-        """
         if not self.slug:
             self.slug = slugify(self.title)
         self.clean()
@@ -324,9 +311,9 @@ class Comment(models.Model):
 
     # ----- COMMENT CONTENT -----
 
-    body = models.TextField(max_length=200)
-    # TextField: The actual comment text (no length limit)
-    # Can contain HTML? Consider escaping for security
+    body = models.CharField(max_length=1000)
+    # CharField: The actual comment text with 1000 character limit
+    # Automatically truncated in database
 
     # ----- DATE/TIME FIELDS -----
     image = models.ImageField(upload_to='comments/%Y/%m/%d/', blank=True, null=True)
@@ -386,7 +373,6 @@ class Comment(models.Model):
         return f"Comment by {self.name} on {self.post}"
 
 class AudioPost(models.Model):
-    title = models.CharField(max_length=200, blank=True)
     audio_file = models.FileField(upload_to='audio/%Y/%m/%d')
     description = models.TextField(blank=True)
     uploaded_by = models.ForeignKey(
@@ -394,15 +380,25 @@ class AudioPost(models.Model):
         on_delete=models.CASCADE,
         related_name='audio_posts'
     )
+    music_name = models.CharField(max_length=200, blank=True)
+    active = models.BooleanField(default=True)
     created = models.DateTimeField(auto_now_add=True)
+    updated = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created']
+
+        indexes = [
+            models.Index(fields=['created'])
+        ]
 
     def __str__(self):
-        return self.title or self.audio_file.name.rsplit('/', 1)[-1]
+        return self.music_name or self.audio_file.name.rsplit('/', 1)[-1]
 
     def save(self, *args, **kwargs):
-        if not self.title and self.audio_file:
+        if not self.music_name and self.audio_file:
             import os
-            self.title = os.path.splitext(os.path.basename(self.audio_file.name))[0]
+            self.music_name = os.path.splitext(os.path.basename(self.audio_file.name))[0]
         super().save(*args, **kwargs)
 
 # =====================
@@ -501,6 +497,23 @@ class AudioPost(models.Model):
 #    → Check status field has value 'PB' for published posts
 #    → Verify Post.Status.PUBLISHED value (should be 'PB')
 #
-# 7. Markdown not rendering
-#    → Use |safe filter in template: {{ post.get_markdown_body|safe }}
-#    → Verify markdown library is installed: pip install markdown
+# =====================
+# AUDIT LOG MODEL
+# =====================
+
+class AuditLog(models.Model):
+    """请求审计日志"""
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True)
+    method = models.CharField(max_length=10)
+    path = models.CharField(max_length=500)
+    ip_address = models.GenericIPAddressField()
+    status_code = models.IntegerField(null=True, blank=True)
+    response_time = models.FloatField(default=0)
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-timestamp']
+        indexes = [models.Index(fields=['-timestamp'])]
+
+    def __str__(self):
+        return f"{self.method} {self.path} - {self.status_code}"

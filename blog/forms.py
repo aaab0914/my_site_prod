@@ -4,11 +4,10 @@
 # ========================================
 
 from django import forms
-# forms: Django's form handling module for creating and validating forms
-
 from .models import Post, Comment, AudioPost
-# Comment: The comment model (imported from the current app)
-# Post: The main blog post model (imported from the current app)
+from PIL import Image
+from io import BytesIO
+from django.core.files.uploadedfile import InMemoryUploadedFile
 
 
 # ========================================
@@ -34,11 +33,11 @@ class CommentForm(forms.ModelForm):
     """
     class Meta:
         model = Comment
-        fields = ['body', 'image']
+        fields = ['body']
         widgets = {
             # 'name': forms.TextInput(attrs={'class': 'form-control'}),
             'body': forms.Textarea(attrs={'class': 'form-control', 'rows': 4}),
-            'image': forms.FileInput(attrs={'class': 'form-control'}),
+            # 'image': forms.FileInput(attrs={'class': 'form-control'}),
         }
 
 
@@ -55,18 +54,54 @@ class PostCreateForm(forms.ModelForm):
     """
     class Meta:
         model = Post
-        fields = ['title', 'body', 'tags', 'cover_image']
+        fields = ['title', 'body', 'cover_image', 'tags']
         widgets = {
             'title': forms.TextInput(attrs={'class': 'form-control'}),
             'body': forms.Textarea(attrs={'class': 'form-control', 'rows': 10}),
-            'tags': forms.TextInput(attrs={'class': 'form-control'}),
             'cover_image': forms.FileInput(attrs={'class': 'form-control'}),
+            'tags': forms.TextInput(attrs={'class': 'form-control'}),
         }
+
+    def clean_cover_image(self):
+        image = self.cleaned_data.get('cover_image')
+        if image:
+            img = Image.open(image)
+            if img.mode in ('RGBA', 'LA', 'P'):
+                img = img.convert('RGB')
+
+            MAX_SIZE = 1.5 * 1024 * 1024
+            quality = 85
+            img_io = BytesIO()
+
+            while quality > 30:
+                img_io.seek(0)
+                img_io.truncate()
+                img.save(img_io, format='JPEG', quality=quality, optimize=True)
+                if img_io.tell() <= MAX_SIZE:
+                    break
+                quality -= 5
+
+            scale = 1.0
+            while img_io.tell() > MAX_SIZE and scale > 0.5:
+                scale -= 0.1
+                width, height = img.size
+                new_size = (int(width * scale), int(height * scale))
+                img_resized = img.resize(new_size, Image.Resampling.LANCZOS)
+                img_io = BytesIO()
+                img_resized.save(img_io, format='JPEG', quality=quality, optimize=True)
+
+            img_io.seek(0)
+            return InMemoryUploadedFile(
+                img_io, 'ImageField',
+                image.name.split('.')[0] + '.jpg',
+                'image/jpeg', img_io.tell(), None
+            )
+        return image
 
 class AudioUploadForm(forms.ModelForm):
     class Meta:
         model = AudioPost
-        fields = ['title', 'audio_file', 'description']
+        fields = ['music_name', 'audio_file', 'description']
         widgets = {
             'description': forms.Textarea(attrs={'row':3}),
         }

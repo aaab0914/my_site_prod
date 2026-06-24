@@ -1,0 +1,37 @@
+{% extends 'blog/base.html' %}
+
+{% block title %}
+  Delete Audio Post
+{% endblock %}
+
+{% block content %}
+  <div class="delete-container" style="max-width: 600px; margin: 40px auto; padding: 20px;
+border: 1px solid #e0e0e0; border-radius: 8px; background: #fff9f9">
+    <h1 style="color: #cc0000;">
+      Are you sure want to delete this audio post?
+    </h1>
+    <div class="audio-info" style="margin: 20px; padding: 15px; background: #f5f5f5; border-radius: 6px"></div>
+      <p><strong>Title:</strong> {{ audiopost.music_name }}</p>
+      <p><strong>Description:</strong> {{ audiopost.description|default:"No description" }}</p>
+      <p><strong>Uploaded by:</strong> {{ audiopost.uploaded_by.username }}</p>
+      <p><strong>Uploaded at:</strong> {{ audiopost.created|date:"F j, Y, g:i a" }}</p>
+      {% if audiopost.audio_file %}
+        <p><strong>File</strong> <a href="{{ audiopost.audio_file.url }}" target="
+_blank"> {{ audiopost.audio_file.name }}</a></p>
+      {% endif %}
+  </div>
+
+  <form method="post">
+    {% csrf_token %}
+    <div class="action-button" style="display: flex; gap: 10px; margin-top: 20px;">
+      <button type="submit" class="btn btn-danger" style="padding: 10px 20px;
+background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer;">
+        Yes, delete it
+      </button>
+      <a href="{% url 'blog:audio_list' %}" class="btn btn-secondary" style="padding:10px 20px;
+background: #6c757d; color: white; text-decoration: none; border-radius: 4px;">
+        Cancel
+      </a>
+    </div>
+  </form>
+{% endblock %}

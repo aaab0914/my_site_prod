@@ -69,6 +69,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     'my_site.middleware.LoginRequiredMiddleware',
+    'my_site.audit_middleware.AuditLoggingMiddleware',
 ]
 
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
@@ -137,7 +138,7 @@ USE_TZ = True
 # ========================================
 STATIC_URL = "static/"
 STATICFILES_DIRS = [BASE_DIR / "static"]
-STATIC_ROOT = '/var/www/my_site_prod/staticfiles/'  # 保持您服务器的绝对路径
+STATIC_ROOT = config('STATIC_ROOT', default=BASE_DIR / 'staticfiles')
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
@@ -145,33 +146,53 @@ MEDIA_ROOT = BASE_DIR / 'media'
 # ========================================
 # Logging configuration
 # ========================================
-LOGS_DIR = BASE_DIR / 'logs'
-if not LOGS_DIR.exists():
-    LOGS_DIR.mkdir(parents=True)
-
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
+            'style': '{',
+        },
+        'simple': {
+            'format': '{levelname} {asctime} {message}',
+            'style': '{',
+        },
+    },
     'handlers': {
+        'console': {
+            'level': 'INFO',
+            'class': 'logging.StreamHandler',
+            'formatter': 'simple',
+        },
         'file': {
             'level': 'INFO',
-            'class': 'logging.handlers.TimedRotatingFileHandler',
-            'filename': LOGS_DIR / 'access.log',
-            'when': 'midnight',
-            'interval': 1,
-            'backupCount': 30,
-            'encoding': 'utf-8',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': os.path.join(BASE_DIR, 'logs', 'django.log'),
+            'maxBytes': 1024 * 1024 * 10,
+            'backupCount': 5,
+            'formatter': 'verbose',
+        },
+        'error_file': {
+            'level': 'ERROR',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': os.path.join(BASE_DIR, 'logs', 'error.log'),
+            'maxBytes': 1024 * 1024 * 10,
+            'backupCount': 5,
+            'formatter': 'verbose',
         },
     },
     'loggers': {
-        'django': {'handlers': ['file'], 'level': 'INFO', 'propagate': True},
-        'django.server': {'handlers': ['file'], 'level': 'INFO', 'propagate': False},
+        'django': {'handlers': ['console', 'file'], 'level': 'INFO', 'propagate': False},
+        'django.request': {'handlers': ['file', 'error_file'], 'level': 'WARNING', 'propagate': False},
+        'blog': {'handlers': ['console', 'file'], 'level': 'INFO', 'propagate': False},
+        'users': {'handlers': ['console', 'file'], 'level': 'INFO', 'propagate': False},
     },
 }
 
 # ========================================
 # Miscellaneous
 # ========================================
-DATA_UPLOAD_MAX_MEMORY_SIZE = 100 * 1024 * 1024  # 100MB
-FILE_UPLOAD_MAX_MEMORY_SIZE = 100 * 1024 * 1024  # 100MB
+DATA_UPLOAD_MAX_MEMORY_SIZE = 1572864  # 1.5MB (必须是整数)
+FILE_UPLOAD_MAX_MEMORY_SIZE = 1572864  # 1.5MB (必须是整数)
 LOGIN_URL = '/users/login/'

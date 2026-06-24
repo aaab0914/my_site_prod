@@ -94,3 +94,28 @@ venv.bak/
 # 系统文件
 .DS_Store
 Thumbs.db
+
+# 备份文件
+backups/
+
+# 测试和覆盖率
+.pytest_cache/
+.coverage
+htmlcov/
+
+# 构建文件
+dist/
+build/
+*.egg-info/
+
+# 临时文件
+*.tmp
+*.temp
+*.swn
+
+# SSL证书和私钥
+*.pem
+*.key
+
+# 本地Docker覆盖配置
+docker-compose.override.yml

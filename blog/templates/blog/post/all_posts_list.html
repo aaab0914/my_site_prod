@@ -20,12 +20,8 @@
                 <!-- Display cover image if it exists -->
                 {% if post.cover_image %}
                     <div style="margin-bottom: 10px;">
-                        <!--
-                          post.cover_image.url: Absolute URL to the uploaded image file
-                          Django automatically serves media files when DEBUG=True
-                        -->
                         <img src="{{ post.cover_image.url }}" alt="{{ post.title }}"
-                             style="max-width: 100%; height: auto; border-radius: 8px;">
+                             style="width: 350px; height: 150px; object-fit: cover; border-radius: 8px;">
                     </div>
                 {% endif %}
 

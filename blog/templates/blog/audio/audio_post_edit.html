@@ -1,0 +1,54 @@
+{% extends 'blog/base.html' %}
+
+{% block title %}
+  Edit Audio Post
+{% endblock %}
+
+{% block content %}
+  <div class="edit-container" style="max-width: 800px; margin: 40px auto; padding: 20px;
+border: 1px solid #e0e0e0; border-radius: 8px">
+    <h1>
+      Edit Audio Post
+    </h1>
+
+    <form method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+
+      {% if form.non_field_errors %}
+        <div class="alert alert-danger" style="background: #f8d7da; padding: 10px;
+border-radius: 4px; margin-bottom: 15px;">
+          {{ form.non_file_errors }}
+        </div>
+      {% endif %}
+
+      {{ form.as_p }}
+
+      {% if audiopost.audio_file %}
+        <div style="margin: 10px 0; padding: 10px; background: #f0f8ff; border-radius: 4px;">
+          <p><strong>Current Audio File:</strong></p>
+          <audio controls style="width: 100%">
+            <source src="{{ audiopost.audio_file.url }}" type="audio/mpeg">
+            Your browser does not support the audio element.
+          </audio>
+          <p style="margin-top: 5px; font-size: 0.9em; color: #666">
+            <a href="{{ audiopost_audio_file.url }}" target="_blank">
+              Download file
+            </a>|
+              Leave blank to keep current file.
+          </p>
+        </div>
+      {% endif %}
+
+      <div class="action-buttons" style="margin-top: 20px; display: flex; gap: 10px;">
+        <button type="submit" class="btn btn-primart" style="padding: 10px 20px; background:
+#007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">
+          Save Changes
+        </button>
+        <a href="{% url 'blog:audio_post_list' %}" class="btn btn-secondary" style="padding:
+10px 20px; background: #6c757d; color: white; text-decoration: none; border-radius: 4px">
+          Cancel
+        </a>
+      </div>
+    </form>
+  </div>
+{% endif %}

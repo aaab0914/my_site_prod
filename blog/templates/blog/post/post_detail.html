@@ -23,6 +23,21 @@
         {{ post.get_markdown_body|safe }}
     </div>
 
+    {% if post.audio_file %}
+      {% if post.author == request.user or request.user.is_superuser %}
+        <div class="audio-actions" style="margin: 20px 0;">
+          <a href="{% url 'blog:audio_post_edit' post.id %}" class="btn btn-primary" style="padding: 8px 15px; background: #007bff; color:white;
+  text-decoration: none; border-radius: 4px;">
+            Edit Audio
+          </a>
+          <a href="{% url 'blog:audio_post_delete' post.id %}" class="btn btn-danger" style="padding: 8px 15px; background: #dc3545; color: white;
+  text-decoration: none; border-radius: 4px;">
+            Delete Audio
+          </a>
+        </div>
+        {% endif %}
+    {% endif %}
+
     <!-- 删除按钮容器（右下角） -->
     <div class="post-delete-container">
         {% if user.is_authenticated and user == post.author or user.is_superuser %}

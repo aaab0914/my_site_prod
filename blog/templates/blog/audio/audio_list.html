@@ -8,13 +8,23 @@
         <div class="col-md-6 mb-4">
             <div class="card">
                 <div class="card-body">
-                    <h5 class="card-title">{{ audio.title }}</h5>
+                    <h5 class="card-title">{{ audio.music_name }}</h5>
                     <p class="card-text text-muted">上传者: {{ audio.uploaded_by.username }}</p>
-                    <!-- 核心：HTML5 原生音频播放器 -->
                     <audio controls style="width: 100%;">
                         <source src="{{ audio.audio_file.url }}" type="audio/mpeg">
                         您的浏览器不支持音频播放。
                     </audio>
+                    {% if user.is_superuser %}
+                    <div style="margin-top: 10px;">
+                        <a href="{% url 'blog:audio_post_edit' audio.id %}" class="btn btn-primary" style="padding: 6px 12px; background: #007bff; color: white; text-decoration: none; border-radius: 4px; font-size: 12px;">编辑</a>
+                        <a href="{% url 'blog:audio_post_delete' audio.id %}" class="btn btn-danger" style="padding: 6px 12px; background: #dc3545; color: white; text-decoration: none; border-radius: 4px; font-size: 12px;">删除</a>
+                    </div>
+                    {% elif user == audio.uploaded_by %}
+                    <div style="margin-top: 10px;">
+                        <a href="{% url 'blog:audio_post_edit' audio.id %}" class="btn btn-primary" style="padding: 6px 12px; background: #007bff; color: white; text-decoration: none; border-radius: 4px; font-size: 12px;">编辑</a>
+                        <a href="{% url 'blog:audio_post_delete' audio.id %}" class="btn btn-danger" style="padding: 6px 12px; background: #dc3545; color: white; text-decoration: none; border-radius: 4px; font-size: 12px;">删除</a>
+                    </div>
+                    {% endif %}
                 </div>
             </div>
         </div>

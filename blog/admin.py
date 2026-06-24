@@ -12,7 +12,7 @@ from django.utils.html import format_html
 # Escapes special characters to prevent XSS attacks
 # Use when inserting custom HTML into admin display
 
-from .models import Post, Comment
+from .models import Post, Comment, AudioPost, AuditLog
 
 
 # Post: The main blog post model (with draft/published status, slug, author, etc.)
@@ -197,6 +197,71 @@ class CommentAdmin(admin.ModelAdmin):
         'body'  # Search by comment content (partial match)
     ]
     # Useful for finding comments by specific users or containing certain keywords
+@admin.register(AudioPost)
+class AudioPostAdmin(admin.ModelAdmin):
+    list_display = [
+        'music_name',
+        'audio_file',
+        'description',
+        'created',
+        'active'
+    ]
+
+    list_filter = [
+        'active',
+        'created',
+        'updated'
+    ]
+
+    search_fields = [
+        'music_name',
+        'description'
+    ]
+
+    readonly_fields = [
+        'created',
+        'updated'
+    ]
+
+    list_per_page = 20
+
+
+@admin.register(AuditLog)
+class AuditLogAdmin(admin.ModelAdmin):
+    list_display = [
+        'timestamp',
+        'method',
+        'path',
+        'status_code',
+        'user',
+        'ip_address',
+        'response_time'
+    ]
+
+    list_filter = [
+        'method',
+        'status_code',
+        'timestamp'
+    ]
+
+    search_fields = [
+        'path',
+        'ip_address',
+        'user__username'
+    ]
+
+    readonly_fields = [
+        'user',
+        'method',
+        'path',
+        'ip_address',
+        'status_code',
+        'response_time',
+        'timestamp'
+    ]
+
+    list_per_page = 50
+    date_hierarchy = 'timestamp'
 
 # ========================================
 # Extended Configuration Options (Not in original, but useful to know)

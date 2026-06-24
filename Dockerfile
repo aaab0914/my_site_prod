@@ -20,16 +20,18 @@ RUN pip install --upgrade pip && pip install -r requirements.txt
 # 复制项目代码到容器内
 COPY . .
 
-# 创建静态文件和媒体文件目录，并赋予 app 用户权限
-RUN mkdir -p /code/staticfiles /code/media && \
-    chown -R app:app /code
+# 创建静态文件、媒体文件和日志目录，并赋予 app 用户权限
+RUN mkdir -p /code/staticfiles /code/media /code/logs && \
+    chown -R app:app /code && \
+    chmod -R 755 /code/media /code/logs
 
 # 复制启动脚本并赋予执行权限
 COPY entrypoint.sh /code/entrypoint.sh
 RUN chmod +x /code/entrypoint.sh
 
-# 切换到非 root 用户运行应用
-USER app
+# 复制启动脚本并赋予执行权限
+COPY entrypoint.sh /code/entrypoint.sh
+RUN chmod +x /code/entrypoint.sh
 
 # 暴露 Gunicorn 端口
 EXPOSE 8000
