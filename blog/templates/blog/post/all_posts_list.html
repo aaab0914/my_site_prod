@@ -66,13 +66,11 @@
                 </p>
 
                 <!--
-                  Post body truncated to 30 words for the list view
-                  |markdown: Converts Markdown to HTML (requires a custom template filter)
-                  |safe: Marks the HTML as safe to render (use carefully with user content)
-                  |truncatewords_html:30: Limits to 30 words while preserving HTML tags
+                  Post body truncated to about 100 characters for the list view
+                  so Chinese and English are limited consistently.
                 -->
                 <p>
-                    {{ post.body|markdown|safe|truncatewords_html:30 }}
+                    {{ post.body|markdown|safe|truncatechars_html:100 }}
                 </p>
             </div>
         {% empty %}
