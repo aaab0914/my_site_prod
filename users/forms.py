@@ -11,6 +11,7 @@ from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 # AuthenticationForm: Built-in form for user login (username/password validation)
 
 from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError
 # User: Django's built-in user model
 
 from .models import Profile
@@ -133,3 +134,42 @@ class UserProfileForm(forms.ModelForm):
             }),
             'avatar': forms.FileInput(attrs={'class': 'form-control'}),
         }
+
+    def clean_avatar(self):
+        avatar = self.cleaned_data.get("avatar")
+        if not avatar:
+            return avatar
+
+        allowed_types = {"image/jpeg", "image/png", "image/webp"}
+        if getattr(avatar, "content_type", "") not in allowed_types:
+            raise ValidationError("Avatar must be a JPEG, PNG, or WebP image.")
+
+        if avatar.size > 3 * 1024 * 1024:
+            raise ValidationError("Avatar must be 3MB or smaller.")
+
+        return avatar
+
+
+class UsernameChangeForm(forms.ModelForm):
+    class Meta:
+        model = User
+        fields = ["username"]
+        widgets = {
+            "username": forms.TextInput(
+                attrs={
+                    "class": "form-control",
+                    "placeholder": "New username",
+                    "maxlength": User._meta.get_field("username").max_length,
+                }
+            ),
+        }
+
+    def clean_username(self):
+        username = self.cleaned_data["username"].strip()
+        if not username:
+            raise ValidationError("Username cannot be empty.")
+
+        if User.objects.filter(username__iexact=username).exclude(pk=self.instance.pk).exists():
+            raise ValidationError("Username already exists.")
+
+        return username

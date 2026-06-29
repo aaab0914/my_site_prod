@@ -300,9 +300,12 @@ class Comment(models.Model):
 
     # ----- AUTHOR INFORMATION -----
 
-    name = models.CharField(max_length=80)
-    # CharField: Commenter's name (required, max 80 characters)
-    # Displayed next to comment text
+    author = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='blog_comments',
+    )
+    # ForeignKey: Links comment to the authenticated user who created it
 
     email = models.EmailField()
     # EmailField: Commenter's email address (for gravatar, moderation, replies)
@@ -370,7 +373,13 @@ class Comment(models.Model):
 
         :return: Descriptive string with commenter name and associated post
         """
-        return f"Comment by {self.name} on {self.post}"
+        return f"Comment by {self.display_name} on {self.post}"
+
+    @property
+    def display_name(self):
+        if self.author_id:
+            return self.author.username
+        return self.email.split("@", 1)[0]
 
 class AudioPost(models.Model):
     audio_file = models.FileField(upload_to='audio/%Y/%m/%d')

@@ -4,6 +4,7 @@
 # ========================================
 
 from django import forms
+from django.core.exceptions import ValidationError
 from .models import Post, Comment, AudioPost
 from PIL import Image
 from io import BytesIO
@@ -65,6 +66,11 @@ class PostCreateForm(forms.ModelForm):
     def clean_cover_image(self):
         image = self.cleaned_data.get('cover_image')
         if image:
+            allowed_types = {"image/jpeg", "image/png", "image/webp"}
+            if getattr(image, "content_type", "") not in allowed_types:
+                raise ValidationError("Cover image must be a JPEG, PNG, or WebP image.")
+            if image.size > 3 * 1024 * 1024:
+                raise ValidationError("Cover image must be 3MB or smaller before optimization.")
             img = Image.open(image)
             if img.mode in ('RGBA', 'LA', 'P'):
                 img = img.convert('RGB')
@@ -105,3 +111,25 @@ class AudioUploadForm(forms.ModelForm):
         widgets = {
             'description': forms.Textarea(attrs={'row':3}),
         }
+
+    def clean_audio_file(self):
+        audio_file = self.cleaned_data.get("audio_file")
+        if not audio_file:
+            return audio_file
+
+        allowed_types = {
+            "audio/mpeg",
+            "audio/mp3",
+            "audio/wav",
+            "audio/x-wav",
+            "audio/ogg",
+        }
+        allowed_extensions = (".mp3", ".wav", ".ogg")
+        if getattr(audio_file, "content_type", "") not in allowed_types:
+            raise ValidationError("Audio upload must be an MP3, WAV, or OGG file.")
+        if not audio_file.name.lower().endswith(allowed_extensions):
+            raise ValidationError("Audio file extension must be .mp3, .wav, or .ogg.")
+        if audio_file.size > 10 * 1024 * 1024:
+            raise ValidationError("Audio upload must be 10MB or smaller.")
+
+        return audio_file

@@ -3,8 +3,11 @@ from django.contrib.auth.models import User
 from django.urls import reverse
 from django.utils import timezone
 from datetime import timedelta
+from django.core.files.uploadedfile import SimpleUploadedFile
+from django.core.cache import cache
 from .models import Profile, UserActivity, UserPreference
 from .forms import UserRegisterForm, UserLoginForm
+from blog.models import Post, Comment
 
 
 class UserModelTests(TestCase):
@@ -100,6 +103,7 @@ class UserLoginViewTests(TestCase):
         self.client = Client()
         self.user = User.objects.create_user(username='testuser', password='testpass123')
         self.login_url = reverse('users:login')
+        cache.clear()
 
     def test_login_page_loads(self):
         """Test GET login page"""
@@ -118,6 +122,42 @@ class UserLoginViewTests(TestCase):
         data = {'username': 'testuser', 'password': 'wrongpass'}
         response = self.client.post(self.login_url, data)
         self.assertNotIn('_auth_user_id', self.client.session)
+
+    def test_login_is_rate_limited_after_repeated_failures(self):
+        data = {'username': 'testuser', 'password': 'wrongpass'}
+        for _ in range(5):
+            self.client.post(self.login_url, data)
+        response = self.client.post(self.login_url, data)
+        self.assertEqual(response.status_code, 429)
+
+
+class UserRouteIntegrationTests(TestCase):
+    def setUp(self):
+        self.client = Client()
+
+    def test_login_route_is_available_for_blog_redirects(self):
+        response = self.client.get(reverse('users:login'))
+        self.assertEqual(response.status_code, 200)
+
+    def test_register_route_is_available_for_blog_redirects(self):
+        response = self.client.get(reverse('users:register'))
+        self.assertEqual(response.status_code, 200)
+
+    def test_profile_route_requires_login_for_own_profile(self):
+        response = self.client.get(reverse('users:profile'))
+        self.assertEqual(response.status_code, 302)
+
+    def test_profile_edit_requires_login(self):
+        response = self.client.get(reverse('users:profile_edit'))
+        self.assertEqual(response.status_code, 302)
+
+    def test_username_change_requires_login(self):
+        response = self.client.post(reverse('users:username_change'), {'username': 'newname'})
+        self.assertEqual(response.status_code, 302)
+
+    def test_account_delete_requires_login_for_post(self):
+        response = self.client.post(reverse('users:account_delete'), {'confirm_delete': True})
+        self.assertEqual(response.status_code, 302)
 
 
 class UserProfileViewTests(TestCase):
@@ -139,10 +179,138 @@ class UserProfileViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.context['user'], other_user)
 
+    def test_view_other_profile_hides_draft_posts_and_inactive_comments(self):
+        other_user = User.objects.create_user(username='otheruser', password='pass')
+        published_post = Post.objects.create(
+            title='Published profile post',
+            slug='published-profile-post',
+            body='Visible post body',
+            author=other_user,
+            status=Post.Status.PUBLISHED,
+            publish=timezone.now(),
+        )
+        published_post.tags.add('profile')
+        Post.objects.create(
+            title='Draft profile post',
+            slug='draft-profile-post',
+            body='Hidden draft body',
+            author=other_user,
+            status=Post.Status.DRAFT,
+            publish=timezone.now(),
+        )
+        Comment.objects.create(
+            post=published_post,
+            author=other_user,
+            email='other@example.com',
+            body='Visible comment',
+            active=True,
+        )
+        Comment.objects.create(
+            post=published_post,
+            author=other_user,
+            email='other@example.com',
+            body='Hidden comment',
+            active=False,
+        )
+
+        response = self.client.get(reverse('users:profile_by_username', kwargs={'username': 'otheruser'}))
+        self.assertEqual(response.status_code, 200)
+        posts = list(response.context['posts'])
+        comments = list(response.context['comments'])
+        self.assertEqual(len(posts), 1)
+        self.assertEqual(posts[0].title, 'Published profile post')
+        self.assertEqual(len(comments), 1)
+        self.assertEqual(comments[0].body, 'Visible comment')
+
+    def test_view_own_profile_keeps_draft_posts_and_all_comments(self):
+        published_post = Post.objects.create(
+            title='Own published post',
+            slug='own-published-post',
+            body='Visible post body',
+            author=self.user,
+            status=Post.Status.PUBLISHED,
+            publish=timezone.now(),
+        )
+        published_post.tags.add('profile')
+        Post.objects.create(
+            title='Own draft post',
+            slug='own-draft-post',
+            body='Draft body',
+            author=self.user,
+            status=Post.Status.DRAFT,
+            publish=timezone.now(),
+        )
+        Comment.objects.create(
+            post=published_post,
+            author=self.user,
+            email='test@example.com',
+            body='Active own comment',
+            active=True,
+        )
+        Comment.objects.create(
+            post=published_post,
+            author=self.user,
+            email='test@example.com',
+            body='Inactive own comment',
+            active=False,
+        )
+
+        response = self.client.get(reverse('users:profile'))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context['posts'].count(), 2)
+        self.assertEqual(response.context['comments'].count(), 2)
+
     def test_profile_not_found(self):
         """Test 404 for non-existent user"""
         response = self.client.get(reverse('users:profile_by_username', kwargs={'username': 'nonexistent'}))
         self.assertEqual(response.status_code, 404)
+
+    def test_profile_edit_post_updates_non_file_fields(self):
+        response = self.client.post(
+            reverse('users:profile_edit'),
+            {
+                'bio': 'Updated bio',
+                'location': 'Shanghai',
+                'birth_date': '2000-01-01',
+            },
+            follow=True,
+        )
+        self.assertEqual(response.status_code, 200)
+        self.user.profile.refresh_from_db()
+        self.assertEqual(self.user.profile.bio, 'Updated bio')
+        self.assertEqual(self.user.profile.location, 'Shanghai')
+
+    def test_profile_edit_avatar_upload_respects_login_flow(self):
+        avatar = SimpleUploadedFile('avatar.jpg', b'avatar-bytes', content_type='image/jpeg')
+        response = self.client.post(
+            reverse('users:profile_edit'),
+            {
+                'bio': 'Avatar update',
+                'location': 'Beijing',
+                'birth_date': '2001-02-03',
+                'avatar': avatar,
+            },
+            follow=True,
+        )
+        self.assertEqual(response.status_code, 200)
+
+    def test_profile_edit_rejects_disallowed_avatar_type(self):
+        avatar = SimpleUploadedFile(
+            'avatar.webp',
+            b'RIFF1234WEBPVP8 ',
+            content_type='image/webp',
+        )
+        response = self.client.post(
+            reverse('users:profile_edit'),
+            {
+                'bio': 'Avatar update',
+                'location': 'Beijing',
+                'birth_date': '2001-02-03',
+                'avatar': avatar,
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Upload a valid image.')
 
 
 class UserAccountDeleteTests(TestCase):
@@ -162,6 +330,12 @@ class UserAccountDeleteTests(TestCase):
         user_id = self.user.id
         response = self.client.post(self.delete_url, {'confirm_delete': True})
         self.assertFalse(User.objects.filter(id=user_id).exists())
+
+    def test_delete_account_get_only_shows_confirmation(self):
+        user_id = self.user.id
+        response = self.client.get(self.delete_url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(User.objects.filter(id=user_id).exists())
 
     def test_delete_requires_login(self):
         """Test delete requires authentication"""
@@ -187,5 +361,30 @@ class UsernameChangeTests(TestCase):
         """Test cannot change to existing username"""
         User.objects.create_user(username='existinguser', password='pass')
         response = self.client.post(self.url, {'username': 'existinguser'})
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.username, 'testuser')
+
+    def test_change_to_existing_username_case_insensitive(self):
+        User.objects.create_user(username='ExistingUser', password='pass')
+        response = self.client.post(self.url, {'username': 'existinguser'}, follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.username, 'testuser')
+
+    def test_change_username_rejects_invalid_characters(self):
+        response = self.client.post(self.url, {'username': 'bad name'}, follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.username, 'testuser')
+
+    def test_change_username_rejects_empty_value(self):
+        response = self.client.post(self.url, {'username': '   '}, follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.username, 'testuser')
+
+    def test_change_username_rejects_overlong_value(self):
+        response = self.client.post(self.url, {'username': 'a' * 151}, follow=True)
+        self.assertEqual(response.status_code, 200)
         self.user.refresh_from_db()
         self.assertEqual(self.user.username, 'testuser')

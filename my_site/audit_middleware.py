@@ -1,5 +1,9 @@
 import time
+import logging
 from blog.models import AuditLog
+
+
+logger = logging.getLogger(__name__)
 
 
 class AuditLoggingMiddleware:
@@ -28,8 +32,8 @@ class AuditLoggingMiddleware:
                 status_code=response.status_code,
                 response_time=response_time
             )
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.warning("Failed to write audit log: %s", exc)
 
         return response
 

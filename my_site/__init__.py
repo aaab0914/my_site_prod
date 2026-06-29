@@ -9,6 +9,6 @@ __author__ = 'Your Name'
 __email__ = 'your@email.com'
 __description__ = 'My Blog Project'
 
-# 未来为 Celery 做准备
-# from .celery import app as celery_app
-# __all__ = ('celery_app',)
+from .celery import app as celery_app
+
+__all__ = ("celery_app",)

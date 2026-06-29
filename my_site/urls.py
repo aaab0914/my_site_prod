@@ -23,6 +23,7 @@ from markdownx import urls as markdownx_urls
 # For example: /markdownx/upload/ for image uploads
 
 from blog.sitemaps import PostSitemap
+from .metrics import metrics_view
 # PostSitemap: Sitemap class for Post model (defined in blog/sitemaps.py)
 # Tells Django which posts to include in the sitemap
 
@@ -85,6 +86,7 @@ urlpatterns = [
     # Defined in users/urls.py with namespace='users'
     # Example: /users/register/, /users/login/, /users/profile/
     path('users/', include('users.urls', namespace='users')),
+    path("metrics", metrics_view, name="metrics"),
 ]
 
 # ===== MEDIA FILES (DEVELOPMENT ONLY) =====

@@ -1,0 +1,46 @@
+from pathlib import Path
+import json
+from urllib.request import urlopen
+
+from django.test import Client, SimpleTestCase
+
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+
+class PrometheusIntegrationTests(SimpleTestCase):
+    databases = "__all__"
+
+    def setUp(self):
+        self.prometheus = (BASE_DIR / "prometheus.yml").read_text(encoding="utf-8")
+        self.urls = (BASE_DIR / "my_site" / "urls.py").read_text(encoding="utf-8")
+        self.client = Client()
+
+    def test_prometheus_integration_scrapes_django_and_celery_exporter(self):
+        self.assertIn('path("metrics", metrics_view, name="metrics")', self.urls)
+        self.assertIn('job_name: "django"', self.prometheus)
+        self.assertIn('metrics_path: /metrics', self.prometheus)
+        self.assertIn('targets: ["web:8000"]', self.prometheus)
+        self.assertIn('job_name: "celery-exporter"', self.prometheus)
+        self.assertIn('targets: ["celery-exporter:9540"]', self.prometheus)
+
+    def test_metrics_endpoint_returns_prometheus_payload(self):
+        response = self.client.get("/metrics")
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("text/plain", response["Content-Type"])
+        content = response.content.decode("utf-8")
+        self.assertIn("# HELP", content)
+        self.assertIn("# TYPE", content)
+
+    def test_prometheus_runtime_api_reports_django_and_celery_targets_up(self):
+        with urlopen("http://prometheus:9090/api/v1/targets", timeout=10) as response:
+            payload = json.loads(response.read().decode("utf-8"))
+
+        self.assertEqual(payload["status"], "success")
+        active_targets = payload["data"]["activeTargets"]
+        job_names = {target["labels"]["job"] for target in active_targets}
+        self.assertIn("django", job_names)
+        self.assertIn("celery-exporter", job_names)
+        health_by_job = {target["labels"]["job"]: target["health"] for target in active_targets}
+        self.assertEqual(health_by_job["django"], "up")
+        self.assertEqual(health_by_job["celery-exporter"], "up")

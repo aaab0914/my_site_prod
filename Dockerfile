@@ -4,7 +4,7 @@ FROM python:3.12-slim
 # 设置环境变量，优化 Python 和 pip 行为
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    DJANGO_SETTINGS_MODULE=my_site.settings \
+    DJANGO_SETTINGS_MODULE=my_site.settings.prod \
     PIP_NO_CACHE_DIR=1
 
 # 设置工作目录
@@ -25,16 +25,12 @@ RUN mkdir -p /code/staticfiles /code/media /code/logs && \
     chown -R app:app /code && \
     chmod -R 755 /code/media /code/logs
 
-# 复制启动脚本并赋予执行权限
-COPY entrypoint.sh /code/entrypoint.sh
-RUN chmod +x /code/entrypoint.sh
-
-# 复制启动脚本并赋予执行权限
-COPY entrypoint.sh /code/entrypoint.sh
-RUN chmod +x /code/entrypoint.sh
+# 将入口脚本复制到不受 /code 绑定挂载影响的位置
+COPY entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
 
 # 暴露 Gunicorn 端口
 EXPOSE 8000
 
-# 使用启动脚本作为容器入口点
-ENTRYPOINT ["/code/entrypoint.sh"]
+# 使用 shell 显式执行入口脚本，避免宿主机执行位差异导致权限错误
+ENTRYPOINT ["sh", "/usr/local/bin/entrypoint.sh"]

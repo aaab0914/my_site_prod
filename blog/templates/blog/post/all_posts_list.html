@@ -75,6 +75,12 @@
                     {{ post.body|markdown|safe|truncatewords_html:30 }}
                 </p>
             </div>
+        {% empty %}
+            <div class="empty-state">
+                <h2>No posts yet</h2>
+                <p>The blog home page is working, but there are no published posts to display yet.</p>
+                <p><a href="{% url 'users:login' %}">Log in</a> to create the first post.</p>
+            </div>
         {% endfor %}
     </div>
 

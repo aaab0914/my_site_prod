@@ -17,7 +17,7 @@ from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 # EmptyPage: Exception raised when accessing a page outside the valid range
 # PageNotAnInteger: Exception raised when the page number is not an integer
 
-from django.views.generic import ListView, DeleteView, UpdateView
+from django.views.generic import ListView
 # ListView: Class-based view for displaying a list of objects
 from django.contrib import messages
 
@@ -58,8 +58,44 @@ from django.contrib.auth.decorators import login_required
 # login_required: Decorator that restricts a view to authenticated users only
 
 from django.utils.text import slugify
-from django.urls import reverse, reverse_lazy
-from django.views.generic.edit import DeleteView
+from django.urls import reverse_lazy
+from django.views.generic.edit import DeleteView, UpdateView
+
+# ========================================
+# 内部辅助函数
+# ========================================
+
+
+def _build_form(form_class, request, *, instance=None):
+    if request.method == 'POST':
+        return form_class(request.POST, request.FILES, instance=instance)
+    return form_class(instance=instance)
+
+
+def _post_detail_redirect(post):
+    return redirect(
+        'blog:post_detail',
+        year=post.publish.year,
+        month=post.publish.month,
+        day=post.publish.day,
+        post_slug=post.slug,
+    )
+
+
+def _comment_redirect_target(comment):
+    return _post_detail_redirect(comment.post)
+
+
+def _user_can_manage_comment(user, comment):
+    return comment.author_id == user.id or user.is_superuser
+
+
+def _get_comment_for_post_slug(post_slug, comment_id):
+    comment = get_object_or_404(Comment, id=comment_id)
+    if comment.post.slug != post_slug:
+        return None
+    return comment
+
 
 # ========================================
 # 函数视图
@@ -194,19 +230,15 @@ def post_detail(request, year, month, day, post_slug):
     """
 
     # Retrieve the published post matching all criteria
-    # If multiple posts match, select the latest one
-    posts = Post.objects.filter(
-        status=Post.Status.PUBLISHED,
-        slug=post_slug,
-        publish__year=year,
-        publish__month=month,
-        publish__day=day
-    ).order_by('-publish')
-
-    post = posts.first()
-    if not post:
-        from django.http import Http404
-        raise Http404(f"Post not found")
+    # This ensures the URL (with date and slug) uniquely identifies the post
+    post = get_object_or_404(
+        Post,
+        status=Post.Status.PUBLISHED,  # Only published posts
+        slug=post_slug,  # Match the slug
+        publish__year=year,  # Match publication year
+        publish__month=month,  # Match publication month
+        publish__day=day  # Match publication day
+    )
 
     # Get all active comments for this post (approved comments only)
     comments = post.comments.filter(active=True)
@@ -351,20 +383,18 @@ def post_search(request):
 
 @login_required
 def audio_upload(request):
-    if request.method == 'POST':
-        form = AudioUploadForm(request.POST, request.FILES)
-        if form.is_valid():
-            audio = form.save(commit=False)
-            audio.uploaded_by = request.user
-            audio.save()
-            return redirect('blog:audio_list')
-    else:
-        form = AudioUploadForm()
+    form = _build_form(AudioUploadForm, request)
+    if request.method == 'POST' and form.is_valid():
+        audio = form.save(commit=False)
+        audio.uploaded_by = request.user
+        audio.save()
+        messages.success(request, 'Success upload audio')
+        return redirect('blog:audio_list')
     return render(request, 'blog/audio/upload_audio.html', {'form': form})
 
 def audio_list(request):
     audios = AudioPost.objects.all().order_by('-created')
-    return render(request, 'blog/audio/audio_list.html', {'audios': audios, 'user': request.user})
+    return render(request, 'blog/audio/audio_list.html', {'audios': audios})
 
 @login_required
 def post_create(request):
@@ -384,39 +414,15 @@ def post_create(request):
     :return: Rendered create form or redirect to the new post's detail page
     """
 
-    # Handle POST request (form submission)
-    if request.method == 'POST':
-        # Bind form with POST data
-        form = PostCreateForm(request.POST, request.FILES)
+    form = _build_form(PostCreateForm, request)
+    if request.method == 'POST' and form.is_valid():
+        post = form.save(commit=False)
+        post.author = request.user
+        post.status = Post.Status.PUBLISHED
+        post.save()
+        form.save_m2m()
+        return redirect(post.get_absolute_url())
 
-        # Validate the form
-        if form.is_valid():
-            # Create post object without saving to DB yet
-            post = form.save(commit=False)
-
-            # Set the author to the currently logged-in user
-            # This prevents users from impersonating others
-            post.author = request.user
-
-            # Set status to PUBLISHED (immediately visible)
-            # Could be changed to DRAFT for review workflow
-            post.status = Post.Status.PUBLISHED
-
-            # Save the post to database (now with author and status)
-            post.save()
-
-            # Save many-to-many relationships (tags)
-            # Must be called after the post has a primary key
-            form.save_m2m()
-
-            # Redirect to the newly created post's detail page
-            return redirect(post.get_absolute_url())
-
-    else:
-        # GET request: display empty form
-        form = PostCreateForm()
-
-    # Render the creation post template
     return render(request, 'blog/post/create_post.html', {'form': form})
 
 
@@ -522,22 +528,13 @@ def add_comment(request, post_id):
         status=Post.Status.PUBLISHED
     )
 
-    # Initialize comment variable (None if no comment created yet)
     comment = None
-
-    # Create a form instance with the submitted POST data
-    form = CommentForm(request.POST, request.FILES)
-
-    # Validate the form (check required fields, etc.)
+    form = _build_form(CommentForm, request)
     if form.is_valid():
-        # Create a comment object without saving to database yet
         comment = form.save(commit=False)
-
-        # Associate the comment with the post
         comment.post = post
-        comment.name = request.user.username
-
-        # Save the comment to database (active=False by default, pending moderation)
+        comment.author = request.user
+        comment.email = request.user.email or f"{request.user.username}@example.invalid"
         comment.save()
 
     # Render the comment template with context
@@ -571,49 +568,18 @@ def edit_comment(request, post_slug, comment_id):
         Rendered edit form or redirect to post detail page
     """
 
-    # Retrieve the comment by its ID
-    # Returns 404 if the comment doesn't exist
-    comment = get_object_or_404(Comment, id=comment_id)
-
-    # Verify the comment belongs to the correct post
-    # Prevents editing a comment from the wrong post URL
-    if comment.post.slug != post_slug:
+    comment = _get_comment_for_post_slug(post_slug, comment_id)
+    if comment is None:
         return redirect('blog:post_list')
 
-    # Check if user has permission to edit
-    # Only the comment author or superuser can edit
-    if comment.name != request.user.username and not request.user.is_superuser:
-        return redirect(
-            'blog:post_detail',
-            year=comment.post.publish.year,
-            month=comment.post.publish.month,
-            day=comment.post.publish.day,
-            post_slug=comment.post.slug,
-        )
+    if not _user_can_manage_comment(request.user, comment):
+        return _comment_redirect_target(comment)
 
-    # Handle POST request (form submission)
-    if request.method == 'POST':
-        # Bind form with POST data and existing comment instance
-        form = CommentForm(data=request.POST, instance=comment)
+    form = _build_form(CommentForm, request, instance=comment)
+    if request.method == 'POST' and form.is_valid():
+        form.save()
+        return _comment_redirect_target(comment)
 
-        # Validate the form
-        if form.is_valid():
-            # Save the updated comment to the database
-            form.save()
-            # Redirect to the post detail page after successful edit
-            return redirect(
-                'blog:post_detail',
-                year=comment.post.publish.year,
-                month=comment.post.publish.month,
-                day=comment.post.publish.day,
-                post_slug=comment.post.slug,
-            )
-
-    else:
-        # GET request: display the edit form with existing comment data
-        form = CommentForm(instance=comment)
-
-    # Render the edit comment template with context data
     return render(
         request,
         'blog/comment/edit_comment.html',
@@ -643,59 +609,51 @@ def comment_delete(request, post_slug, comment_id):
         Redirect to post detail page or rendered confirmation template
     """
 
-    # Retrieve the comment by its ID
-    comment = get_object_or_404(Comment, id=comment_id)
+    comment = _get_comment_for_post_slug(post_slug, comment_id)
+    if comment is None:
+        return redirect('blog:post_list')
 
-    # Check permission: only comment author or superuser can delete
-    if request.user.username != comment.name and not request.user.is_superuser:
+    if not _user_can_manage_comment(request.user, comment):
         messages.error(request, 'You are not allowed to delete this comment.')
-        return redirect(
-            'blog:post_detail',
-            year=comment.post.publish.year,
-            month=comment.post.publish.month,
-            day=comment.post.publish.day,
-            post_slug=comment.post.slug,
-        )
+        return _comment_redirect_target(comment)
 
-    # Handle POST request (confirmation and deletion)
     if request.method == 'POST':
         post = comment.post
         comment.delete()
         messages.success(request, 'Comment deleted successfully.')
-        return redirect(
-            'blog:post_detail',
-            year=post.publish.year,
-            month=post.publish.month,
-            day=post.publish.day,
-            post_slug=post.slug,
-        )
+        return _post_detail_redirect(post)
 
-    # GET request: display the delete confirmation template
     return render(request, 'blog/comment/delete_comment.html', {'comment': comment})
 
-class AudioPostDeleteView(DeleteView):
+class AudioPostEditView(LoginRequiredMixin, UpdateView):
+    model = AudioPost
+    form_class = AudioUploadForm
+    template_name = 'blog/audio/audio_post_edit.html'
+    context_object_name = 'audiopost'
+
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return self.handle_no_permission()
+        obj = self.get_object()
+        if obj.uploaded_by != request.user and not request.user.is_superuser:
+            raise PermissionDenied("You are not allowed to edit this audio post.")
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_success_url(self):
+        return reverse_lazy('blog:audio_list')
+
+class AudioPostDeleteView(LoginRequiredMixin, DeleteView):
     model = AudioPost
     template_name = 'blog/audio/audio_post_delete.html'
     success_url = reverse_lazy('blog:audio_post_delete_success')
     context_object_name = 'audiopost'
 
     def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return self.handle_no_permission()
         obj = self.get_object()
         if obj.uploaded_by != request.user and not request.user.is_superuser:
-            raise PermissionDenied('You are not allowed to delete this audio post.')
-        return super().dispatch(request, *args, **kwargs)
-
-class AudioPostEditView(LoginRequiredMixin, UpdateView):
-    model = AudioPost
-    template_name = 'blog/audio/audio_post_edit.html'
-    fields = ['music_name', 'audio_file', 'description']
-    context_object_name = 'audiopost'
-    success_url = reverse_lazy('blog:audio_post_list')
-
-    def dispatch(self, request, *args, **kwargs):
-        obj = self.get_object()
-        if obj.uploaded_by != request.user and not request.user.is_superuser:
-            raise PermissionDenied('You are not allowed to edit this audio post.')
+            raise PermissionDenied("You are not allowed to delete this audio post.")
         return super().dispatch(request, *args, **kwargs)
 
 # ┌─────────────────────────────────────────────────────────────────────────────┐

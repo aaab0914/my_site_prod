@@ -42,7 +42,7 @@ A modern, production-ready blog platform built with Django, featuring a comprehe
 ## 🚀 Quick Start
 
 ### Prerequisites
-- Docker and Docker Compose
+- Docker and Docker Compose plugin
 - Python 3.12+
 - PostgreSQL 16
 
@@ -55,30 +55,28 @@ cd my_site_prod-master
 
 2. **Configure environment**:
 ```bash
-# Create .env file
-echo "SECRET_KEY=your-secret-key" > .env
-echo "DEBUG=False" >> .env
-echo "ALLOWED_HOSTS=localhost,127.0.0.1" >> .env
+# Create .env from the tracked template
+cp .env.example .env
 ```
 
 3. **Start containers**:
 ```bash
-docker-compose up -d
+docker compose up -d
 ```
 
 4. **Run migrations**:
 ```bash
-docker-compose exec web python manage.py migrate
+docker compose exec web python manage.py migrate
 ```
 
 5. **Create superuser**:
 ```bash
-docker-compose exec web python manage.py createsuperuser
+docker compose exec web python manage.py createsuperuser
 ```
 
 6. **Collect static files**:
 ```bash
-docker-compose exec web python manage.py collectstatic --noinput
+docker compose exec web python manage.py collectstatic --noinput
 ```
 
 7. **Access the application**:
@@ -151,15 +149,15 @@ GET    /blog/api/tags/            # List tags
 Run the test suite:
 ```bash
 # All tests
-docker-compose exec web python manage.py test
+docker compose exec web python manage.py test
 
 # Specific app
-docker-compose exec web python manage.py test blog
-docker-compose exec web python manage.py test users
-docker-compose exec web python manage.py test images
+docker compose exec web python manage.py test blog
+docker compose exec web python manage.py test users
+docker compose exec web python manage.py test images
 
 # With verbosity
-docker-compose exec web python manage.py test --verbosity=2
+docker compose exec web python manage.py test --verbosity=2
 ```
 
 **Current Coverage**: 29 test cases
@@ -177,13 +175,21 @@ docker-compose exec web python manage.py test --verbosity=2
 - HTTPS-ready configuration
 - User authentication required for sensitive operations
 - Input validation on all forms
+- Login rate limiting after repeated failures
+- Upload file type and size restrictions for avatars, cover images, and audio files
 
 ## 📈 Monitoring & Logs
 
 **Log Files:**
-- `logs/django.log` - Application logs
-- `logs/error.log` - Error logs only
+- `logs/YYYY-MM/django-YYYY-MM-DD.log` - Application logs
+- `logs/YYYY-MM/error-YYYY-MM-DD.log` - Warning and error logs
+- `logs/YYYY-MM/gunicorn-access-YYYY-MM-DD.log` - Gunicorn access logs
+- `logs/YYYY-MM/gunicorn-error-YYYY-MM-DD.log` - Gunicorn error logs
 - `logs/backup.log` - Backup operation logs
+
+Legacy flat files such as `logs/django.log`, `logs/error.log`, and `logs/access.log`
+may still exist from older runs, but active application logging now targets the
+dated files under `logs/YYYY-MM/`.
 
 **Audit Log:**
 - Request tracking in Django Admin
@@ -195,12 +201,14 @@ docker-compose exec web python manage.py test --verbosity=2
 - Automatic backups every 3 days
 - 7-day retention policy
 - Manual backup: `./backup_db.sh`
+- Manual backup on Windows PowerShell: `.\backup_db.ps1`
+- Restore drill on Windows PowerShell: `.\restore_test.ps1`
 
 ## 🚀 Deployment
 
 ### Development
 ```bash
-docker-compose up
+docker compose up
 ```
 
 ### Production
@@ -208,14 +216,16 @@ docker-compose up
 2. Enable HTTPS in nginx.conf
 3. Set DEBUG=False
 4. Configure ALLOWED_HOSTS
-5. Run migrations
-6. Collect static files
-7. Set up SSL certificates
-8. Start services: `docker-compose up -d`
+5. Configure `CSRF_TRUSTED_ORIGINS`
+6. Set up SSL certificates
+7. Start services with `docker compose -f docker-compose.prod.yml up --build -d`
+8. Run `bash ./deploy-prod.sh` for deploy-time checks, migrations, static collection, and smoke tests
 
 ## 📝 Configuration
 
 ### Environment Variables (.env)
+Use `.env.example` as the committed production-safe template.
+
 ```
 SECRET_KEY=your-django-secret-key
 DEBUG=False
@@ -233,25 +243,36 @@ DB_PORT=5432
 SECURE_SSL_REDIRECT=True
 SESSION_COOKIE_SECURE=True
 CSRF_COOKIE_SECURE=True
+CSRF_COOKIE_HTTPONLY=True
+SESSION_COOKIE_HTTPONLY=True
+SECURE_HSTS_SECONDS=31536000
+```
+
+Do not commit the real `.env`. Commit `.env.example` only.
+
+Validate production values before deployment:
+
+```bash
+python validate_prod_env.py
 ```
 
 ## 🐛 Troubleshooting
 
 **Port already in use:**
 ```bash
-docker-compose down
-docker-compose up -d
+docker compose down
+docker compose up -d
 ```
 
 **Database migration issues:**
 ```bash
-docker-compose exec web python manage.py makemigrations
-docker-compose exec web python manage.py migrate
+docker compose exec web python manage.py makemigrations
+docker compose exec web python manage.py migrate
 ```
 
 **Media files not visible:**
 ```bash
-docker-compose exec web python manage.py collectstatic --noinput
+docker compose exec web python manage.py collectstatic --noinput
 ```
 
 **Permission denied on scripts:**

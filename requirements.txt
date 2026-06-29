@@ -39,6 +39,7 @@ Pygments==2.20.0
 python-decouple==3.8
 pyxdg==0.28
 requests==2.34.1
+sentry-sdk==2.34.0
 sqlparse==0.5.5
 stack-data==0.6.3
 traitlets==5.14.3
@@ -49,3 +50,9 @@ wcwidth==0.7.0
 Django==6.0.2
 djangorestframework==3.15.0
 django-filter==24.3
+celery==5.5.3
+flower==2.0.1
+redis==6.2.0
+prometheus-client==0.23.1
+elasticsearch==8.19.1
+django-elasticsearch-dsl==8.2

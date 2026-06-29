@@ -56,9 +56,9 @@
         {% for comment in comments %}
             <div class="comment">
                 <p class="info">
-                    Comment {{ forloop.counter }} by {{ comment.name }}
+                    Comment {{ forloop.counter }} by {{ comment.display_name }}
                     {{ comment.created }}
-                    {% if user.is_authenticated and user.username == comment.name or user.is_superuser %}
+                    {% if user.is_authenticated and user == comment.author or user.is_superuser %}
                         <a href="{% url 'blog:edit_comment' post.slug comment.id %}" class="edit-link">Edit</a>
                         <a href="{% url 'blog:comment_delete' post.slug comment.id %}" class="delete-link" style="color: #cc0000; margin-left: 10px;">Delete</a>
                     {% endif %}

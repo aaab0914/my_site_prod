@@ -1,6 +1,6 @@
 #!/bin/bash
 
-echo "🚀 Starting local deployment..."
+echo "Starting local development deployment with docker-compose.yml..."
 
 # 1. 确保 Docker 在运行
 if ! docker info > /dev/null 2>&1; then
@@ -8,27 +8,27 @@ if ! docker info > /dev/null 2>&1; then
     exit 1
 fi
 
-# 2. 停止并清理旧容器
-echo "🧹 Stopping and removing old containers..."
+# 2. 停止旧容器
+echo "Stopping local containers..."
 docker compose down
 
 # 3. 重新构建并启动
-echo "🔧 Building and starting containers..."
+echo "Building and starting local containers..."
 docker compose up -d --build
 
 # 4. 等待数据库就绪
-echo "⏳ Waiting for database to be ready..."
+echo "Waiting for database to be ready..."
 sleep 10
 
 # 5. 执行迁移
-echo "📦 Running migrations..."
+echo "Running migrations..."
 docker exec my_site_web python manage.py migrate
 
 # 6. 检查服务是否运行
-echo "✅ Checking service status..."
+echo "Checking service status..."
 if curl -s http://localhost:8001/ > /dev/null; then
-    echo "✅ Deployment successful! Application running at http://localhost:8001/"
+    echo "Local deployment successful. Application running at http://localhost:8001/"
 else
-    echo "❌ Deployment failed. Please check logs."
+    echo "Local deployment failed. Please check logs."
     docker compose logs web
 fi

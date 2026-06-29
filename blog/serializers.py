@@ -10,10 +10,15 @@ class TagSerializer(serializers.ModelSerializer):
 
 
 class CommentSerializer(serializers.ModelSerializer):
+    name = serializers.SerializerMethodField()
+
     class Meta:
         model = Comment
         fields = ['id', 'name', 'email', 'body', 'created', 'active']
         read_only_fields = ['created']
+
+    def get_name(self, obj):
+        return obj.display_name
 
 
 class PostSerializer(serializers.ModelSerializer):

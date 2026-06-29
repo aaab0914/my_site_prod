@@ -5,6 +5,10 @@
 # =====================
 
 from django.apps import AppConfig
+import logging
+
+
+logger = logging.getLogger(__name__)
 
 
 # connection: Django's database connection wrapper
@@ -22,8 +26,8 @@ class BlogConfig(AppConfig):
     def ready(self):
         try:
             from . import signals
-        except ImportError:
-            pass
+        except ImportError as exc:
+            logger.warning("Failed to import blog signals: %s", exc)
 
 # =====================
 # SIGNAL MODULE EXAMPLE (signals.py)

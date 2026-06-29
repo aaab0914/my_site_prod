@@ -3,8 +3,15 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 from .models import Post, Comment
-from .serializers import PostSerializer, PostCreateSerializer, CommentSerializer
+from .serializers import PostSerializer, PostCreateSerializer, CommentSerializer, TagSerializer
 from django.shortcuts import get_object_or_404
+
+
+class IsAuthorOrReadOnly(permissions.BasePermission):
+    def has_object_permission(self, request, view, obj):
+        if request.method in permissions.SAFE_METHODS:
+            return True
+        return request.user.is_authenticated and obj.author == request.user
 
 
 class PostListAPIView(generics.ListCreateAPIView):
@@ -29,12 +36,7 @@ class PostListAPIView(generics.ListCreateAPIView):
 class PostDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Post.published.all()
     serializer_class = PostSerializer
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
-
-    def get_queryset(self):
-        if self.request.method in ['PUT', 'PATCH', 'DELETE']:
-            return Post.objects.filter(author=self.request.user)
-        return Post.published.all()
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsAuthorOrReadOnly]
 
 
 class CommentListAPIView(generics.ListCreateAPIView):
@@ -49,14 +51,15 @@ class CommentListAPIView(generics.ListCreateAPIView):
 
 
 class CommentDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
-    queryset = Comment.objects.all()
+    queryset = Comment.objects.filter(active=True)
     serializer_class = CommentSerializer
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    permission_classes = [permissions.AllowAny]
 
-    def get_queryset(self):
-        if self.request.method in ['PUT', 'PATCH', 'DELETE']:
-            return Comment.objects.filter(name=self.request.user.username)
-        return Comment.objects.filter(active=True)
+    def update(self, request, *args, **kwargs):
+        return Response({'detail': 'Comment updates via API are disabled.'}, status=405)
+
+    def destroy(self, request, *args, **kwargs):
+        return Response({'detail': 'Comment deletion via API is disabled.'}, status=405)
 
 
 @api_view(['GET'])

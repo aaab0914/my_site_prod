@@ -18,10 +18,9 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 # messages: Framework for sending one-time notifications to users
 
-from django.contrib.auth.forms import UserChangeForm
-# UserChangeForm: Form for changing user information (username, email, etc.)
-
 from django.contrib.auth.models import User
+from django.core.cache import cache
+from django.http import HttpResponse
 # User: Built-in Django user model
 
 from django.utils import timezone
@@ -33,7 +32,8 @@ from django import forms
 from .forms import (
     UserRegisterForm,  # Form for user registration
     UserLoginForm,  # Form for user login
-    UserProfileForm  # Form for editing user profile
+    UserProfileForm,  # Form for editing user profile
+    UsernameChangeForm,
 )
 
 from blog.models import Post, Comment
@@ -87,6 +87,15 @@ def register(request):
 # VIEW: LOGIN
 # ========================================
 
+LOGIN_RATE_LIMIT_WINDOW = 900
+LOGIN_RATE_LIMIT_MAX_FAILURES = 5
+
+
+def _login_rate_limit_key(request):
+    username = request.POST.get("username", "").strip().lower() or "anonymous"
+    ip = request.META.get("REMOTE_ADDR", "unknown")
+    return f"login-failures:{ip}:{username}"
+
 def login_view(request):
     """
     Handles user login.
@@ -104,13 +113,23 @@ def login_view(request):
         return redirect('blog:all_posts_list')
 
     if request.method == 'POST':
+        rate_limit_key = _login_rate_limit_key(request)
+        failure_count = cache.get(rate_limit_key, 0)
+        if failure_count >= LOGIN_RATE_LIMIT_MAX_FAILURES:
+            return HttpResponse(
+                "Too many failed login attempts. Please wait 15 minutes and try again.",
+                status=429,
+            )
+
         # User submitted login credentials
         form = UserLoginForm(request, data=request.POST)
         if form.is_valid():
             # Credentials are valid - get the authenticated user
             user = form.get_user()
+            cache.delete(rate_limit_key)
             login(request, user)
             return redirect('blog:all_posts_list')
+        cache.set(rate_limit_key, failure_count + 1, timeout=LOGIN_RATE_LIMIT_WINDOW)
     else:
         # First visit to the page - show empty form
         form = UserLoginForm()
@@ -212,6 +231,7 @@ def logout_view(request):
 # VIEW: PROFILE (VIEW PROFILE)
 # ========================================
 
+@login_required
 def profile(request, username=None):
     """
     Displays a user's profile page with their posts and comments.
@@ -233,12 +253,14 @@ def profile(request, username=None):
         # Show profile of the currently logged-in user
         user = request.user
 
-    # Get all posts by this user, ordered newest first
-    user_posts = Post.objects.filter(author=user).order_by('-publish')
+    viewing_own_profile = user == request.user
 
-    # Get all comments by this user, ordered newest first
-    # Comments are linked to the user via the 'name' field (username)
-    user_comments = Comment.objects.filter(name=user.username).order_by('-created')
+    if viewing_own_profile:
+        user_posts = Post.objects.filter(author=user).order_by('-publish')
+        user_comments = Comment.objects.filter(author=user).order_by('-created')
+    else:
+        user_posts = Post.published.filter(author=user).order_by('-publish')
+        user_comments = Comment.objects.filter(author=user, active=True).order_by('-created')
 
     return render(
         request,
@@ -303,36 +325,18 @@ def username_change(request):
         HTTP response: Username change page
     """
     if request.method == 'POST':
-        # User submitted a new username
-        new_username = request.POST.get('username', '').strip()
-        if new_username:
-            # Check if username is already taken
-            if User.objects.filter(username=new_username).exclude(id=request.user.id).exists():
-                messages.error(request, 'Username already exists.')
-                return redirect('users:username_change')
-
-            # Update username
-            request.user.username = new_username
-            request.user.save()
+        form = UsernameChangeForm(request.POST, instance=request.user)
+        if form.is_valid():
+            new_username = form.cleaned_data['username']
+            form.save()
             messages.success(
                 request,
                 f'User "{new_username}" has been changed.'
             )
             return redirect('users:profile')
+        for error in form.errors.get('username', []):
+            messages.error(request, error)
     else:
-        # Show the username change form
-        form = UserChangeForm(instance=request.user)
-        # Hide all fields except 'username'
-        for field in form.fields:
-            if field != 'username':
-                form.fields[field].widget = forms.HiddenInput()
-
-    # If GET request or form errors, display the form
-    form = UserChangeForm(instance=request.user)
-    # Hide all fields except 'username'
-    for field in form.fields:
-        if field != 'username':
-            form.fields[field].widget = forms.HiddenInput()
+        form = UsernameChangeForm(instance=request.user)
 
     return render(request, 'users/username_change.html', {'form': form})
-

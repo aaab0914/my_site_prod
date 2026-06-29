@@ -17,6 +17,11 @@ class ImagePostForm(forms.ModelForm):
     def clean_image(self):
         image = self.cleaned_data.get('image')
         if image:
+            allowed_types = {"image/jpeg", "image/png", "image/webp"}
+            if getattr(image, "content_type", "") not in allowed_types:
+                raise ValidationError("Image must be a JPEG, PNG, or WebP file.")
+            if image.size > 3 * 1024 * 1024:
+                raise ValidationError("Image must be 3MB or smaller before optimization.")
             img = Image.open(image)
             if img.mode in ('RGBA', 'LA', 'P'):
                 img = img.convert('RGB')
