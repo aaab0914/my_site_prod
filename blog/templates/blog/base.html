@@ -44,6 +44,11 @@
         </p>
 
         <p>
+            <a href="{% url 'blog:images:gallery_list' %}">🖼 Gallery</a> |
+            <a href="{% url 'blog:images:gallery_upload' %}">Upload Images</a>
+        </p>
+
+        <p>
             <a href="{% url 'users:profile' %}">My Profile</a> |
             <a href="{% url 'users:logout' %}">Logout</a>
         </p>
@@ -95,6 +100,10 @@
 
         <p>
             <a href="{% url 'blog:audio_list' %}">🎵 Audio List</a>
+        </p>
+
+        <p>
+            <a href="{% url 'blog:images:gallery_list' %}">🖼 Gallery</a>
         </p>
     {% endif %}
 </div>

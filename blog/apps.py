@@ -28,6 +28,10 @@ class BlogConfig(AppConfig):
             from . import signals
         except ImportError as exc:
             logger.warning("Failed to import blog signals: %s", exc)
+        try:
+            import my_site.media_signals
+        except ImportError as exc:
+            logger.warning("Failed to import media signals: %s", exc)
 
 # =====================
 # SIGNAL MODULE EXAMPLE (signals.py)

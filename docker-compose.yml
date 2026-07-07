@@ -101,7 +101,7 @@ services:
   celery-beat:
     build: .
     restart: always
-    command: celery -A my_site beat -l info -E
+    command: celery -A my_site beat -l info
     environment:
       DJANGO_SETTINGS_MODULE: my_site.settings.dev
       DB_NAME: ${DB_NAME}
@@ -206,3 +206,6 @@ volumes:
   postgres_data:
   elasticsearch_data:
   grafana_data:
+
+
+

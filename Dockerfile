@@ -13,9 +13,12 @@ WORKDIR /code
 # 创建非 root 用户 'app'，提升安全性
 RUN addgroup --system app && adduser --system --ingroup app app
 
-# 复制依赖文件并安装（利用 Docker 缓存层，加快后续构建）
-COPY requirements.txt .
-RUN pip install --upgrade pip && pip install -r requirements.txt
+# 复制依赖清单
+COPY requirements.txt /tmp/requirements.txt
+
+# ✅ 纯在线安装：直接从 PyPI 下载并安装所有依赖
+RUN pip install --upgrade pip && \
+    pip install --no-cache-dir -r /tmp/requirements.txt
 
 # 复制项目代码到容器内
 COPY . .

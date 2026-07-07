@@ -128,6 +128,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     # X-Frame-Options middleware: Prevents clickjacking attacks
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "my_site.media_sync_middleware.MediaSyncMiddleware",
     # Custom middleware: Enforces login requirement for protected URLs
     "my_site.middleware.LoginRequiredMiddleware",
     # Custom middleware: Logs user actions and API calls for audit trail
@@ -200,10 +201,15 @@ CELERY_TASK_SOFT_TIME_LIMIT = config("CELERY_TASK_SOFT_TIME_LIMIT", default=25 *
 CELERY_WORKER_SEND_TASK_EVENTS = config("CELERY_WORKER_SEND_TASK_EVENTS", default=True, cast=bool)
 CELERY_TASK_SEND_SENT_EVENT = config("CELERY_TASK_SEND_SENT_EVENT", default=True, cast=bool)
 CELERY_RESULT_EXTENDED = config("CELERY_RESULT_EXTENDED", default=True, cast=bool)
+MEDIA_SYNC_BEAT_MINUTES = config("MEDIA_SYNC_BEAT_MINUTES", default=5, cast=int)
 CELERY_BEAT_SCHEDULE = {
     "ping-blog-task-every-5-minutes": {
         "task": "blog.tasks.ping_blog_task",
         "schedule": crontab(minute="*/5"),
+    },
+    "sync-site-media-every-n-minutes": {
+        "task": "my_site.tasks.sync_site_media_task",
+        "schedule": crontab(minute=f"*/{MEDIA_SYNC_BEAT_MINUTES}"),
     },
 }
 
@@ -255,6 +261,7 @@ STATIC_ROOT = config("STATIC_ROOT", default=BASE_DIR / "staticfiles")
 MEDIA_URL = "/media/"
 # MEDIA_ROOT: Filesystem path for storing user-uploaded files
 MEDIA_ROOT = BASE_DIR / "media"
+MEDIA_SYNC_INTERVAL_SECONDS = config("MEDIA_SYNC_INTERVAL_SECONDS", default=10, cast=int)
 
 # ============================================================================
 # LOGGING CONFIGURATION
@@ -348,10 +355,10 @@ X_FRAME_OPTIONS = "DENY"
 
 # DATA_UPLOAD_MAX_MEMORY_SIZE: Maximum size of POST data (in bytes)
 # Prevents large uploads from consuming too much memory
-DATA_UPLOAD_MAX_MEMORY_SIZE = config("DATA_UPLOAD_MAX_MEMORY_SIZE", default=5 * 1024 * 1024, cast=int)  # 5MB
+DATA_UPLOAD_MAX_MEMORY_SIZE = config("DATA_UPLOAD_MAX_MEMORY_SIZE", default=25 * 1024 * 1024, cast=int)  # 25MB
 
 # FILE_UPLOAD_MAX_MEMORY_SIZE: Maximum size of file uploads (in bytes)
-FILE_UPLOAD_MAX_MEMORY_SIZE = config("FILE_UPLOAD_MAX_MEMORY_SIZE", default=5 * 1024 * 1024, cast=int)  # 5MB
+FILE_UPLOAD_MAX_MEMORY_SIZE = config("FILE_UPLOAD_MAX_MEMORY_SIZE", default=25 * 1024 * 1024, cast=int)  # 25MB
 
 # ============================================================================
 # URLS & DEFAULT FIELD

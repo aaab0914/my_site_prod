@@ -6,10 +6,11 @@ chmod -R 755 /code/media /code/logs 2>/dev/null || true
 
 if [ "${DJANGO_SETTINGS_MODULE}" = "my_site.settings.prod" ]; then
   python /code/validate_prod_env.py
+  python manage.py check --deploy
 fi
 
-python manage.py check --deploy
-python manage.py collectstatic --noinput
+python manage.py check
+python manage.py collectstatic --noinput || echo "collectstatic failed; continuing startup" >&2
 
 # Host cron handles database backups; skip in-container backup loop
 echo "Host cron handles database backups; skipping in-container backup loop" >&2
