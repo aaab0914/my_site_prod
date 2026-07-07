@@ -1,0 +1,411 @@
+{% extends "blog/base.html" %}
+
+{% block title %}Upload Images{% endblock %}
+
+{% block content %}
+<style>
+    .upload-shell {
+        max-width: 980px;
+        margin: 0 auto 32px;
+    }
+
+    .upload-hero {
+        margin-bottom: 24px;
+        padding: 28px 30px;
+        border-radius: 24px;
+        background: linear-gradient(135deg, #103c52, #1d6a70 58%, #d9efe3 140%);
+        color: #fff;
+        box-shadow: 0 18px 40px rgba(16, 60, 82, 0.22);
+    }
+
+    .upload-hero h1 {
+        margin: 0 0 10px;
+        padding: 0;
+        border: 0;
+        font-size: 40px;
+        font-weight: 700;
+    }
+
+    .upload-hero p {
+        margin: 0;
+        max-width: 760px;
+        color: rgba(255, 255, 255, 0.9);
+        font-size: 16px;
+        line-height: 1.6;
+    }
+
+    .upload-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1.6fr) minmax(280px, 1fr);
+        gap: 22px;
+    }
+
+    .upload-panel {
+        padding: 24px;
+        border: 1px solid #d9e2ea;
+        border-radius: 20px;
+        background: #fff;
+        box-shadow: 0 14px 34px rgba(15, 23, 42, 0.08);
+    }
+
+    .upload-panel h2,
+    .upload-panel h3 {
+        margin: 0 0 14px;
+    }
+
+    .upload-field {
+        margin-bottom: 18px;
+    }
+
+    .upload-field label {
+        float: none;
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 700;
+        color: #173042;
+    }
+
+    .upload-field input[type="file"],
+    .upload-field textarea {
+        width: 100%;
+        float: none;
+        margin: 0;
+        padding: 12px 14px;
+        border: 1px solid #c6d3df;
+        border-radius: 14px;
+        background: #f8fbfd;
+        font-size: 14px;
+    }
+
+    .upload-field textarea {
+        min-height: 120px;
+        resize: vertical;
+    }
+
+    .upload-error {
+        margin-top: 8px;
+        color: #b42318;
+        font-size: 14px;
+    }
+
+    .upload-errors {
+        margin-bottom: 18px;
+        padding: 14px 16px;
+        border-radius: 14px;
+        background: #fff1f1;
+        color: #a61b1b;
+    }
+
+    .paste-zone {
+        margin-bottom: 18px;
+        padding: 24px;
+        border: 2px dashed #7da5b2;
+        border-radius: 18px;
+        background: linear-gradient(180deg, #f7fbfd, #eef5f8);
+        transition: border-color 0.2s ease, background 0.2s ease;
+        outline: none;
+    }
+
+    .paste-zone:focus,
+    .paste-zone.is-active {
+        border-color: #0f766e;
+        background: linear-gradient(180deg, #f0fbf9, #e4f6f2);
+    }
+
+    .paste-zone strong {
+        display: block;
+        font-size: 18px;
+        color: #173042;
+    }
+
+    .paste-zone p {
+        margin: 8px 0 0;
+        color: #4e6373;
+        line-height: 1.6;
+    }
+
+    .upload-actions {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-top: 22px;
+    }
+
+    .upload-submit,
+    .upload-clear {
+        border: 0;
+        border-radius: 999px;
+        padding: 12px 18px;
+        font-size: 14px;
+        font-weight: 700;
+        cursor: pointer;
+    }
+
+    .upload-submit {
+        background: #0f766e;
+        color: #fff;
+    }
+
+    .upload-clear {
+        background: #e8eef3;
+        color: #22384a;
+    }
+
+    .upload-notes {
+        display: grid;
+        gap: 14px;
+    }
+
+    .upload-note {
+        padding: 18px;
+        border-radius: 18px;
+        background: #f8fafc;
+        border: 1px solid #dbe4ec;
+    }
+
+    .upload-note h3 {
+        margin-bottom: 10px;
+        color: #173042;
+    }
+
+    .upload-note p,
+    .upload-note li {
+        color: #526474;
+        line-height: 1.6;
+    }
+
+    .upload-note ul {
+        margin: 0;
+        padding-left: 18px;
+    }
+
+    .upload-preview {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+        display: grid;
+        gap: 10px;
+    }
+
+    .upload-preview li {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 12px 14px;
+        border-radius: 14px;
+        background: #f5f8fb;
+        border: 1px solid #dce6ee;
+        color: #243848;
+        font-size: 14px;
+    }
+
+    .upload-preview-empty {
+        color: #6b7b8b;
+    }
+
+    .upload-counter {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 32px;
+        height: 32px;
+        border-radius: 999px;
+        background: #d9ece7;
+        color: #0f5f59;
+        font-weight: 700;
+    }
+
+    @media screen and (max-width: 768px) {
+        .upload-hero {
+            padding: 22px 20px;
+        }
+
+        .upload-hero h1 {
+            font-size: 30px;
+        }
+
+        .upload-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .upload-panel {
+            padding: 18px;
+        }
+    }
+</style>
+
+<section class="upload-shell">
+    <div class="upload-hero">
+        <h1>Upload Images</h1>
+        <p>已登录用户可以一次提交最多 99 张图片。您可以选择本地文件，也可以点击下方粘贴区域后直接按 Ctrl+V 粘贴剪贴板图片。</p>
+    </div>
+
+    <div class="upload-grid">
+        <form method="post" enctype="multipart/form-data" id="gallery-upload-form" class="upload-panel">
+            {% csrf_token %}
+            <h2>Add Images to Gallery</h2>
+
+            {% if form.non_field_errors %}
+                <div class="upload-errors">{{ form.non_field_errors }}</div>
+            {% endif %}
+
+            <div class="upload-field">
+                <label for="{{ form.images.id_for_label }}">Local image files</label>
+                {{ form.images }}
+                {% if form.images.errors %}
+                    <div class="upload-error">{{ form.images.errors }}</div>
+                {% endif %}
+            </div>
+
+            <div id="paste-zone" class="paste-zone">
+                <strong>Paste images here</strong>
+                <p>先点击这个区域，再按 Ctrl+V。粘贴进来的图片会自动加入上传列表。</p>
+            </div>
+
+            <div class="upload-field">
+                <label for="{{ form.description.id_for_label }}">Description</label>
+                {{ form.description }}
+                {% if form.description.errors %}
+                    <div class="upload-error">{{ form.description.errors }}</div>
+                {% endif %}
+            </div>
+
+            {{ form.pasted_images_data }}
+
+            <div class="upload-actions">
+                <button type="submit" class="upload-submit">Upload to Gallery</button>
+                <button type="button" class="upload-clear" id="clear-selection">Clear Selection</button>
+            </div>
+        </form>
+
+        <aside class="upload-notes">
+            <section class="upload-panel upload-note">
+                <h3>Current Selection</h3>
+                <ul id="paste-preview" class="upload-preview">
+                    <li class="upload-preview-empty">No images selected yet.</li>
+                </ul>
+            </section>
+
+            <section class="upload-panel upload-note">
+                <h3>Rules</h3>
+                <ul>
+                    <li>Only logged-in users can upload.</li>
+                    <li>JPEG, PNG, and WebP are supported.</li>
+                    <li>You can submit up to 99 images at one time.</li>
+                    <li>Large images are optimized before saving.</li>
+                </ul>
+            </section>
+        </aside>
+    </div>
+</section>
+
+<script>
+(() => {
+    const form = document.getElementById("gallery-upload-form");
+    const fileInput = document.getElementById("{{ form.images.id_for_label }}");
+    const pastedImagesInput = document.getElementById("{{ form.pasted_images_data.id_for_label }}");
+    const pasteZone = document.getElementById("paste-zone");
+    const pastePreview = document.getElementById("paste-preview");
+    const clearSelection = document.getElementById("clear-selection");
+    let pastedFiles = [];
+    let localFiles = [];
+
+    function getAllFiles() {
+        return localFiles.concat(pastedFiles).slice(0, 99);
+    }
+
+    function syncPastedImagesField() {
+        const readerJobs = pastedFiles.map(file => new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve({
+                name: file.name,
+                data_url: reader.result,
+            });
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+        }));
+
+        return Promise.all(readerJobs).then(items => {
+            pastedImagesInput.value = JSON.stringify(items);
+        });
+    }
+
+    function renderPreview() {
+        pastePreview.innerHTML = "";
+        const allFiles = getAllFiles();
+        if (!allFiles.length) {
+            const empty = document.createElement("li");
+            empty.className = "upload-preview-empty";
+            empty.textContent = "No images selected yet.";
+            pastePreview.appendChild(empty);
+            return;
+        }
+
+        allFiles.forEach((file, index) => {
+            const item = document.createElement("li");
+            const count = document.createElement("span");
+            count.className = "upload-counter";
+            count.textContent = index + 1;
+
+            const name = document.createElement("span");
+            name.textContent = file.name;
+
+            item.appendChild(count);
+            item.appendChild(name);
+            pastePreview.appendChild(item);
+        });
+    }
+
+    fileInput.addEventListener("change", () => {
+        localFiles = Array.from(fileInput.files || []).slice(0, 99 - pastedFiles.length);
+        renderPreview();
+    });
+
+    pasteZone.tabIndex = 0;
+    pasteZone.addEventListener("focus", () => pasteZone.classList.add("is-active"));
+    pasteZone.addEventListener("blur", () => pasteZone.classList.remove("is-active"));
+    pasteZone.addEventListener("paste", (event) => {
+        const items = Array.from(event.clipboardData?.items || []);
+        const imageItems = items.filter(item => item.type.startsWith("image/"));
+        if (!imageItems.length) {
+            return;
+        }
+
+        event.preventDefault();
+        imageItems.forEach((item, index) => {
+            const file = item.getAsFile();
+            if (!file) {
+                return;
+            }
+            const extension = file.type.split("/")[1] || "png";
+            const wrapped = new File([file], `pasted-image-${Date.now()}-${index}.${extension}`, { type: file.type });
+            pastedFiles.push(wrapped);
+        });
+
+        pastedFiles = pastedFiles.slice(0, 99 - localFiles.length);
+        renderPreview();
+        syncPastedImagesField();
+    });
+
+    clearSelection.addEventListener("click", () => {
+        pastedFiles = [];
+        localFiles = [];
+        fileInput.value = "";
+        pastedImagesInput.value = "";
+        renderPreview();
+        pasteZone.focus();
+    });
+
+    form.addEventListener("submit", (event) => {
+        if (pastedFiles.length) {
+            event.preventDefault();
+            syncPastedImagesField().then(() => {
+                form.submit();
+            });
+        }
+    });
+})();
+</script>
+{% endblock %}

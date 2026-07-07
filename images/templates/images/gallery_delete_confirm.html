@@ -1,0 +1,60 @@
+{% extends "blog/base.html" %}
+
+{% block title %}Delete Image{% endblock %}
+
+{% block content %}
+<style>
+    .gallery-delete {
+        max-width: 720px;
+        margin: 0 auto 32px;
+        padding: 24px;
+        border: 1px solid #e2d3d1;
+        border-radius: 18px;
+        background: #fff;
+        box-shadow: 0 12px 26px rgba(15, 23, 42, 0.08);
+    }
+
+    .gallery-delete h1 {
+        margin-top: 0;
+    }
+
+    .gallery-delete-actions {
+        display: flex;
+        gap: 12px;
+        margin-top: 20px;
+    }
+
+    .gallery-delete-confirm,
+    .gallery-delete-cancel {
+        display: inline-block;
+        padding: 10px 16px;
+        border-radius: 999px;
+        text-decoration: none;
+        font-weight: 700;
+        border: 0;
+        cursor: pointer;
+    }
+
+    .gallery-delete-confirm {
+        background: #b42318;
+        color: #fff;
+    }
+
+    .gallery-delete-cancel {
+        background: #e9eff4;
+        color: #22384a;
+    }
+</style>
+
+<section class="gallery-delete">
+    <h1>Delete Image</h1>
+    <p>{{ image.title }}</p>
+    <form method="post">
+        {% csrf_token %}
+        <div class="gallery-delete-actions">
+            <button class="gallery-delete-confirm" type="submit">Delete</button>
+            <a class="gallery-delete-cancel" href="{% url 'blog:images:gallery_detail' image.id %}">Cancel</a>
+        </div>
+    </form>
+</section>
+{% endblock %}

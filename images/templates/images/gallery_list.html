@@ -1,0 +1,230 @@
+{% extends "blog/base.html" %}
+
+{% block title %}Gallery{% endblock %}
+
+{% block content %}
+<style>
+    .gallery-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 24px;
+        padding-bottom: 16px;
+        border-bottom: 1px solid #d8dee8;
+    }
+
+    .gallery-title {
+        margin: 0;
+        font-size: 38px;
+        line-height: 1.1;
+    }
+
+    .gallery-subtitle {
+        margin: 8px 0 0;
+        color: #5f6b7a;
+    }
+
+    .gallery-action {
+        display: inline-block;
+        padding: 12px 18px;
+        border-radius: 999px;
+        background: #0f766e;
+        color: #fff;
+        text-decoration: none;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    .gallery-grid {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 20px;
+    }
+
+    .gallery-card {
+        overflow: hidden;
+        border: 1px solid #dfe5ec;
+        border-radius: 18px;
+        background: #fff;
+        box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+    }
+
+    .gallery-link {
+        display: block;
+        color: inherit;
+        text-decoration: none;
+        cursor: pointer;
+    }
+
+    .gallery-media,
+    .gallery-fallback {
+        width: 100%;
+        height: 220px;
+    }
+
+    .gallery-media {
+        display: block;
+        object-fit: cover;
+        background: #eef2f6;
+    }
+
+    .gallery-fallback {
+        display: none;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #e5ecf4, #cfd9e6);
+        color: #445164;
+        font-size: 15px;
+        font-weight: 600;
+        text-align: center;
+        padding: 20px;
+        box-sizing: border-box;
+    }
+
+    .gallery-body {
+        padding: 16px;
+    }
+
+    .gallery-media-link {
+        display: block;
+        cursor: pointer;
+    }
+
+    .gallery-body h3 {
+        margin: 0 0 8px;
+        font-size: 22px;
+    }
+
+    .gallery-body p {
+        margin: 0 0 10px;
+        color: #465467;
+    }
+
+    .gallery-meta {
+        font-size: 14px;
+        color: #6c7888;
+    }
+
+    .gallery-detail-action {
+        display: inline-block;
+        margin-top: 12px;
+        color: #0f766e;
+        font-weight: 700;
+        text-decoration: none;
+    }
+
+    .gallery-empty {
+        padding: 28px;
+        border: 1px dashed #c6d0dc;
+        border-radius: 18px;
+        background: #f8fafc;
+        color: #526173;
+    }
+
+    .gallery-pagination {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        margin-top: 26px;
+        flex-wrap: wrap;
+    }
+
+    .gallery-pagination a,
+    .gallery-pagination span {
+        display: inline-block;
+        min-width: 42px;
+        padding: 10px 14px;
+        border-radius: 999px;
+        text-align: center;
+        text-decoration: none;
+        background: #eef3f7;
+        color: #22384a;
+        font-weight: 700;
+    }
+
+    .gallery-pagination .is-current {
+        background: #0f766e;
+        color: #fff;
+    }
+
+    @media screen and (max-width: 1200px) {
+        .gallery-grid {
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+        }
+    }
+
+    @media screen and (max-width: 900px) {
+        .gallery-grid {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+    }
+
+    @media screen and (max-width: 640px) {
+        .gallery-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
+</style>
+
+<section class="gallery-header">
+    <div>
+        <h1 class="gallery-title">Gallery</h1>
+        <p class="gallery-subtitle">Browse uploaded images. Logged-in users can upload local files or paste images from the clipboard.</p>
+    </div>
+    {% if user.is_authenticated %}
+        <a class="gallery-action" href="{% url 'blog:images:gallery_upload' %}">Upload or Paste Images</a>
+    {% endif %}
+</section>
+
+{% if images %}
+    <section class="gallery-grid">
+        {% for image in images %}
+            <article class="gallery-card">
+                <a class="gallery-media-link" href="{% url 'blog:images:gallery_detail' image.id %}">
+                    <img
+                        class="gallery-media"
+                        src="{{ image.image.url }}"
+                        alt="{{ image.title }}"
+                        loading="lazy"
+                        onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
+                    >
+                    <div class="gallery-fallback">Image file missing<br>{{ image.title }}</div>
+                </a>
+                <div class="gallery-body">
+                    <a class="gallery-link" href="{% url 'blog:images:gallery_detail' image.id %}">
+                        <h3>{{ image.title }}</h3>
+                    </a>
+                    {% if image.description %}
+                        <p>{{ image.description }}</p>
+                    {% endif %}
+                    <div class="gallery-meta">By {{ image.uploaded_by.username }} on {{ image.created|date:"Y-m-d H:i" }}</div>
+                    <a class="gallery-detail-action" href="{% url 'blog:images:gallery_detail' image.id %}">View Details</a>
+                </div>
+            </article>
+        {% endfor %}
+    </section>
+    {% if page_obj and page_obj.paginator.num_pages > 1 %}
+        <nav class="gallery-pagination">
+            {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}">Prev</a>
+            {% endif %}
+            {% for page_number in page_obj.paginator.page_range %}
+                {% if page_number == page_obj.number %}
+                    <span class="is-current">{{ page_number }}</span>
+                {% else %}
+                    <a href="?page={{ page_number }}">{{ page_number }}</a>
+                {% endif %}
+            {% endfor %}
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}">Next</a>
+            {% endif %}
+        </nav>
+    {% endif %}
+{% else %}
+    <div class="gallery-empty">
+        No images in the gallery yet.
+    </div>
+{% endif %}
+{% endblock %}

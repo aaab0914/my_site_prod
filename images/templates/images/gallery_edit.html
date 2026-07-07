@@ -1,0 +1,80 @@
+{% extends "blog/base.html" %}
+
+{% block title %}Edit Image{% endblock %}
+
+{% block content %}
+<style>
+    .gallery-edit {
+        max-width: 760px;
+        margin: 0 auto 32px;
+        padding: 24px;
+        border: 1px solid #dbe3eb;
+        border-radius: 20px;
+        background: #fff;
+        box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+    }
+
+    .gallery-edit h1 {
+        margin-top: 0;
+    }
+
+    .gallery-edit label {
+        float: none;
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 700;
+    }
+
+    .gallery-edit input,
+    .gallery-edit textarea {
+        width: 100%;
+        float: none;
+        margin: 0 0 16px;
+        padding: 12px 14px;
+        border: 1px solid #cbd6e1;
+        border-radius: 14px;
+        background: #f8fbfd;
+        font-size: 14px;
+        box-sizing: border-box;
+    }
+
+    .gallery-edit-actions {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+    }
+
+    .gallery-edit-save,
+    .gallery-edit-cancel {
+        display: inline-block;
+        padding: 10px 16px;
+        border-radius: 999px;
+        text-decoration: none;
+        font-weight: 700;
+        border: 0;
+        cursor: pointer;
+    }
+
+    .gallery-edit-save {
+        background: #0f766e;
+        color: #fff;
+    }
+
+    .gallery-edit-cancel {
+        background: #e9eff4;
+        color: #22384a;
+    }
+</style>
+
+<section class="gallery-edit">
+    <h1>Edit Image</h1>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <div class="gallery-edit-actions">
+            <button class="gallery-edit-save" type="submit">Save</button>
+            <a class="gallery-edit-cancel" href="{% url 'blog:images:gallery_detail' image.id %}">Cancel</a>
+        </div>
+    </form>
+</section>
+{% endblock %}

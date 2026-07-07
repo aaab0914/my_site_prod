@@ -1,0 +1,123 @@
+{% extends "blog/base.html" %}
+
+{% block title %}{{ image.title }}{% endblock %}
+
+{% block content %}
+<style>
+    .gallery-detail {
+        max-width: 980px;
+        margin: 0 auto 32px;
+    }
+
+    .gallery-detail-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 18px;
+    }
+
+    .gallery-detail-back {
+        color: #0f766e;
+        text-decoration: none;
+        font-weight: 700;
+    }
+
+    .gallery-detail-delete {
+        display: inline-block;
+        padding: 10px 16px;
+        border-radius: 999px;
+        background: #b42318;
+        color: #fff;
+        text-decoration: none;
+        font-weight: 700;
+    }
+
+    .gallery-detail-actions {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+    }
+
+    .gallery-detail-edit {
+        display: inline-block;
+        padding: 10px 16px;
+        border-radius: 999px;
+        background: #0f766e;
+        color: #fff;
+        text-decoration: none;
+        font-weight: 700;
+    }
+
+    .gallery-detail-card {
+        border: 1px solid #dbe3eb;
+        border-radius: 20px;
+        overflow: hidden;
+        background: #fff;
+        box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+    }
+
+    .gallery-detail-image {
+        display: block;
+        width: 100%;
+        max-height: 70vh;
+        object-fit: contain;
+        background: #f3f7fa;
+    }
+
+    .gallery-detail-body {
+        padding: 22px;
+    }
+
+    .gallery-detail-body h1 {
+        margin: 0 0 12px;
+        border: 0;
+        padding: 0;
+    }
+
+    .gallery-detail-meta {
+        color: #607080;
+        margin-bottom: 14px;
+    }
+
+    .gallery-detail-description {
+        color: #243848;
+        line-height: 1.7;
+        white-space: pre-wrap;
+    }
+
+    .gallery-detail-notice {
+        margin-bottom: 16px;
+        padding: 12px 14px;
+        border-radius: 12px;
+        background: #f4f7fa;
+        color: #607080;
+    }
+</style>
+
+<section class="gallery-detail">
+    <div class="gallery-detail-top">
+        <a class="gallery-detail-back" href="{% url 'blog:images:gallery_list' %}">Back to Gallery</a>
+        {% if can_manage %}
+            <div class="gallery-detail-actions">
+                <a class="gallery-detail-edit" href="{% url 'blog:images:gallery_edit' image.id %}">Edit</a>
+                <a class="gallery-detail-delete" href="{% url 'blog:images:gallery_delete' image.id %}">Delete</a>
+            </div>
+        {% endif %}
+    </div>
+
+    <article class="gallery-detail-card">
+        <img class="gallery-detail-image" src="{{ image.image.url }}" alt="{{ image.title }}">
+        <div class="gallery-detail-body">
+            {% if not can_manage %}
+                <div class="gallery-detail-notice">Only the creator or a superuser can edit or delete this image.</div>
+            {% endif %}
+            <h1>{{ image.title }}</h1>
+            <div class="gallery-detail-meta">By {{ image.uploaded_by.username }} on {{ image.created|date:"Y-m-d H:i" }}</div>
+            {% if image.description %}
+                <div class="gallery-detail-description">{{ image.description }}</div>
+            {% endif %}
+        </div>
+    </article>
+</section>
+{% endblock %}
