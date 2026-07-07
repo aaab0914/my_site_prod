@@ -27,7 +27,6 @@ from django.contrib import messages
 # from django.contrib.redirects.models import Redirect
 
 from django.views.decorators.http import require_POST
-from django.views.decorators.cache import cache_page
 # require_POST: Decorator that restricts a view to accept only POST requests
 
 from django.db.models import Count
@@ -152,7 +151,6 @@ def post_share(request, post_id):
     )
 
 
-@cache_page(120)
 def post_list(request, tag_slug=None):
     """
     View function for displaying a list of posts with optional tag filtering.
@@ -172,8 +170,8 @@ def post_list(request, tag_slug=None):
     :return: Rendered list template with posts and optional tag
     """
 
-    # Start with all published posts and load related objects up front
-    post_list = Post.published.select_related('author').prefetch_related('tags')
+    # Start with all published posts
+    post_list = Post.published.all()
 
     # Variable to store the tag object (if filtering by tag)
     tag = None
@@ -231,16 +229,16 @@ def post_detail(request, year, month, day, post_slug):
     :return: Rendered detail template with post, comments, form, and similar posts
     """
 
-    # Retrieve the newest published post matching the date + slug.
-    # This avoids a 500 if duplicate rows exist for the same public URL.
-    post = Post.published.filter(
-        slug=post_slug,
-        publish__year=year,
-        publish__month=month,
-        publish__day=day,
-    ).order_by('-publish', '-id').first()
-    if post is None:
-        raise Http404('No Post matches the given query.')
+    # Retrieve the published post matching all criteria
+    # This ensures the URL (with date and slug) uniquely identifies the post
+    post = get_object_or_404(
+        Post,
+        status=Post.Status.PUBLISHED,  # Only published posts
+        slug=post_slug,  # Match the slug
+        publish__year=year,  # Match publication year
+        publish__month=month,  # Match publication month
+        publish__day=day  # Match publication day
+    )
 
     # Get all active comments for this post (approved comments only)
     comments = post.comments.filter(active=True)

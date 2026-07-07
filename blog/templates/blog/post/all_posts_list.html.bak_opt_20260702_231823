@@ -70,7 +70,7 @@
                   so Chinese and English are limited consistently.
                 -->
                 <p>
-                    {{ post.body|striptags|truncatechars:140 }}
+                    {{ post.body|markdown|safe|truncatechars_html:100 }}
                 </p>
             </div>
         {% empty %}

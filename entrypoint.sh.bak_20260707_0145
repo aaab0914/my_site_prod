@@ -11,8 +11,13 @@ fi
 python manage.py check --deploy
 python manage.py collectstatic --noinput
 
-# Host cron handles database backups; skip in-container backup loop
-echo "Host cron handles database backups; skipping in-container backup loop" >&2
+# 启动后台备份进程
+if [ -f /code/backup_loop.sh ]; then
+  chmod +x /code/backup_loop.sh
+  /code/backup_loop.sh >> /code/logs/backup.log 2>&1 &
+else
+  echo "backup_loop.sh not found; skipping background backup loop" >&2
+fi
 
 MONTH_DIR="$(date +%Y-%m)"
 DAY="$(date +%Y-%m-%d)"
