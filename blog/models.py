@@ -27,6 +27,9 @@ from django.db import models
 from django.urls import reverse
 # reverse: Generates URLs from named URL patterns.
 
+from django.utils import timezone
+# timezone: Timezone-aware datetime utilities.
+
 from django.utils.text import slugify
 # slugify: Converts a string to a URL-friendly slug.
 
