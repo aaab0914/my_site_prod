@@ -69,3 +69,7 @@ Others/
 .psql_history
 *.history
 index_backup.html
+
+*.last_applied
+
+*.bak_*
