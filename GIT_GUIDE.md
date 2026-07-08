@@ -5,7 +5,7 @@ This file contains practical Git operations for `my_site_prod-master`.
 Project root:
 
 ```powershell
-cd C:\Users\K1457\Downloads\Compressed\my_site_prod-master
+cd G:\Projests\Python_Projects\my_site_prod-master
 ```
 
 ## Common Git Operations
@@ -49,7 +49,7 @@ git diff --cached
 7. Show changes for one file:
 
 ```powershell
-git diff -- blog/views.py
+git diff -- blog/views
 ```
 
 8. Show commit history:
@@ -91,7 +91,7 @@ git add README.md
 14. Stage multiple project files:
 
 ```powershell
-git add my_site/tests_settings.py my_site/settings/dev.py
+git add my_site/tests/test_settings.py my_site/settings/dev.py
 ```
 
 15. Stage all tracked and untracked changes:

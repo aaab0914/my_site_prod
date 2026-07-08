@@ -5,7 +5,7 @@ This file contains 30 project-specific Django shell operations for `my_site_prod
 Project root:
 
 ```powershell
-cd C:\Users\K1457\Downloads\Compressed\my_site_prod-master
+cd G:\Projests\Python_Projects\my_site_prod-master
 ```
 
 Default Django target:

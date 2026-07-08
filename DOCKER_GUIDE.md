@@ -5,7 +5,7 @@ This file contains 20 common Docker Compose operations for `my_site_prod-master`
 Project root:
 
 ```powershell
-cd C:\Users\K1457\Downloads\Compressed\my_site_prod-master
+cd G:\Projests\Python_Projects\my_site_prod-master
 ```
 
 Default services:

@@ -10,8 +10,8 @@ The goal is to stop adding new features and move the project into a stable, main
 
 Current risk:
 
-- `POSTGRES_PASSWORD: Coffee.1`
-- `DB_PASSWORD: Coffee.1`
+- `POSTGRES_PASSWORD: <set-in-env>`
+- `DB_PASSWORD: <set-in-env>`
 
 Why this matters:
 

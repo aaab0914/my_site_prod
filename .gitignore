@@ -69,7 +69,15 @@ Others/
 .psql_history
 *.history
 index_backup.html
-
 *.last_applied
-
 *.bak_*
+
+# Runtime-generated artifacts
+/data/
+/media/
+/staticfiles/
+/logs/
+/backups/
+/backups/db/
+celerybeat-schedule
+celerybeat-schedule.local-backup

@@ -5,7 +5,7 @@ This document lists the current test files in the project, their paths, and the 
 Project root:
 
 ```powershell
-cd C:\Users\K1457\Downloads\Compressed\my_site_prod-master
+cd G:\Projests\Python_Projects\my_site_prod-master
 ```
 
 ## CI Coverage
@@ -39,10 +39,10 @@ docker compose exec web python manage.py test
 
 ### Blog Tests
 
-File path:
+Package path:
 
 ```text
-blog/tests.py
+blog/tests/
 ```
 
 Run:
@@ -60,13 +60,26 @@ Main coverage:
 - RSS feed
 - search behavior
 - admin blog actions
+- API permission behavior
+- Docker-related blog checks
+
+Main module layout:
+
+```text
+blog/tests/test_blog/
+  test_tags_and_feeds.py
+  test_posts_and_comments.py
+  test_audio.py
+  test_api.py
+  test_admin_and_docker.py
+```
 
 ### Images Tests
 
-File path:
+Package path:
 
 ```text
-images/tests.py
+images/tests/
 ```
 
 Run:
@@ -77,14 +90,14 @@ docker compose exec web python manage.py test images.tests
 
 Main coverage:
 
-- image app tests defined in `images/tests.py`
+- image app tests defined in `images/tests/test_images.py`
 
 ### Users Tests
 
-File path:
+Package path:
 
 ```text
-users/tests.py
+users/tests/
 ```
 
 Run:
@@ -103,6 +116,16 @@ Main coverage:
 - username change
 - user model behavior
 
+Main module layout:
+
+```text
+users/tests/test_users/
+  test_models.py
+  test_auth.py
+  test_profile.py
+  test_account.py
+```
+
 ## Project-Level Infrastructure Tests
 
 ### Docker Compose Tests
@@ -110,13 +133,13 @@ Main coverage:
 File path:
 
 ```text
-my_site/tests_docker_compose.py
+my_site/tests/test_docker_compose.py
 ```
 
 Run:
 
 ```powershell
-docker compose exec web python manage.py test my_site.tests_docker_compose
+docker compose exec web python manage.py test my_site.tests.test_docker_compose
 ```
 
 Main coverage:
@@ -129,16 +152,16 @@ Main coverage:
 
 ### Infrastructure Tests
 
-File path:
+Package path:
 
 ```text
-my_site/tests_infrastructure.py
+my_site/tests/test_infrastructure/
 ```
 
 Run:
 
 ```powershell
-docker compose exec web python manage.py test my_site.tests_infrastructure
+docker compose exec web python manage.py test my_site.tests.test_infrastructure
 ```
 
 Main coverage:
@@ -149,18 +172,30 @@ Main coverage:
 - entrypoint expectations
 - permissions-related startup assumptions
 
+Main module layout:
+
+```text
+my_site/tests/test_infrastructure/
+  common.py
+  test_nginx.py
+  test_gunicorn.py
+  test_postgres.py
+  test_monitoring.py
+  test_runtime_probes.py
+```
+
 ### Nginx Config Tests
 
 File path:
 
 ```text
-my_site/tests_nginx_config.py
+my_site/tests/test_nginx_config.py
 ```
 
 Run:
 
 ```powershell
-docker compose exec web python manage.py test my_site.tests_nginx_config
+docker compose exec web python manage.py test my_site.tests.test_nginx_config
 ```
 
 Main coverage:
@@ -174,13 +209,13 @@ Main coverage:
 File path:
 
 ```text
-my_site/tests_settings.py
+my_site/tests/test_settings.py
 ```
 
 Run:
 
 ```powershell
-docker compose exec web python manage.py test my_site.tests_settings
+docker compose exec web python manage.py test my_site.tests.test_settings
 ```
 
 Main coverage:
@@ -195,13 +230,13 @@ Main coverage:
 File path:
 
 ```text
-my_site/tests_celery_integration.py
+my_site/tests/test_celery_integration.py
 ```
 
 Run:
 
 ```powershell
-docker compose exec web python manage.py test my_site.tests_celery_integration
+docker compose exec web python manage.py test my_site.tests.test_celery_integration
 ```
 
 Main coverage:
@@ -215,13 +250,13 @@ Main coverage:
 File path:
 
 ```text
-my_site/tests_sentry_integration.py
+my_site/tests/test_sentry_integration.py
 ```
 
 Run:
 
 ```powershell
-docker compose exec web python manage.py test my_site.tests_sentry_integration
+docker compose exec web python manage.py test my_site.tests.test_sentry_integration
 ```
 
 Main coverage:
@@ -235,13 +270,13 @@ Main coverage:
 File path:
 
 ```text
-my_site/tests_prometheus_integration.py
+my_site/tests/test_prometheus_integration.py
 ```
 
 Run:
 
 ```powershell
-docker compose exec web python manage.py test my_site.tests_prometheus_integration
+docker compose exec web python manage.py test my_site.tests.test_prometheus_integration
 ```
 
 Main coverage:
@@ -256,13 +291,13 @@ Main coverage:
 File path:
 
 ```text
-my_site/tests_grafana_integration.py
+my_site/tests/test_grafana_integration.py
 ```
 
 Run:
 
 ```powershell
-docker compose exec web python manage.py test my_site.tests_grafana_integration
+docker compose exec web python manage.py test my_site.tests.test_grafana_integration
 ```
 
 Main coverage:
@@ -283,35 +318,46 @@ docker compose exec web python manage.py test blog.tests images.tests users.test
 Run infrastructure and deployment tests:
 
 ```powershell
-docker compose exec web python manage.py test my_site.tests_docker_compose my_site.tests_infrastructure my_site.tests_nginx_config my_site.tests_settings
+docker compose exec web python manage.py test my_site.tests.test_docker_compose my_site.tests.test_infrastructure my_site.tests.test_nginx_config my_site.tests.test_settings
 ```
 
 Run observability integration tests:
 
 ```powershell
-docker compose exec web python manage.py test my_site.tests_celery_integration my_site.tests_sentry_integration my_site.tests_prometheus_integration my_site.tests_grafana_integration
+docker compose exec web python manage.py test my_site.tests.test_celery_integration my_site.tests.test_sentry_integration my_site.tests.test_prometheus_integration my_site.tests.test_grafana_integration
 ```
 
 Run the currently most important stabilization set:
 
 ```powershell
-docker compose exec web python manage.py test my_site.tests_settings my_site.tests_docker_compose blog.tests users.tests
+docker compose exec web python manage.py test my_site.tests.test_settings my_site.tests.test_docker_compose blog.tests users.tests
 ```
 
 ## Current Test File List
 
 ```text
-blog/tests.py
-images/tests.py
-users/tests.py
-my_site/tests_docker_compose.py
-my_site/tests_infrastructure.py
-my_site/tests_nginx_config.py
-my_site/tests_settings.py
-my_site/tests_celery_integration.py
-my_site/tests_sentry_integration.py
-my_site/tests_prometheus_integration.py
-my_site/tests_grafana_integration.py
+blog/tests/test_blog/test_tags_and_feeds.py
+blog/tests/test_blog/test_posts_and_comments.py
+blog/tests/test_blog/test_audio.py
+blog/tests/test_blog/test_api.py
+blog/tests/test_blog/test_admin_and_docker.py
+images/tests/test_images.py
+users/tests/test_users/test_models.py
+users/tests/test_users/test_auth.py
+users/tests/test_users/test_profile.py
+users/tests/test_users/test_account.py
+my_site/tests/test_docker_compose.py
+my_site/tests/test_infrastructure/test_nginx.py
+my_site/tests/test_infrastructure/test_gunicorn.py
+my_site/tests/test_infrastructure/test_postgres.py
+my_site/tests/test_infrastructure/test_monitoring.py
+my_site/tests/test_infrastructure/test_runtime_probes.py
+my_site/tests/test_nginx_config.py
+my_site/tests/test_settings.py
+my_site/tests/test_celery_integration.py
+my_site/tests/test_sentry_integration.py
+my_site/tests/test_prometheus_integration.py
+my_site/tests/test_grafana_integration.py
 ```
 
 ## Notes

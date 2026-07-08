@@ -5,7 +5,7 @@ This file is the main index for project documentation in `my_site_prod-master`.
 Project root:
 
 ```text
-C:\Users\K1457\Downloads\Compressed\my_site_prod-master
+G:\Projests\Python_Projects\my_site_prod-master
 ```
 
 ## Start Here
@@ -50,6 +50,9 @@ C:\Users\K1457\Downloads\Compressed\my_site_prod-master
 - `TEST_INDEX.md`
   Full list of test files, test paths, and recommended run commands.
 
+- `SOURCE_STRUCTURE.md`
+  Current Python package layout after views/forms/models/tests/admin/urls were reorganized into package directories.
+
 - `INTEGRATIONS_GUIDE.md`
   Runtime integration guide for Celery, Sentry, Prometheus, Grafana, Flower, Redis, and Elasticsearch.
 
@@ -76,6 +79,9 @@ C:\Users\K1457\Downloads\Compressed\my_site_prod-master
 
 - `API_DOCUMENTATION.md`
   API-related documentation already present in the repository.
+
+- `RUNTIME_ARTIFACTS.md`
+  Runtime-generated directories and handling notes for `data/`, `media/`, `staticfiles/`, `logs/`, and `backups/`.
 
 - `README_EN.md`
   English README variant already present in the repository.

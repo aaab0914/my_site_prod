@@ -5,7 +5,7 @@ This file contains practical GitHub CLI style operations for `my_site_prod-maste
 Project root:
 
 ```powershell
-cd C:\Users\K1457\Downloads\Compressed\my_site_prod-master
+cd G:\Projests\Python_Projects\my_site_prod-master
 ```
 
 These commands assume `gh` is installed and that this local repository is connected to a GitHub remote.
