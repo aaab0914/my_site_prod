@@ -4,7 +4,7 @@ cd /var/www/my_site_prod_repo_new
 echo '=== CURRENT IMAGEPOST/AUDIOPOST ==='
 docker exec my_site_prod_repo-web-1 python manage.py shell -c "from images.models import ImagePost; from blog.models import AudioPost; print('ImagePost count', ImagePost.objects.count()); print(list(ImagePost.objects.values_list('id','title','image')[:50])); print('AudioPost count', AudioPost.objects.count()); print(list(AudioPost.objects.values_list('id','music_name','audio_file')[:50]))"
 echo '=== OLD DB BACKUPS TABLE DATA SEARCH ==='
-for db in /var/www/my_site_prod/backups/db_20260624_020001.sql.gz /var/www/my_site_prod_backup_20260624/backups/db_20260624_020001.sql.gz /root/backups/database/my_site_db_20260620_071824.sql.gz; do
+for db in /var/www/my_site_prod_repo_new/backups/db/*.sql /var/www/my_site_prod_repo_new/backups/db/*.sql.gz /root/backups/database/*.sql.gz; do
   [ -f "$db" ] || continue
   echo "--- $db image/audio tables"
   zgrep -nE 'COPY (public\.)?(blog_audiopost|images_imagepost)|audio/|posts/.+\.(jpg|png|webp)' "$db" | head -n 120 || true

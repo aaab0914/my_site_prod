@@ -5,6 +5,8 @@ from django.core.exceptions import ValidationError
 from django.core.files.storage import default_storage
 from django.shortcuts import get_object_or_404, redirect, render
 
+from blog.models import Post
+
 from .forms import GalleryImageEditForm, GalleryUploadForm
 from .models import ImagePost
 from my_site.media_sync import maybe_sync_site_media
@@ -33,13 +35,22 @@ def gallery_detail(request, image_id):
         messages.error(request, "Image file is missing.")
         return redirect("blog:images:gallery_list")
 
+    linked_post = None
+    if image.image and image.image.name:
+        linked_post = (
+            Post.published.filter(cover_image=image.image.name)
+            .select_related("author")
+            .order_by("-publish", "-id")
+            .first()
+        )
+
     can_manage = request.user.is_authenticated and (
         image.uploaded_by_id == request.user.id or request.user.is_superuser
     )
     return render(
         request,
         "images/gallery_detail.html",
-        {"image": image, "can_manage": can_manage},
+        {"image": image, "can_manage": can_manage, "linked_post": linked_post},
     )
 
 

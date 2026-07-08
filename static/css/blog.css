@@ -43,6 +43,8 @@ p.date {
    ======================================== */
 
 #content {
+    position: relative;
+    z-index: 1;
     width: 70%;              /* 右侧要留 30% 给侧边栏 */
     padding: 0 0 0 30px;
     float: none;             /* 移除传统浮动 */
@@ -52,6 +54,8 @@ p.date {
     width: 30%;
     padding: 10px;
     background: #efefef;
+    position: relative;
+    z-index: 2;
     height: 100%;            /* 【修改点2】高度等于内容高度，而不是强行撑满一屏 */
     box-sizing: border-box;
     float: none;             /* 移除传统浮动 */

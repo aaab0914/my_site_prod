@@ -17,14 +17,6 @@
         {% for post in posts %}
             <div class="post-item" style="margin-bottom: 30px; border-bottom: 1px solid #eee; padding-bottom: 20px;">
 
-                <!-- Display cover image if it exists -->
-                {% if post.cover_image %}
-                    <div style="margin-bottom: 10px;">
-                        <img src="{{ post.cover_image.url }}" alt="{{ post.title }}"
-                             style="width: 350px; height: 150px; object-fit: cover; border-radius: 8px;">
-                    </div>
-                {% endif %}
-
                 <!-- Post title linked to its detail page -->
                 <h2>
                     <a href="{{ post.get_absolute_url }}">{{ post.title }}</a>
@@ -66,18 +58,25 @@
                 </p>
 
                 <!--
-                  Post body truncated to about 100 characters for the list view
-                  so Chinese and English are limited consistently.
+                  Post body truncated to 30 words for the list view
+                  |markdown: Converts Markdown to HTML (requires a custom template filter)
+                  |safe: Marks the HTML as safe to render (use carefully with user content)
+                  |truncatewords_html:30: Limits to 30 words while preserving HTML tags
                 -->
-                <p>
-                    {{ post.body|striptags|truncatechars:140 }}
-                </p>
-            </div>
-        {% empty %}
-            <div class="empty-state">
-                <h2>No posts yet</h2>
-                <p>The blog home page is working, but there are no published posts to display yet.</p>
-                <p><a href="{% url 'users:login' %}">Log in</a> to create the first post.</p>
+                <div style="margin-top: 10px;">
+                    {{ post.body|markdown|safe|truncatewords_html:30 }}
+                </div>
+
+                {% if post.cover_image %}
+                    <div style="margin: 12px 0 0;">
+                        <!--
+                          post.cover_image.url: Absolute URL to the uploaded image file
+                          Django automatically serves media files when DEBUG=True
+                        -->
+                        <img src="{{ post.cover_image.url }}" alt="{{ post.title }}"
+                             style="display: block; width: 100%; max-width: 420px; height: auto; max-height: 240px; object-fit: cover; border-radius: 8px;">
+                    </div>
+                {% endif %}
             </div>
         {% endfor %}
     </div>

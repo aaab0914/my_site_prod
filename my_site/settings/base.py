@@ -146,7 +146,7 @@ ROOT_URLCONF = "my_site.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",  # Django template engine
-        "DIRS": [],  # Additional directories to search for templates (project-level templates)
+        "DIRS": [BASE_DIR],  # Include project root so index.html can serve the root landing page
         "APP_DIRS": True,  # Whether to look for templates inside each app's 'templates/' directory
         "OPTIONS": {
             "context_processors": [  # Functions that add variables to every template context

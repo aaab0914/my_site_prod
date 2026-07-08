@@ -5,19 +5,15 @@
 {% endblock %}
 
 {% block content %}
-  <div class="edit-container" style="max-width: 800px; margin: 40px auto; padding: 20px;
-border: 1px solid #e0e0e0; border-radius: 8px">
-    <h1>
-      Edit Audio Post
-    </h1>
+  <div class="edit-container" style="max-width: 800px; margin: 40px auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px">
+    <h1>Edit Audio Post</h1>
 
     <form method="post" enctype="multipart/form-data">
       {% csrf_token %}
 
       {% if form.non_field_errors %}
-        <div class="alert alert-danger" style="background: #f8d7da; padding: 10px;
-border-radius: 4px; margin-bottom: 15px;">
-          {{ form.non_file_errors }}
+        <div class="alert alert-danger" style="background: #f8d7da; padding: 10px; border-radius: 4px; margin-bottom: 15px;">
+          {{ form.non_field_errors }}
         </div>
       {% endif %}
 
@@ -31,24 +27,20 @@ border-radius: 4px; margin-bottom: 15px;">
             Your browser does not support the audio element.
           </audio>
           <p style="margin-top: 5px; font-size: 0.9em; color: #666">
-            <a href="{{ audiopost_audio_file.url }}" target="_blank">
-              Download file
-            </a>|
-              Leave blank to keep current file.
+            <a href="{{ audiopost.audio_file.url }}" target="_blank">Download file</a> |
+            Leave the upload field blank to keep the current file.
           </p>
         </div>
       {% endif %}
 
       <div class="action-buttons" style="margin-top: 20px; display: flex; gap: 10px;">
-        <button type="submit" class="btn btn-primart" style="padding: 10px 20px; background:
-#007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">
+        <button type="submit" class="btn btn-primary" style="padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">
           Save Changes
         </button>
-        <a href="{% url 'blog:audio_post_list' %}" class="btn btn-secondary" style="padding:
-10px 20px; background: #6c757d; color: white; text-decoration: none; border-radius: 4px">
+        <a href="{% url 'blog:audio_list' %}" class="btn btn-secondary" style="padding: 10px 20px; background: #6c757d; color: white; text-decoration: none; border-radius: 4px">
           Cancel
         </a>
       </div>
     </form>
   </div>
-{% endif %}
+{% endblock %}

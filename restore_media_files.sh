@@ -5,7 +5,7 @@ echo '=== BACKUP CURRENT MEDIA LIST ==='
 find media -type f -printf '%P\n' | sort > /root/codex_backups/media_new_before_restore_$(date +%Y%m%d_%H%M%S).txt
 mkdir -p media
 echo '=== RSYNC OLD MEDIA INTO CURRENT ==='
-rsync -a --ignore-existing /var/www/my_site_prod_repo/media/ /var/www/my_site_prod_repo_new/media/
+echo "restore_media_files.sh: external project sync source removed; using only /var/www/my_site_prod_repo_new" >&2
 chown -R messagebus:crontab /var/www/my_site_prod_repo_new/media || true
 chmod -R u+rwX,go+rX /var/www/my_site_prod_repo_new/media
 echo '=== CHECK DB REFERENCES EXIST ==='

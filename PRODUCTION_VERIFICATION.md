@@ -45,6 +45,7 @@ docker compose -f docker-compose.prod.yml exec web python manage.py showmigratio
 5. Confirm Django deploy checks:
 
 ```bash
+docker compose -f docker-compose.prod.yml exec web python manage.py check --deploy
 docker compose -f docker-compose.prod.yml exec -T web python manage.py check --deploy
 ```
 

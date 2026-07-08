@@ -164,14 +164,20 @@ class AudioUploadForm(forms.ModelForm):
 
     def clean_audio_file(self):
         """
-        Validate the uploaded audio file for type and size.
+        Validate a newly uploaded audio file.
 
-        Returns:
-            UploadedFile: The validated audio file object.
+        When editing an existing AudioPost, leaving the upload field blank keeps
+        the current file and must not trigger upload validation.
         """
         audio_file = self.cleaned_data.get("audio_file")
         if not audio_file:
             return audio_file
+
+        # Existing FieldFile objects from the model instance have no upload
+        # metadata like content_type. Only validate real newly uploaded files.
+        if not hasattr(audio_file, "content_type"):
+            return audio_file
+
         allowed_types = {
             "audio/mpeg",
             "audio/mp3",

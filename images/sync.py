@@ -5,6 +5,7 @@ from django.conf import settings
 from my_site.media_cleanup import move_media_file_to_trash
 from .models import ImagePost
 
+
 def sync_gallery_media():
     media_root = Path(settings.MEDIA_ROOT)
     posts_root = media_root / "posts"

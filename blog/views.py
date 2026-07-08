@@ -16,7 +16,6 @@ from django.shortcuts import get_object_or_404, redirect, render
 
 from django.urls import reverse_lazy
 
-from django.views.decorators.cache import cache_page
 from django.views.decorators.http import require_POST
 
 from django.views.generic.edit import DeleteView, UpdateView
@@ -32,6 +31,7 @@ from .forms import (
 )
 
 from .models import Post, Comment, AudioPost
+from images.models import ImagePost
 
 def post_share(request, post_id):
     post = get_object_or_404(Post, id=post_id, status=Post.Status.PUBLISHED)
@@ -43,7 +43,6 @@ def post_share(request, post_id):
         form = EmailPostForm()
     return render(request, "blog/post/share.html", {"post": post, "form": form})
 
-@cache_page(120)
 def post_list(request, tag_slug=None):
     post_queryset = Post.published.select_related("author").prefetch_related("tags")
     tag = None
@@ -144,6 +143,15 @@ def post_create(request):
         post.status = Post.Status.PUBLISHED
         post.save()
         form.save_m2m()
+        if post.cover_image:
+            ImagePost.objects.get_or_create(
+                image=post.cover_image.name,
+                defaults={
+                    "title": post.title,
+                    "description": "",
+                    "uploaded_by": request.user,
+                },
+            )
         return redirect(post.get_absolute_url())
     return render(request, "blog/post/create_post.html", {"form": form})
 

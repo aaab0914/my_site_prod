@@ -23,6 +23,7 @@ class NginxConfigFileTests(SimpleTestCase):
 
     def test_client_upload_limit_is_defined(self):
         self.assertIn("client_max_body_size 25m;", self.nginx_text)
+        self.assertIn("client_max_body_size 10m;", self.nginx_text)
 
     def test_static_location_is_configured(self):
         self.assertIn("location /static/", self.nginx_text)

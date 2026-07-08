@@ -14,6 +14,7 @@ from django.urls import reverse
 from images.forms import GalleryUploadForm
 from images.admin import ImageAdmin
 from images.models import ImagePost
+from blog.models import Post
 from images.sync import sync_gallery_media
 
 
@@ -90,6 +91,29 @@ class GalleryUploadTests(TestCase):
 
         self.assertEqual(response.status_code, 302)
         self.assertEqual(ImagePost.objects.count(), 1)
+
+
+    def test_post_create_with_cover_image_creates_matching_gallery_image(self):
+        response = self.client.post(
+            reverse("blog:post_create"),
+            data={
+                "title": "Post With Cover",
+                "body": "Body for cover image sync",
+                "tags": "cover-sync",
+                "cover_image": make_test_image(name="post-cover.png"),
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+        post = Post.objects.get(title="Post With Cover")
+        self.assertTrue(post.cover_image)
+        self.assertTrue(
+            ImagePost.objects.filter(
+                image=post.cover_image.name,
+                uploaded_by=self.user,
+            ).exists(),
+            "Publishing a post with a cover image should add the same file to gallery.",
+        )
 
     def test_gallery_detail_loads(self):
         image = ImagePost.objects.create(

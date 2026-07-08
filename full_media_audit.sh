@@ -11,10 +11,10 @@ print(json.dumps(rows, ensure_ascii=False, indent=2))"
 echo '=== ALL CURRENT MEDIA FILES ==='
 find /var/www/my_site_prod_repo_new/media -type f -printf '%s %p\n' | sort -nr | head -n 300
 echo '=== ALL OLD MEDIA FILES ==='
-for d in /var/www/my_site_prod_repo/media /var/www/my_site_prod/media /var/www/my_site_prod_backup_20260624/media; do
+for d in /var/www/my_site_prod_repo_new/media; do
   [ -d "$d" ] && echo "--- $d" && find "$d" -type f -printf '%s %p\n' | sort -nr | head -n 300
 done
 echo '=== MEDIA BACKUP TAR CONTENTS ==='
-for t in /var/www/my_site_prod/backups/media_*.tar.gz /var/www/my_site_prod_backup_20260624/backups/media_*.tar.gz; do
+for t in /var/www/my_site_prod_repo_new/backups/media_*.tar.gz; do
   [ -f "$t" ] && echo "--- $t" && tar -tzf "$t" | head -n 80
 done

@@ -32,6 +32,7 @@ from django.conf.urls.static import static
 # Used when DEBUG=True to serve uploaded files
 
 from django.conf import settings
+from django.views.generic import TemplateView
 # settings: Django project configuration settings
 # Used to access MEDIA_URL and MEDIA_ROOT
 
@@ -53,6 +54,7 @@ sitemaps = {
 # ========================================
 
 urlpatterns = [
+    path("", TemplateView.as_view(template_name="index.html"), name="site_index"),
     # ===== ADMIN INTERFACE =====
     # Django Admin dashboard for managing models
     # Accessible at: http://localhost:8001/admin/

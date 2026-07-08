@@ -93,6 +93,20 @@
         background: #f4f7fa;
         color: #607080;
     }
+
+    .gallery-detail-linked-post {
+        margin: 16px 0 0;
+        padding: 14px 16px;
+        border-radius: 14px;
+        background: #eef7f5;
+        color: #1f3b35;
+    }
+
+    .gallery-detail-linked-post a {
+        color: #0f766e;
+        font-weight: 700;
+        text-decoration: none;
+    }
 </style>
 
 <section class="gallery-detail">
@@ -116,6 +130,12 @@
             <div class="gallery-detail-meta">By {{ image.uploaded_by.username }} on {{ image.created|date:"Y-m-d H:i" }}</div>
             {% if image.description %}
                 <div class="gallery-detail-description">{{ image.description }}</div>
+            {% endif %}
+            {% if linked_post %}
+                <div class="gallery-detail-linked-post">
+                    Related post:
+                    <a href="{{ linked_post.get_absolute_url }}">{{ linked_post.title }}</a>
+                </div>
             {% endif %}
         </div>
     </article>

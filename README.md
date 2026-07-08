@@ -1,260 +1,285 @@
-# my_site_prod-master
+# My Site - Django Blog Platform
 
-## Overview
+> A modern, production-ready Django platform for blogging, media publishing, account management, and Docker-based deployment.
 
-`my_site_prod-master` is a Docker-based Django content site with:
+## ✨ Features
 
-- blog posts
-- comments
-- audio uploads
-- user profiles and account actions
-- Celery background jobs
-- Redis
-- PostgreSQL
-- Elasticsearch
-- Nginx
-- Prometheus
-- Grafana
-- Flower
+### Blog Management
+- **Post Publishing**: Create, edit, delete, and manage draft or published posts
+- **Rich Text Editor**: Markdown authoring with live preview via `django-markdownx`
+- **Tagging System**: Tag-based filtering and categorization
+- **Search Functionality**: Full-text style search across posts and comments
+- **RSS Feed**: Built-in content syndication
+- **Audio Upload**: Upload and host audio directly on the platform
+- **Comments**: User comment flow with moderation support
 
-The project is designed to run locally with `docker compose` and includes supporting operational scripts, backup scripts, and observability configuration.
+### User Management
+- **User Authentication**: Registration, login, logout, and profile management
+- **Profile Customization**: Bio, location, birth date, and avatar upload
+- **Avatar Rate Limiting**: 3-day cooldown to reduce abuse
+- **Activity Logging**: Track user actions and login history
+- **User Preferences**: Theme and notification settings
+- **Account Management**: Username changes and account deletion
 
-Recent codebase cleanup moved large single-file modules into package directories for better maintenance. Blog and user `views`, `forms`, and `models` now live in package-style layouts, and larger test files were split into focused test modules.
+### Media Management
+- **Image Hosting**: Upload and manage gallery images
+- **Audio Streaming**: Serve audio files from the platform
+- **Automatic Organization**: Date-based media storage layout
 
-## Stack
+### API & Integration
+- **REST API**: API endpoints for posts, comments, and tags
+- **Token Authentication**: Secure token-based access
+- **API Documentation**: Reference available in `API_DOCUMENTATION.md`
+- **Django Admin**: Full backend management interface
 
-- Python 3.12
-- Django 6.0.2
+### DevOps & Monitoring
+- **Docker Deployment**: Compose-based stack with PostgreSQL and Nginx
+- **Automatic Backup**: Scheduled backups with retention
+- **Request Logging**: Audit trail with IP tracking
+- **CI/CD Pipeline**: GitHub Actions workflow support
+- **Unit Tests**: Coverage across models, views, forms, and uploads
+
+## 🚀 Quick Start
+
+### Prerequisites
+
+- Docker and Docker Compose plugin
+- Python 3.12+
 - PostgreSQL 16
-- Redis 7
-- Celery 5.5
-- Flower 2.0
-- Elasticsearch 8.14
-- Nginx 1.25
-- Prometheus
-- Grafana
-- Gunicorn
 
-Key Python packages in use:
+### Installation
 
-- `django-extensions`
-- `django-markdownx`
-- `django-taggit`
-- `djangorestframework`
-- `django-filter`
-- `psycopg`
-- `sentry-sdk`
-- `django-elasticsearch-dsl`
-
-## Project Layout
-
-```text
-my_site_prod-master/
-├── blog/
-├── users/
-├── my_site/
-├── grafana/
-├── backups/
-├── media/
-├── static/
-├── staticfiles/
-├── Shell_Commands/
-├── docker-compose.yml
-├── docker-compose.prod.yml
-├── Dockerfile
-├── nginx.conf
-├── prometheus.yml
-├── manage.py
-└── README.md
+1. **Enter the project directory**
+```bash
+cd my_site_prod-master
 ```
 
-## Services
-
-The main local `docker-compose.yml` starts these services:
-
-- `db` - PostgreSQL
-- `redis` - Redis broker / cache
-- `elasticsearch` - search backend
-- `web` - Django + Gunicorn
-- `celery` - worker
-- `celery-beat` - scheduler
-- `flower` - Celery monitoring UI
-- `prometheus` - metrics scraping
-- `grafana` - dashboards
-- `celery-exporter` - Celery metrics
-- `nginx` - reverse proxy
-
-## Main Features
-
-- blog list and detail pages
-- tag-based content
-- comment system
-- audio upload and listing
-- user registration, login, and profile management
-- Django admin
-- audit logging
-- Celery task processing
-- observability endpoints for Prometheus / Grafana / Flower
-
-## Environment
-
-Copy the example file and adjust values for your environment:
-
+2. **Create your environment file**
 ```bash
 cp .env.example .env
 ```
 
-Important variables:
-
-- `SECRET_KEY`
-- `DEBUG`
-- `ALLOWED_HOSTS`
-- `CSRF_TRUSTED_ORIGINS`
-- `DB_NAME`
-- `DB_USER`
-- `DB_PASSWORD`
-- `DB_HOST`
-- `DB_PORT`
-- `REDIS_URL`
-- `CELERY_BROKER_URL`
-- `CELERY_RESULT_BACKEND`
-- `ELASTICSEARCH_URL`
-
-The project currently expects PostgreSQL to be available through the `db` service and Redis through the `redis` service.
-
-## Local Startup
-
-Start the full stack:
-
+3. **Start the stack**
 ```bash
-docker compose up --build -d
+docker compose up -d
 ```
 
-Check status:
-
-```bash
-docker compose ps
-```
-
-View logs:
-
-```bash
-docker compose logs --tail=100 web
-docker compose logs --tail=100 db
-docker compose logs --tail=100 nginx
-```
-
-## Common Django Operations
-
-Run migrations:
-
+4. **Run migrations**
 ```bash
 docker compose exec web python manage.py migrate
 ```
 
-Collect static files:
-
-```bash
-docker compose exec -T web python manage.py collectstatic --noinput
-```
-
-Create a superuser:
-
+5. **Create a superuser**
 ```bash
 docker compose exec web python manage.py createsuperuser
 ```
 
-Open a Django shell:
+6. **Collect static files**
+```bash
+docker compose exec web python manage.py collectstatic --noinput
+```
+
+7. **Open the application**
+
+| Area | URL |
+| --- | --- |
+| Blog | `http://localhost/blog/` |
+| Admin | `http://localhost/admin/` |
+| API | `http://localhost/blog/api/` |
+
+## 📁 Project Structure
+
+```text
+my_site_prod-master/
+|- blog/              # Blog app: posts, comments, audio
+|- users/             # Authentication and profile management
+|- images/            # Gallery and image hosting
+|- my_site/           # Settings, root URLs, metrics, middleware
+|- media/             # User-uploaded files
+|- staticfiles/       # Collected static assets
+|- logs/              # Application and runtime logs
+|- backups/           # Database backups
+|- docker-compose.yml
+|- docker-compose.prod.yml
+|- Dockerfile
+|- nginx.conf
+|- requirements.txt
+`- manage.py
+```
+
+## 🔧 Technology Stack
+
+| Layer | Tools |
+| --- | --- |
+| Backend | Django 6.0.2, Django REST Framework, Gunicorn |
+| Data | PostgreSQL 16 |
+| Frontend | Django Templates, HTML, CSS, JavaScript |
+| Media | Pillow, django-markdownx |
+| DevOps | Docker, Docker Compose, GitHub Actions |
+
+### Supporting Libraries
+
+- `django-taggit`
+- `django-markdownx`
+- `Pillow`
+- `python-decouple`
+
+## 📊 API Documentation
+
+See [API_DOCUMENTATION.md](./API_DOCUMENTATION.md) for the full API reference.
+
+### Common Endpoints
+
+```text
+GET    /blog/api/posts/           List all posts
+POST   /blog/api/posts/           Create a post
+GET    /blog/api/posts/{id}/      Retrieve one post
+PUT    /blog/api/posts/{id}/      Update one post
+DELETE /blog/api/posts/{id}/      Delete one post
+
+GET    /blog/api/comments/        List comments
+POST   /blog/api/comments/        Create a comment
+GET    /blog/api/tags/            List tags
+```
+
+## 🧪 Testing
+
+Run the full test suite:
 
 ```bash
-docker compose exec web python manage.py shell
+docker compose exec web python manage.py test
 ```
 
-## Main Local Endpoints
-
-- `http://localhost/`
-- `http://localhost/blog/`
-- `http://localhost/users/login/`
-- `http://localhost/users/register/`
-- `http://localhost:3000/` - Grafana
-- `http://localhost:5555/` - Flower
-- `http://localhost:9090/` - Prometheus
-- `http://localhost:9200/` - Elasticsearch
-- `http://localhost:9540/metrics` - celery-exporter
-
-## Backup And Restore
-
-Relevant files:
-
-- `backup_db.sh`
-- `backup_db.ps1`
-- `backup_loop.sh`
-- `restore_test.ps1`
-- `backups/`
-
-Manual backup examples:
+Run tests by app:
 
 ```bash
-bash ./backup_db.sh
+docker compose exec web python manage.py test blog
+docker compose exec web python manage.py test users
+docker compose exec web python manage.py test images
 ```
 
-```powershell
-& ".\backup_db.ps1"
-```
-
-Restore a SQL dump:
+Verbose output:
 
 ```bash
-docker compose exec -T db psql -U "$DB_USER" -d "$DB_NAME" < backups/db/your_backup.sql
+docker compose exec web python manage.py test --verbosity=2
 ```
 
-## Operational Notes
+<details>
+<summary>Coverage Areas</summary>
 
-- The local stack uses Docker named volumes for PostgreSQL.
-- Do not mount raw PostgreSQL data directories from Windows paths into `/var/lib/postgresql/data`.
-- `celery-beat` should run with `celery -A my_site beat -l info`.
-- If `web` is healthy but routes fail, inspect `web`, `nginx`, and `db` logs together.
+- Blog models and views
+- User authentication and profile flows
+- API endpoints
+- Image and audio uploads
 
-## Useful Files
+</details>
 
-- [DOCKER_GUIDE.md](./DOCKER_GUIDE.md)
-- [PROJECT_OPERATIONS_GUIDE.md](./PROJECT_OPERATIONS_GUIDE.md)
-- [PRODUCTION_VERIFICATION.md](./PRODUCTION_VERIFICATION.md)
-- [OBSERVABILITY_RUNBOOK.md](./OBSERVABILITY_RUNBOOK.md)
-- [PSQL_GUIDE.md](./PSQL_GUIDE.md)
-- [TEST_INDEX.md](./TEST_INDEX.md)
-- [SOURCE_STRUCTURE.md](./SOURCE_STRUCTURE.md)
-- [RUNTIME_ARTIFACTS.md](./RUNTIME_ARTIFACTS.md)
+## 🔐 Security Features
 
-## Command Reference
+- CSRF protection enabled
+- ORM-based SQL injection protection
+- Template escaping for XSS mitigation
+- Secure password hashing
+- HTTPS-ready deployment settings
+- Authentication required for sensitive actions
+- Validation on forms and uploads
+- Login rate limiting after repeated failures
+- Upload size and file-type restrictions for avatars, cover images, and audio
 
-Additional command cheat sheets are available in the project root:
+## 📈 Monitoring & Logs
 
-- [REDIS_COMMANDS.md](./REDIS_COMMANDS.md)
-- [NGINX_COMMANDS.md](./NGINX_COMMANDS.md)
-- [CELERY_COMMANDS.md](./CELERY_COMMANDS.md)
-- [PSQL_COMMANDS.md](./PSQL_COMMANDS.md)
+### Log Files
 
-Shell-level Django examples are also available under:
+- `logs/YYYY-MM/django-YYYY-MM-DD.log`
+- `logs/YYYY-MM/error-YYYY-MM-DD.log`
+- `logs/YYYY-MM/gunicorn-access-YYYY-MM-DD.log`
+- `logs/YYYY-MM/gunicorn-error-YYYY-MM-DD.log`
+- `logs/backup.log`
 
-- `Shell_Commands/`
+Legacy flat files may still exist, but active logging targets the dated files under `logs/YYYY-MM/`.
 
-## Production
+### Audit Log
 
-For production-style deployment, use:
+- Request tracking in Django Admin
+- User action history
+- IP address logging
 
+### Database Backups
+
+- Stored in `backups/db/`
+- Automatic backup schedule with retention
+- Manual Linux backup: `./backup_db.sh`
+- Manual PowerShell backup: `.\backup_db.ps1`
+- Restore drill: `.\restore_test.ps1`
+
+## 🚀 Deployment
+
+### Development
+
+```bash
+docker compose up
+```
+
+### Production
+
+1. Set values in `.env`
+2. Enable HTTPS in `nginx.conf`
+3. Set `DEBUG=False`
+4. Configure `ALLOWED_HOSTS`
+5. Configure `CSRF_TRUSTED_ORIGINS`
+6. Install SSL certificates
+7. Start services with:
 ```bash
 docker compose -f docker-compose.prod.yml up --build -d
 ```
+8. Run deploy checks:
+```bash
+bash ./deploy-prod.sh
+```
 
-Validate production environment values before deployment:
+## 📝 Configuration
+
+### Environment Variables
+
+Use `.env.example` as the committed template.
+
+```env
+SECRET_KEY=your-django-secret-key
+DEBUG=False
+ALLOWED_HOSTS=yourdomain.com,www.yourdomain.com
+CSRF_TRUSTED_ORIGINS=https://yourdomain.com
+
+DB_NAME=my_site_db
+DB_USER=my_site_user
+DB_PASSWORD=your-strong-password
+DB_HOST=db
+DB_PORT=5432
+
+SECURE_SSL_REDIRECT=True
+SESSION_COOKIE_SECURE=True
+CSRF_COOKIE_SECURE=True
+CSRF_COOKIE_HTTPONLY=True
+SESSION_COOKIE_HTTPONLY=True
+SECURE_HSTS_SECONDS=31536000
+```
+
+Do not commit the real `.env`. Commit `.env.example` only.
+
+Validate production values before deployment:
 
 ```bash
 python validate_prod_env.py
 ```
 
-## Current Caveats
+## 📚 Related Docs
 
-- Security-related Django warnings may still appear if local `.env` values are development-oriented.
-- Elasticsearch, Prometheus, Grafana, and Flower are enabled in the main stack, so the full project is heavier than a minimal Django deployment.
-- This repository contains both application code and operational tooling; treat it as an app-plus-infra workspace rather than a minimal Django sample.
+- [DOCKER_GUIDE.md](./DOCKER_GUIDE.md)
+- [PROJECT_OPERATIONS_GUIDE.md](./PROJECT_OPERATIONS_GUIDE.md)
+- [PRODUCTION_VERIFICATION.md](./PRODUCTION_VERIFICATION.md)
+- [OBSERVABILITY_RUNBOOK.md](./OBSERVABILITY_RUNBOOK.md)
+- [TEST_INDEX.md](./TEST_INDEX.md)
+
+## Current Notes
+
+- The production stack in this repository includes more than a minimal blog because it also carries observability and operational tooling.
+- Some security warnings may still appear if local `.env` values are intentionally development-oriented.

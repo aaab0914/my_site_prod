@@ -3,36 +3,76 @@
 {% block title %}Edit Profile{% endblock %}
 
 {% block content %}
-<div class="profile-edit-container" style="max-width: 500px; margin: 40px auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px; background: #f9f9f9;">
-    <h2 style="text-align: center; margin-bottom: 20px;">Edit Profile</h2>
+<style>
+    .account-shell { max-width: 1040px; margin: 0 auto 36px; }
+    .account-hero {
+        margin-bottom: 24px; padding: 30px; border-radius: 28px;
+        background: radial-gradient(circle at top right, rgba(255,255,255,.24), transparent 28%), linear-gradient(135deg, #17263d, #0f766e 58%, #d8b36a 155%);
+        color: #fff; box-shadow: 0 24px 54px rgba(15,23,42,.2);
+    }
+    .account-hero h1 { margin: 0 0 10px; border: 0; font-size: 42px; font-weight: 800; letter-spacing: -.03em; }
+    .account-hero p { margin: 0; max-width: 720px; color: rgba(255,255,255,.92); line-height: 1.7; font-size: 16px; }
+    .account-layout { display: grid; grid-template-columns: minmax(0,1.45fr) minmax(280px,.85fr); gap: 22px; }
+    .account-panel { padding: 24px; border-radius: 22px; border: 1px solid #d7e1ea; background: #fff; box-shadow: 0 16px 36px rgba(15,23,42,.08); }
+    .account-panel h2,.account-panel h3 { margin: 0 0 14px; color: #16283a; }
+    .account-form { display: grid; gap: 16px; }
+    .account-form p { margin: 0; }
+    .account-form label { display: block; float: none !important; margin-bottom: 8px; font-weight: 700; color: #173042; }
+    .account-form input,.account-form textarea,.account-form select { width: 100%; display: block; float: none !important; margin: 0; padding: 13px 15px; border: 1px solid #c8d5df; border-radius: 15px; background: #f7fafc; font-size: 14px; box-sizing: border-box; }
+    .account-form input[type="file"] { padding: 14px 15px; }
+    .account-form textarea { min-height: 130px; resize: vertical; }
+    .account-status { padding: 14px 16px; border-radius: 16px; font-size: 14px; line-height: 1.6; }
+    .account-status.ok { background: #ecfdf3; color: #166534; border: 1px solid #bbf7d0; }
+    .account-status.wait { background: #fff7ed; color: #9a3412; border: 1px solid #fed7aa; }
+    .account-actions { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 6px; }
+    .account-button,.account-link { display: inline-flex; align-items: center; justify-content: center; min-width: 148px; width: auto !important; float: none !important; border: 0; border-radius: 999px; padding: 12px 20px; font-size: 14px; font-weight: 700; text-decoration: none; line-height: 1.2; white-space: nowrap; cursor: pointer; }
+    .account-button { background: linear-gradient(135deg, #0f766e, #14532d); color: #fff; }
+    .account-link { background: #e9eef3; color: #21384b; }
+    .account-note { padding: 18px; border-radius: 18px; background: #f8fafc; border: 1px solid #dbe5ed; }
+    .account-note p,.account-note li { color: #536576; line-height: 1.6; }
+    .account-note ul { margin: 0; padding-left: 18px; }
+    @media screen and (max-width: 768px) {
+        .account-hero { padding: 24px 20px; }
+        .account-hero h1 { font-size: 32px; }
+        .account-layout { grid-template-columns: 1fr; }
+        .account-panel { padding: 18px; }
+    }
+</style>
 
-    {% if messages %}
-        <ul style="list-style: none; padding: 0; margin: 10px 0;">
-            {% for message in messages %}
-                <li style="padding: 10px; margin: 5px 0; border-radius: 4px;
-                           background: {% if message.tags == 'error' %}#ffcccc{% else %}#d4edda{% endif %};
-                           color: {% if message.tags == 'error' %}#cc0000{% else %}#155724{% endif %};">
-                    {{ message }}
-                </li>
-            {% endfor %}
-        </ul>
-    {% endif %}
+<section class="account-shell">
+    <div class="account-hero">
+        <h1>Edit Profile</h1>
+        <p>Update your public profile, avatar, and personal details from a page that matches the rest of the site’s newer interface.</p>
+    </div>
 
-    <form method="post" enctype="multipart/form-data">
-        {% csrf_token %}
-        {{ form.as_p }}
+    <div class="account-layout">
+        <section class="account-panel">
+            <h2>Profile Settings</h2>
+            <form method="post" enctype="multipart/form-data" class="account-form">
+                {% csrf_token %}
+                {{ form.as_p }}
 
-        {% if remaining_days > 0 %}
-            <p style="color: #888; font-size: 0.9em; margin-top: 10px;">
-                ⏱️ You can change your avatar in <strong>{{ remaining_days }} day(s)</strong>.
-            </p>
-        {% else %}
-            <p style="color: #28a745; font-size: 0.9em; margin-top: 10px;">
-                ✅ You can change your avatar now.
-            </p>
-        {% endif %}
+                {% if remaining_days > 0 %}
+                    <div class="account-status wait">You can change your avatar again in <strong>{{ remaining_days }} day(s)</strong>.</div>
+                {% else %}
+                    <div class="account-status ok">Your avatar can be changed right now.</div>
+                {% endif %}
 
-        <button type="submit" style="width: 100%; padding: 10px; background: #00abff; color: white; border: none; border-radius: 4px; font-size: 16px; cursor: pointer;">Save Changes</button>
-    </form>
-</div>
+                <div class="account-actions">
+                    <button type="submit" class="account-button">Save Changes</button>
+                    <a href="{% url 'users:profile' %}" class="account-link">Back to Profile</a>
+                </div>
+            </form>
+        </section>
+
+        <aside class="account-panel account-note">
+            <h3>Profile Notes</h3>
+            <ul>
+                <li>Use a clean avatar image for better profile presentation.</li>
+                <li>Keep your bio short and readable.</li>
+                <li>Location and profile details help visitors identify your content faster.</li>
+            </ul>
+        </aside>
+    </div>
+</section>
 {% endblock %}

@@ -3,35 +3,47 @@
 {% block title %}Change Username{% endblock %}
 
 {% block content %}
-<div style="max-width: 500px; margin: 40px auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px; background: #f9f9f9;">
-    <h2 style="text-align: center; margin-bottom: 20px;">Change Username</h2>
+<style>
+    .account-shell { max-width: 960px; margin: 0 auto 36px; }
+    .account-hero { margin-bottom: 24px; padding: 30px; border-radius: 28px; background: radial-gradient(circle at top right, rgba(255,255,255,.24), transparent 28%), linear-gradient(135deg, #1b2941, #236b83 58%, #d9b26a 155%); color: #fff; box-shadow: 0 24px 54px rgba(15,23,42,.2); }
+    .account-hero h1 { margin: 0 0 10px; border: 0; font-size: 42px; font-weight: 800; letter-spacing: -.03em; }
+    .account-hero p { margin: 0; max-width: 700px; color: rgba(255,255,255,.92); line-height: 1.7; font-size: 16px; }
+    .account-panel { padding: 24px; border-radius: 22px; border: 1px solid #d7e1ea; background: #fff; box-shadow: 0 16px 36px rgba(15,23,42,.08); }
+    .account-panel h2 { margin: 0 0 14px; color: #16283a; }
+    .account-form { display: grid; gap: 16px; }
+    .account-form p { margin: 0; }
+    .account-form label { display: block; float: none !important; margin-bottom: 8px; font-weight: 700; color: #173042; }
+    .account-form input { width: 100%; display: block; float: none !important; margin: 0; padding: 13px 15px; border: 1px solid #c8d5df; border-radius: 15px; background: #f7fafc; font-size: 14px; box-sizing: border-box; }
+    .account-error { color: #b42318; margin-top: 8px; }
+    .account-actions { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 6px; }
+    .account-button,.account-link { display: inline-flex; align-items: center; justify-content: center; min-width: 148px; width: auto !important; float: none !important; border: 0; border-radius: 999px; padding: 12px 20px; font-size: 14px; font-weight: 700; text-decoration: none; line-height: 1.2; white-space: nowrap; cursor: pointer; }
+    .account-button { background: linear-gradient(135deg, #0f766e, #14532d); color: #fff; }
+    .account-link { background: #e9eef3; color: #21384b; }
+    @media screen and (max-width: 768px) { .account-hero { padding: 24px 20px; } .account-hero h1 { font-size: 32px; } .account-panel { padding: 18px; } }
+</style>
 
-    {% if messages %}
-        <ul style="list-style: none; padding: 0; margin: 10px 0;">
-            {% for message in messages %}
-                <li style="padding: 10px; margin: 5px 0; border-radius: 4px;
-                           background: {% if message.tags == 'error' %}#ffcccc{% else %}#d4edda{% endif %};
-                           color: {% if message.tags == 'error' %}#cc0000{% else %}#155724{% endif %};">
-                    {{ message }}
-                </li>
-            {% endfor %}
-        </ul>
-    {% endif %}
+<section class="account-shell">
+    <div class="account-hero">
+        <h1>Change Username</h1>
+        <p>Update the public name shown across your posts, comments, and profile while keeping the rest of your account intact.</p>
+    </div>
 
-    <form method="post">
-        {% csrf_token %}
-        <p>
-            <label for="id_username">New Username:</label>
-            {{ form.username }}
-            {% if form.username.errors %}
-                <div style="color: #cc0033;">{{ form.username.errors }}</div>
-            {% endif %}
-        </p>
-        <button type="submit" style="width: 100%; padding: 10px; background: #00abff; color: white; border: none; border-radius: 4px; font-size: 16px; cursor: pointer;">Update Username</button>
-    </form>
-
-    <p style="text-align: center; margin-top: 15px;">
-        <a href="{% url 'users:profile' %}">Cancel and return to profile</a>
-    </p>
-</div>
+    <section class="account-panel">
+        <h2>Username Update</h2>
+        <form method="post" class="account-form">
+            {% csrf_token %}
+            <p>
+                <label for="id_username">New Username</label>
+                {{ form.username }}
+                {% if form.username.errors %}
+                    <div class="account-error">{{ form.username.errors }}</div>
+                {% endif %}
+            </p>
+            <div class="account-actions">
+                <button type="submit" class="account-button">Update Username</button>
+                <a href="{% url 'users:profile' %}" class="account-link">Back to Profile</a>
+            </div>
+        </form>
+    </section>
+</section>
 {% endblock %}

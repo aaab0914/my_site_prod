@@ -24,7 +24,7 @@ if [ "$#" -gt 0 ]; then
 fi
 
 exec gunicorn \
-  --workers 3 \
+  --workers 2 \
   --bind 0.0.0.0:8000 \
   --access-logfile "/code/logs/${MONTH_DIR}/gunicorn-access-${DAY}.log" \
   --error-logfile "/code/logs/${MONTH_DIR}/gunicorn-error-${DAY}.log" \

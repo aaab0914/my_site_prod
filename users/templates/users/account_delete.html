@@ -1,38 +1,51 @@
-{% extends 'blog/base.html' %}
+{% extends "blog/base.html" %}
 
-{% block title %}
-Delete Account
-{% endblock title %}
+{% block title %}Delete Account{% endblock %}
 
 {% block content %}
-  <h2>
-    Delete Account
-  </h2>
+<style>
+    .danger-shell { max-width: 900px; margin: 0 auto 36px; }
+    .danger-hero { margin-bottom: 24px; padding: 30px; border-radius: 28px; background: radial-gradient(circle at top right, rgba(255,255,255,.18), transparent 28%), linear-gradient(135deg, #3b1414, #9f1239 58%, #f59e0b 170%); color: #fff; box-shadow: 0 24px 54px rgba(15,23,42,.22); }
+    .danger-hero h1 { margin: 0 0 10px; border: 0; font-size: 42px; font-weight: 800; letter-spacing: -.03em; }
+    .danger-hero p { margin: 0; max-width: 720px; color: rgba(255,255,255,.92); line-height: 1.7; font-size: 16px; }
+    .danger-panel { padding: 24px; border-radius: 22px; border: 1px solid #fecaca; background: #fff; box-shadow: 0 16px 36px rgba(15,23,42,.08); }
+    .danger-panel h2 { margin: 0 0 14px; color: #7f1d1d; }
+    .danger-text { color: #4b5563; line-height: 1.7; margin-bottom: 18px; }
+    .danger-confirm { padding: 18px; border-radius: 18px; background: #fff7ed; border: 1px solid #fed7aa; margin-bottom: 18px; }
+    .danger-confirm label { display: flex; gap: 10px; align-items: flex-start; float: none !important; color: #7c2d12; font-weight: 700; }
+    .danger-confirm input { float: none !important; margin-top: 4px; }
+    .danger-actions { display: flex; gap: 12px; flex-wrap: wrap; }
+    .danger-button,.safe-link { display: inline-flex; align-items: center; justify-content: center; min-width: 178px; width: auto !important; float: none !important; border: 0; border-radius: 999px; padding: 12px 20px; font-size: 14px; font-weight: 700; text-decoration: none; line-height: 1.2; white-space: nowrap; cursor: pointer; }
+    .danger-button { background: linear-gradient(135deg, #b91c1c, #7f1d1d); color: #fff; }
+    .safe-link { background: #e9eef3; color: #21384b; }
+    @media screen and (max-width: 768px) { .danger-hero { padding: 24px 20px; } .danger-hero h1 { font-size: 32px; } .danger-panel { padding: 18px; } }
+</style>
 
-  <p>
-    Warning: This action cannot be undone!
-  </p>
-  <p>
-    You are about to permanently delete Your Account. All Your Post, Comment,
-    and Personal Data will be removed form the database.
-  </p>
+<section class="danger-shell">
+    <div class="danger-hero">
+        <h1>Delete Account</h1>
+        <p>This action is permanent. Your account, personal data, posts, and comments will be removed and cannot be recovered later.</p>
+    </div>
 
-  <form method="post">
-    {% csrf_token %}
-    <p>
-      <label>
-        <input type="checkbox" name="confirm_delete" required>
-        I understand that this action cannot be undone
-      </label>
-    </p>
-    <button type="submit">
-      Permanently Delete My Account
-    </button>
-  </form>
+    <section class="danger-panel">
+        <h2>Final Confirmation</h2>
+        <div class="danger-text">
+            Use this only if you are certain you want to remove your account completely from the site.
+        </div>
 
-  <p>
-    <a href="{% url 'blog:all_posts_list' %}">
-      Cancel and return to Home
-    </a>
-  </p>
-{% endblock content %}
+        <form method="post">
+            {% csrf_token %}
+            <div class="danger-confirm">
+                <label>
+                    <input type="checkbox" name="confirm_delete" required>
+                    I understand that this action cannot be undone.
+                </label>
+            </div>
+            <div class="danger-actions">
+                <button type="submit" class="danger-button">Permanently Delete My Account</button>
+                <a href="{% url 'users:profile' %}" class="safe-link">Cancel and Return</a>
+            </div>
+        </form>
+    </section>
+</section>
+{% endblock %}

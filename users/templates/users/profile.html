@@ -4,97 +4,138 @@
 {% block title %}{{ user.username }}'s Profile{% endblock %}
 
 {% block content %}
-<div style="max-width: 600px; margin: 0 auto; padding: 20px;">
-    <h1>{{ user.username }}'s Profile</h1>
+<style>
+    .profile-shell { max-width: 1100px; margin: 0 auto 36px; }
+    .profile-hero {
+        margin-bottom: 24px;
+        padding: 30px;
+        border-radius: 28px;
+        background: radial-gradient(circle at top right, rgba(255,255,255,.24), transparent 28%), linear-gradient(135deg, #18263f, #1a726d 58%, #d8b46b 155%);
+        color: #fff;
+        box-shadow: 0 24px 54px rgba(15,23,42,.2);
+    }
+    .profile-hero h1 { margin: 0 0 10px; border: 0; font-size: 42px; font-weight: 800; letter-spacing: -.03em; }
+    .profile-hero p { margin: 0; max-width: 760px; color: rgba(255,255,255,.92); line-height: 1.7; font-size: 16px; }
+    .profile-grid { display: grid; grid-template-columns: minmax(0,1.2fr) minmax(300px,.8fr); gap: 22px; }
+    .profile-panel { padding: 24px; border-radius: 22px; border: 1px solid #d7e1ea; background: #fff; box-shadow: 0 16px 36px rgba(15,23,42,.08); }
+    .profile-panel h2, .profile-panel h3 { margin: 0 0 14px; color: #16283a; }
+    .profile-head { display: grid; grid-template-columns: 120px minmax(0,1fr); gap: 20px; align-items: center; margin-bottom: 24px; }
+    .profile-avatar, .profile-avatar-empty {
+        width: 120px; height: 120px; border-radius: 50%; overflow: hidden;
+        display: flex; align-items: center; justify-content: center;
+        background: #eef4f8; border: 1px solid #d6e0e8;
+    }
+    .profile-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .profile-avatar-empty span { font-size: 42px; color: #95a4b1; font-weight: 700; }
+    .profile-meta { display: grid; gap: 8px; color: #4f6577; line-height: 1.6; }
+    .profile-meta strong { color: #173042; }
+    .profile-actions { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 18px; }
+    .profile-button, .profile-link {
+        display: inline-flex; align-items: center; justify-content: center;
+        min-width: 148px; border-radius: 999px; padding: 12px 20px;
+        font-size: 14px; font-weight: 700; line-height: 1.2; text-decoration: none;
+    }
+    .profile-button { background: linear-gradient(135deg, #0f766e, #14532d); color: #fff; }
+    .profile-link { background: #e9eef3; color: #21384b; }
+    .profile-list { margin: 0; padding: 0; list-style: none; display: grid; gap: 12px; }
+    .profile-list li { padding: 14px 16px; border-radius: 16px; background: #f8fafc; border: 1px solid #dbe5ed; color: #526677; line-height: 1.65; }
+    .profile-list a { color: #163147; text-decoration: none; font-weight: 700; }
+    .profile-list a:hover { text-decoration: underline; }
+    .profile-empty { color: #6b7280; line-height: 1.7; }
+    @media screen and (max-width: 768px) {
+        .profile-hero { padding: 24px 20px; }
+        .profile-hero h1 { font-size: 32px; }
+        .profile-grid { grid-template-columns: 1fr; }
+        .profile-panel { padding: 18px; }
+        .profile-head { grid-template-columns: 1fr; }
+    }
+</style>
 
-    <div style="display: flex; align-items: center; margin-bottom: 20px;">
-        {% if user.profile and user.profile.avatar %}
-            <img src="{{ user.profile.avatar.url }}" alt="{{ user.username }}'s avatar"
-                 style="width: 100px; height: 100px; border-radius: 50%; object-fit: cover; margin-right: 20px;">
-        {% else %}
-            <div style="width: 100px; height: 100px; border-radius: 50%; background: #e0e0e0; display: flex; align-items: center; justify-content: center; margin-right: 20px;">
-                <span style="font-size: 36px; color: #999;">?</span>
+<section class="profile-shell">
+    <div class="profile-hero">
+        <h1>{{ user.username }}'s Profile</h1>
+        <p>Review published work, comment activity, and account details from a cleaner profile layout that matches the rest of the updated site.</p>
+    </div>
+
+    <div class="profile-grid">
+        <section class="profile-panel">
+            <div class="profile-head">
+                {% if user.profile and user.profile.avatar %}
+                    <div class="profile-avatar">
+                        <img src="{{ user.profile.avatar.url }}" alt="{{ user.username }}'s avatar">
+                    </div>
+                {% else %}
+                    <div class="profile-avatar-empty">
+                        <span>{{ user.username|first|upper }}</span>
+                    </div>
+                {% endif %}
+
+                <div>
+                    <div class="profile-meta">
+                        <div><strong>Username:</strong> {{ user.username }}</div>
+                        <div><strong>Email:</strong> {{ user.email }}</div>
+                        <div><strong>Joined:</strong> {{ user.date_joined|date:"F j, Y" }}</div>
+                        <div><strong>Bio:</strong> {{ user.profile.bio|default:"No bio yet." }}</div>
+                        <div><strong>Location:</strong> {{ user.profile.location|default:"Not specified" }}</div>
+                    </div>
+
+                    <div class="profile-actions">
+                        <a href="{% url 'blog:user_feed' user.username %}" class="profile-link">RSS Feed</a>
+                        {% if user == request.user %}
+                            <a href="{% url 'users:profile_edit' %}" class="profile-button">Edit Profile</a>
+                            <a href="{% url 'users:username_change' %}" class="profile-link">Change Username</a>
+                        {% endif %}
+                    </div>
+                </div>
             </div>
-        {% endif %}
 
-        <div>
-            <p><strong>Username:</strong> {{ user.username }}</p>
-            <p><strong>Email:</strong> {{ user.email }}</p>
-            <p><strong>Joined:</strong> {{ user.date_joined|date:"F j, Y" }}</p>
-            <p><strong>Bio:</strong> {{ user.profile.bio|default:"No bio yet." }}</p>
-            <p><strong>Location:</strong> {{ user.profile.location|default:"Not specified" }}</p>
-        </div>
-    </div>
-
-    <h2>
-        {% if user == request.user %}
-            My Posts
-        {% else %}
-            {{ user.username }}'s Posts
-        {% endif %}
-    </h2>
-
-    {% if posts %}
-        <ul>
-            {% for post in posts %}
-                <li>
-                    <a href="{{ post.get_absolute_url }}">{{ post.title }}</a>
-                    <span style="color: #888; font-size: 0.9em;">({{ post.publish|date:"F j, Y" }})</span>
-                </li>
-            {% endfor %}
-        </ul>
-    {% else %}
-        <p style="color: #888;">
-            {% if user == request.user %}
-                You haven't written any posts yet.
+            <h2>
+                {% if user == request.user %}My Posts{% else %}{{ user.username }}'s Posts{% endif %}
+            </h2>
+            {% if posts %}
+                <ul class="profile-list">
+                    {% for post in posts %}
+                        <li>
+                            <a href="{{ post.get_absolute_url }}">{{ post.title }}</a>
+                            <div>{{ post.publish|date:"F j, Y" }}</div>
+                        </li>
+                    {% endfor %}
+                </ul>
             {% else %}
-                {{ user.username }} hasn't written any posts yet.
+                <p class="profile-empty">
+                    {% if user == request.user %}
+                        You have not written any posts yet.
+                    {% else %}
+                        {{ user.username }} has not written any posts yet.
+                    {% endif %}
+                </p>
             {% endif %}
-        </p>
-    {% endif %}
+        </section>
 
-    <h2>
-        {% if user == request.user %}
-            My Comments
-        {% else %}
-            {{ user.username }}'s Comments
-        {% endif %}
-    </h2>
-
-    {% if comments %}
-        <ul>
-            {% for comment in comments %}
-                <li>
-                    <strong>On:</strong> <a href="{{ comment.post.get_absolute_url }}">{{ comment.post.title }}</a>
-                    <br>
-                    <span style="color: #555;">{{ comment.body|truncatewords:20 }}</span>
-                    <span style="color: #888; font-size: 0.9em;">({{ comment.created|date:"F j, Y" }})</span>
-                </li>
-            {% endfor %}
-        </ul>
-    {% else %}
-        <p style="color: #888;">
-            {% if user == request.user %}
-                You haven't written any comments yet.
+        <aside class="profile-panel">
+            <h3>
+                {% if user == request.user %}My Comments{% else %}{{ user.username }}'s Comments{% endif %}
+            </h3>
+            {% if comments %}
+                <ul class="profile-list">
+                    {% for comment in comments %}
+                        <li>
+                            <div><strong>On:</strong> <a href="{{ comment.post.get_absolute_url }}">{{ comment.post.title }}</a></div>
+                            <div>{{ comment.body|truncatewords:20 }}</div>
+                            <div>{{ comment.created|date:"F j, Y" }}</div>
+                        </li>
+                    {% endfor %}
+                </ul>
             {% else %}
-                {{ user.username }} hasn't written any comments yet.
+                <p class="profile-empty">
+                    {% if user == request.user %}
+                        You have not written any comments yet.
+                    {% else %}
+                        {{ user.username }} has not written any comments yet.
+                    {% endif %}
+                </p>
             {% endif %}
-        </p>
-    {% endif %}
-
-    <!-- RSS 订阅按钮 -->
-    <div style="margin-top: 20px;">
-        <a href="{% url 'blog:user_feed' user.username %}" style="display: inline-block; padding: 8px 16px; background: #00abff; color: white; text-decoration: none; border-radius: 4px;">
-            📡 RSS Feed
-        </a>
+        </aside>
     </div>
-
-    <!-- 只有本人才能看到编辑按钮 -->
-    {% if user == request.user %}
-        <div style="margin-top: 10px;">
-            <a href="{% url 'users:profile_edit' %}" style="background: #00abff; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px; margin-right: 10px;">Edit Profile</a>
-            <a href="{% url 'users:username_change' %}" style="background: #00abff; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px;">Change Username</a>
-        </div>
-    {% endif %}
-</div>
+</section>
 {% endblock %}

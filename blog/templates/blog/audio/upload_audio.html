@@ -1,12 +1,349 @@
-{% extends 'blog/base.html' %}
+{% extends "blog/base.html" %}
+
+{% block title %}Upload Audio{% endblock %}
 
 {% block content %}
-<div class="container mt-5">
-  <h2>upload mp3 file</h2>
-  <form method="post" enctype="multipart/form-data">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit" class="btn vtn-primart">upload</button>
-  </form>
-</div>
+<style>
+    .audio-upload-shell {
+        max-width: 1040px;
+        margin: 0 auto 36px;
+    }
+
+    .audio-upload-hero {
+        position: relative;
+        overflow: hidden;
+        margin-bottom: 24px;
+        padding: 30px;
+        border-radius: 28px;
+        background:
+            radial-gradient(circle at top right, rgba(255, 255, 255, 0.26), transparent 28%),
+            linear-gradient(135deg, #1f2a44, #0f766e 58%, #f2c46d 150%);
+        color: #fff;
+        box-shadow: 0 24px 54px rgba(15, 23, 42, 0.22);
+    }
+
+    .audio-upload-hero h1 {
+        margin: 0 0 10px;
+        border: 0;
+        font-size: 42px;
+        font-weight: 800;
+        letter-spacing: -0.03em;
+    }
+
+    .audio-upload-hero p {
+        max-width: 700px;
+        margin: 0;
+        color: rgba(255, 255, 255, 0.92);
+        line-height: 1.7;
+        font-size: 16px;
+    }
+
+    .audio-upload-stats {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-top: 18px;
+    }
+
+    .audio-upload-pill {
+        display: inline-flex;
+        align-items: center;
+        padding: 10px 14px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.16);
+        backdrop-filter: blur(8px);
+        font-size: 13px;
+        font-weight: 700;
+    }
+
+    .audio-upload-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1.5fr) minmax(280px, 0.9fr);
+        gap: 22px;
+    }
+
+    .audio-upload-panel {
+        padding: 24px;
+        border-radius: 22px;
+        border: 1px solid #d7e1ea;
+        background: #fff;
+        box-shadow: 0 16px 36px rgba(15, 23, 42, 0.08);
+    }
+
+    .audio-upload-panel h2,
+    .audio-upload-panel h3 {
+        margin: 0 0 14px;
+        color: #16283a;
+    }
+
+    .audio-upload-field {
+        margin-bottom: 18px;
+        clear: both;
+    }
+
+    .audio-upload-field label {
+        display: block;
+        float: none !important;
+        clear: both;
+        margin-bottom: 8px;
+        font-weight: 700;
+        color: #173042;
+    }
+
+    .audio-upload-field input,
+    .audio-upload-field textarea {
+        width: 100%;
+        display: block;
+        float: none !important;
+        margin: 0;
+        padding: 13px 15px;
+        border: 1px solid #c8d5df;
+        border-radius: 15px;
+        background: #f7fafc;
+        font-size: 14px;
+        box-sizing: border-box;
+    }
+
+    .audio-upload-field input[type="file"] {
+        padding: 14px 15px;
+    }
+
+    .audio-upload-field textarea {
+        min-height: 130px;
+        resize: vertical;
+    }
+
+    .audio-upload-help {
+        display: block;
+        clear: both;
+        margin-top: 8px;
+        color: #627486;
+        font-size: 13px;
+        line-height: 1.6;
+    }
+
+    .audio-upload-errors {
+        margin-bottom: 18px;
+        padding: 14px 16px;
+        border-radius: 16px;
+        background: #fff1f1;
+        color: #ab1f1f;
+    }
+
+    .audio-upload-error {
+        display: block;
+        clear: both;
+        margin-top: 8px;
+        color: #b42318;
+        font-size: 14px;
+    }
+
+    .audio-upload-dropzone {
+        clear: both;
+        margin-bottom: 18px;
+        padding: 22px;
+        border: 2px dashed #7ca4b4;
+        border-radius: 20px;
+        background: linear-gradient(180deg, #f7fbfd, #eef5fa);
+    }
+
+    .audio-upload-dropzone strong {
+        display: block;
+        margin-bottom: 8px;
+        color: #163147;
+        font-size: 18px;
+    }
+
+    .audio-upload-dropzone p {
+        margin: 0;
+        color: #597084;
+        line-height: 1.6;
+    }
+
+    .audio-upload-actions {
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 12px;
+        flex-wrap: wrap;
+        clear: both;
+        margin-top: 22px;
+    }
+
+    .audio-upload-submit,
+    .audio-upload-reset {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: auto !important;
+        min-width: 148px;
+        float: none !important;
+        clear: none !important;
+        border: 0;
+        border-radius: 999px;
+        padding: 12px 20px;
+        font-size: 14px;
+        font-weight: 700;
+        line-height: 1.2;
+        cursor: pointer;
+        white-space: nowrap;
+    }
+
+    .audio-upload-submit {
+        background: linear-gradient(135deg, #0f766e, #14532d);
+        color: #fff;
+    }
+
+    .audio-upload-reset {
+        background: #e9eef3;
+        color: #21384b;
+    }
+
+    .audio-upload-side {
+        display: grid;
+        gap: 14px;
+    }
+
+    .audio-upload-note {
+        padding: 18px;
+        border-radius: 18px;
+        background: #f8fafc;
+        border: 1px solid #dbe5ed;
+    }
+
+    .audio-upload-note p,
+    .audio-upload-note li {
+        color: #536576;
+        line-height: 1.6;
+    }
+
+    .audio-upload-note ul {
+        margin: 0;
+        padding-left: 18px;
+    }
+
+    .audio-upload-file-name {
+        font-weight: 700;
+        color: #173042;
+    }
+
+    @media screen and (max-width: 768px) {
+        .audio-upload-hero {
+            padding: 24px 20px;
+        }
+
+        .audio-upload-hero h1 {
+            font-size: 32px;
+        }
+
+        .audio-upload-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .audio-upload-panel {
+            padding: 18px;
+        }
+    }
+</style>
+
+<section class="audio-upload-shell">
+    <div class="audio-upload-hero">
+        <h1>Upload Audio</h1>
+        <p>Publish a track with a clean title, a supported audio file, and a short description. The page is tuned for fast submissions without unnecessary visual noise.</p>
+        <div class="audio-upload-stats">
+            <span class="audio-upload-pill">Formats: MP3, WAV, OGG</span>
+            <span class="audio-upload-pill">Max file size: 10 MB</span>
+            <span class="audio-upload-pill">Login required</span>
+        </div>
+    </div>
+
+    <div class="audio-upload-grid">
+        <form method="post" enctype="multipart/form-data" class="audio-upload-panel" id="audio-upload-form">
+            {% csrf_token %}
+            <h2>Track Details</h2>
+
+            {% if form.non_field_errors %}
+                <div class="audio-upload-errors">{{ form.non_field_errors }}</div>
+            {% endif %}
+
+            <div class="audio-upload-field">
+                <label for="{{ form.music_name.id_for_label }}">Track title</label>
+                {{ form.music_name }}
+                {% if form.music_name.errors %}
+                    <div class="audio-upload-error">{{ form.music_name.errors }}</div>
+                {% endif %}
+            </div>
+
+            <div class="audio-upload-dropzone">
+                <strong>Choose your audio file</strong>
+                <p>Select one local file to upload. After choosing a file, its name will appear below so you can confirm the selection before submitting.</p>
+            </div>
+
+            <div class="audio-upload-field">
+                <label for="{{ form.audio_file.id_for_label }}">Audio file</label>
+                {{ form.audio_file }}
+                <div class="audio-upload-help" id="audio-file-name">No file selected.</div>
+                {% if form.audio_file.errors %}
+                    <div class="audio-upload-error">{{ form.audio_file.errors }}</div>
+                {% endif %}
+            </div>
+
+            <div class="audio-upload-field">
+                <label for="{{ form.description.id_for_label }}">Description</label>
+                {{ form.description }}
+                <div class="audio-upload-help">Add context, mood, source notes, or anything listeners should know before pressing play.</div>
+                {% if form.description.errors %}
+                    <div class="audio-upload-error">{{ form.description.errors }}</div>
+                {% endif %}
+            </div>
+
+            <div class="audio-upload-actions">
+                <button type="submit" class="audio-upload-submit">Publish Audio</button>
+                <button type="reset" class="audio-upload-reset" id="audio-upload-reset">Reset</button>
+            </div>
+        </form>
+
+        <aside class="audio-upload-side">
+            <section class="audio-upload-panel audio-upload-note">
+                <h3>Upload Checklist</h3>
+                <ul>
+                    <li>Use a short, readable track title.</li>
+                    <li>Keep the file within 10 MB.</li>
+                    <li>Supported extensions are `.mp3`, `.wav`, and `.ogg`.</li>
+                    <li>Descriptions are optional but useful for discovery.</li>
+                </ul>
+            </section>
+
+            <section class="audio-upload-panel audio-upload-note">
+                <h3>Why this layout</h3>
+                <p>The form keeps the primary action clear, shows validation state near each field, and avoids the plain default Django form output.</p>
+            </section>
+        </aside>
+    </div>
+</section>
+
+<script>
+(() => {
+    const fileInput = document.getElementById("{{ form.audio_file.id_for_label }}");
+    const fileName = document.getElementById("audio-file-name");
+    const resetButton = document.getElementById("audio-upload-reset");
+
+    if (!fileInput || !fileName || !resetButton) {
+        return;
+    }
+
+    fileInput.addEventListener("change", () => {
+        const selected = fileInput.files && fileInput.files[0];
+        fileName.innerHTML = selected
+            ? `<span class="audio-upload-file-name">${selected.name}</span>`
+            : "No file selected.";
+    });
+
+    resetButton.addEventListener("click", () => {
+        window.setTimeout(() => {
+            fileName.textContent = "No file selected.";
+        }, 0);
+    });
+})();
+</script>
 {% endblock %}

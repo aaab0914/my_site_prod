@@ -10,6 +10,7 @@ from .media_cleanup import move_media_file_to_trash
 
 _SYNC_LOCK = threading.Lock()
 _LAST_SYNC_AT = 0.0
+_PROTECTED_PREFIXES = ("audio/",)
 
 
 def _iter_file_fields():
@@ -19,11 +20,25 @@ def _iter_file_fields():
                 yield model, field
 
 
+def _is_protected_media(relative_name):
+    normalized = (relative_name or "").replace("\\", "/").strip("/")
+    return any(normalized.startswith(prefix) for prefix in _PROTECTED_PREFIXES)
+
+
 def _handle_missing_file(instance, field):
     field_file = getattr(instance, field.name)
     relative_name = (field_file.name or "").replace("\\", "/").strip("/")
     if not relative_name:
         return None
+
+    if _is_protected_media(relative_name):
+        return {
+            "type": "protected_missing_file_skipped",
+            "model": instance._meta.label,
+            "id": instance.pk,
+            "field": field.name,
+            "path": relative_name,
+        }
 
     if field.null:
         setattr(instance, field.name, None)
@@ -65,6 +80,8 @@ def sync_site_media():
             if ".trash" in file_path.parts:
                 continue
             relative_name = file_path.relative_to(media_root).as_posix()
+            if _is_protected_media(relative_name):
+                continue
             if relative_name not in referenced_names:
                 trash_name = move_media_file_to_trash(relative_name)
                 if trash_name:
@@ -80,6 +97,8 @@ def sync_site_media():
             reverse=True,
         ):
             try:
+                if directory.relative_to(media_root).as_posix().startswith("audio/"):
+                    continue
                 directory.rmdir()
             except OSError:
                 pass

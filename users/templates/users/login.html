@@ -1,31 +1,193 @@
 {% extends "blog/base.html" %}
 
-{% block title %}
-Log in
-{% endblock title %}
+{% block title %}Log In{% endblock %}
 
 {% block content %}
+<style>
+    .account-shell {
+        max-width: 1040px;
+        margin: 0 auto 36px;
+    }
 
-<div class="login-container" style="max-width: 400px; margin: 40px auto; padding: 20px;
-border: 1px solid #ddd; border-radius: 8px; background: #f9f9f9;">
+    .account-hero {
+        margin-bottom: 24px;
+        padding: 30px;
+        border-radius: 28px;
+        background:
+            radial-gradient(circle at top right, rgba(255, 255, 255, 0.24), transparent 28%),
+            linear-gradient(135deg, #18263f, #156f72 58%, #d8b36a 155%);
+        color: #fff;
+        box-shadow: 0 24px 54px rgba(15, 23, 42, 0.2);
+    }
 
-  <h2 style="text-align: center; margin-bottom: 20px;">
-    Log in
-  </h2>
+    .account-hero h1 {
+        margin: 0 0 10px;
+        border: 0;
+        font-size: 42px;
+        font-weight: 800;
+        letter-spacing: -0.03em;
+    }
 
-  <form method="post">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit" style="width: 100%; padding: 10px; background: #00abff;
-     color: white; border: none; border-radius: 4px; font-size: 16px; cursor: pointer;">
-      Login
-    </button>
-  </form>
+    .account-hero p {
+        margin: 0;
+        max-width: 720px;
+        color: rgba(255, 255, 255, 0.92);
+        line-height: 1.7;
+        font-size: 16px;
+    }
 
-  <p style="text-align: center;margin-top: 15px;">
-    Don't have an account?
-    <a href="{% url 'users:register' %}">Register Here</a>
-  </p>
+    .account-layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1.4fr) minmax(280px, 0.9fr);
+        gap: 22px;
+    }
 
-</div>
-{% endblock content %}
+    .account-panel {
+        padding: 24px;
+        border-radius: 22px;
+        border: 1px solid #d7e1ea;
+        background: #fff;
+        box-shadow: 0 16px 36px rgba(15, 23, 42, 0.08);
+    }
+
+    .account-panel h2,
+    .account-panel h3 {
+        margin: 0 0 14px;
+        color: #16283a;
+    }
+
+    .account-form {
+        display: grid;
+        gap: 16px;
+    }
+
+    .account-form p {
+        margin: 0;
+    }
+
+    .account-form label {
+        display: block;
+        float: none !important;
+        margin-bottom: 8px;
+        font-weight: 700;
+        color: #173042;
+    }
+
+    .account-form input,
+    .account-form textarea,
+    .account-form select {
+        width: 100%;
+        display: block;
+        float: none !important;
+        margin: 0;
+        padding: 13px 15px;
+        border: 1px solid #c8d5df;
+        border-radius: 15px;
+        background: #f7fafc;
+        font-size: 14px;
+        box-sizing: border-box;
+    }
+
+    .account-actions {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-top: 6px;
+    }
+
+    .account-button,
+    .account-link {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 148px;
+        width: auto !important;
+        float: none !important;
+        border: 0;
+        border-radius: 999px;
+        padding: 12px 20px;
+        font-size: 14px;
+        font-weight: 700;
+        text-decoration: none;
+        line-height: 1.2;
+        white-space: nowrap;
+        cursor: pointer;
+    }
+
+    .account-button {
+        background: linear-gradient(135deg, #0f766e, #14532d);
+        color: #fff;
+    }
+
+    .account-link {
+        background: #e9eef3;
+        color: #21384b;
+    }
+
+    .account-note {
+        padding: 18px;
+        border-radius: 18px;
+        background: #f8fafc;
+        border: 1px solid #dbe5ed;
+    }
+
+    .account-note p,
+    .account-note li {
+        color: #536576;
+        line-height: 1.6;
+    }
+
+    .account-note ul {
+        margin: 0;
+        padding-left: 18px;
+    }
+
+    @media screen and (max-width: 768px) {
+        .account-hero {
+            padding: 24px 20px;
+        }
+
+        .account-hero h1 {
+            font-size: 32px;
+        }
+
+        .account-layout {
+            grid-template-columns: 1fr;
+        }
+
+        .account-panel {
+            padding: 18px;
+        }
+    }
+</style>
+
+<section class="account-shell">
+    <div class="account-hero">
+        <h1>Log In</h1>
+        <p>Access your account, continue writing, manage uploads, and open your profile from a cleaner sign-in screen.</p>
+    </div>
+
+    <div class="account-layout">
+        <section class="account-panel">
+            <h2>Welcome Back</h2>
+            <form method="post" class="account-form">
+                {% csrf_token %}
+                {{ form.as_p }}
+                <div class="account-actions">
+                    <button type="submit" class="account-button">Log In</button>
+                    <a href="{% url 'users:register' %}" class="account-link">Create Account</a>
+                </div>
+            </form>
+        </section>
+
+        <aside class="account-panel account-note">
+            <h3>After Login</h3>
+            <ul>
+                <li>Open your profile and update account details.</li>
+                <li>Create posts and manage comments.</li>
+                <li>Upload audio and gallery images from your account area.</li>
+            </ul>
+        </aside>
+    </div>
+</section>
+{% endblock %}

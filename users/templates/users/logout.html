@@ -1,21 +1,26 @@
 {% extends "blog/base.html" %}
 
-{% block title %}Logout{% endblock %}
+{% block title %}Logged Out{% endblock %}
 
 {% block content %}
+<style>
+    .logout-shell { max-width: 820px; margin: 0 auto 36px; }
+    .logout-hero { margin-bottom: 24px; padding: 30px; border-radius: 28px; background: radial-gradient(circle at top right, rgba(255,255,255,.22), transparent 28%), linear-gradient(135deg, #1d2940, #165e7a 58%, #d9b16a 155%); color: #fff; box-shadow: 0 24px 54px rgba(15,23,42,.2); }
+    .logout-hero h1 { margin: 0 0 10px; border: 0; font-size: 42px; font-weight: 800; letter-spacing: -.03em; }
+    .logout-hero p { margin: 0; max-width: 620px; color: rgba(255,255,255,.92); line-height: 1.7; font-size: 16px; }
+    .logout-panel { padding: 24px; border-radius: 22px; border: 1px solid #d7e1ea; background: #fff; box-shadow: 0 16px 36px rgba(15,23,42,.08); text-align: center; }
+    .logout-link { display: inline-flex; align-items: center; justify-content: center; min-width: 160px; border-radius: 999px; padding: 12px 20px; background: linear-gradient(135deg, #0f766e, #14532d); color: #fff; font-size: 14px; font-weight: 700; text-decoration: none; }
+    @media screen and (max-width: 768px) { .logout-hero { padding: 24px 20px; } .logout-hero h1 { font-size: 32px; } .logout-panel { padding: 18px; } }
+</style>
 
-<div style="max-width: 400px; margin: 40px auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px; background: #f9f9f9; text-align: center;">
-
-  <h2 style="margin-bottom: 20px;">
-      You have been logged out
-  </h2>
-
-    <p>Thank you for visiting. Come back soon!</p>
-    <p style="margin-top: 20px;">
-        <a href="{% url 'blog:all_posts_list' %}" style="display: inline-block; padding: 8px 16px;
-        background: #00abff; color: white; text-decoration: none; border-radius: 4px;">
-          Return to Home</a>
-    </p>
-
-</div>
+<section class="logout-shell">
+    <div class="logout-hero">
+        <h1>Logged Out</h1>
+        <p>Your session has ended successfully. You can return to the blog homepage or sign in again whenever you need.</p>
+    </div>
+    <section class="logout-panel">
+        <p>Thank you for visiting. Come back soon.</p>
+        <p><a href="{% url 'blog:all_posts_list' %}" class="logout-link">Return to Blog Home</a></p>
+    </section>
+</section>
 {% endblock %}
