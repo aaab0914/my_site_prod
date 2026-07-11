@@ -13,11 +13,12 @@ def move_media_file_to_trash(relative_name):
 
     timestamp = datetime.now().strftime("%Y%m%d-%H%M%S-%f")
     normalized_relative_name = Path(relative_name.replace("\\", "/"))
-    trash_root = Path(settings.BASE_DIR) / ".trash" / timestamp
+    project_root = Path(settings.BASE_DIR)
+    trash_root = project_root.parent / ".trash" / project_root.name / timestamp
     target_path = trash_root / normalized_relative_name
     target_path.parent.mkdir(parents=True, exist_ok=True)
     try:
         shutil.move(str(source_path), str(target_path))
     except FileNotFoundError:
         return None
-    return target_path.relative_to(Path(settings.BASE_DIR)).as_posix()
+    return target_path.relative_to(project_root.parent).as_posix()

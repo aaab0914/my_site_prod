@@ -1,12 +1,49 @@
 {% extends "blog/base.html" %}
 
-{% block title %}Add a comment{% endblock %}
+{% block title %}Comment Submitted{% endblock %}
 
 {% block content %}
+<style>
+    .comment-success-shell { max-width: 960px; margin: 0 auto 36px; }
+    .comment-success-hero {
+        margin-bottom: 24px; padding: 30px; border-radius: 28px;
+        background: radial-gradient(circle at top right, rgba(255,255,255,.24), transparent 28%), linear-gradient(135deg, #18263f, #1d4f7b 58%, #d5ab63 150%);
+        color: #fff; box-shadow: 0 24px 54px rgba(15,23,42,.2);
+    }
+    .comment-success-hero h1 { margin: 0 0 10px; border: 0; font-size: 42px; font-weight: 800; letter-spacing: -0.03em; }
+    .comment-success-hero p { margin: 0; max-width: 760px; color: rgba(255,255,255,.92); line-height: 1.7; font-size: 16px; }
+    .comment-success-panel { padding: 24px; border-radius: 22px; border: 1px solid #d7e1ea; background: #fff; box-shadow: 0 16px 36px rgba(15,23,42,.08); }
+    .comment-success-panel p { margin: 0 0 18px; color: #546779; line-height: 1.7; }
+    .comment-success-actions { display: flex; gap: 12px; flex-wrap: wrap; }
+    .comment-success-button, .comment-success-link {
+        display: inline-flex; align-items: center; justify-content: center; min-width: 148px;
+        border-radius: 999px; padding: 12px 20px; font-size: 14px; font-weight: 700; line-height: 1.2; text-decoration: none;
+    }
+    .comment-success-button { background: linear-gradient(135deg, #1d4f7b, #17365d); color: #fff; }
+    .comment-success-link { background: #e9eef3; color: #21384b; }
+    @media screen and (max-width: 768px) {
+        .comment-success-hero { padding: 24px 20px; }
+        .comment-success-hero h1 { font-size: 32px; }
+        .comment-success-panel { padding: 18px; }
+    }
+</style>
+
+<section class="comment-success-shell page-shell">
     {% if comment %}
-        <h2>Your Comment has been added!</h2>
-        <p><a href="{{ post.get_absolute_url }}">Back to the Post</a></p>
+        <div class="comment-success-hero page-hero">
+            <h1 class="page-hero-title">Comment Published</h1>
+            <p class="page-hero-copy">Your comment has been added successfully.</p>
+        </div>
+
+        <section class="comment-success-panel">
+            <p>You can return to the post to continue reading or add another reply later.</p>
+            <div class="comment-success-actions">
+                <a href="{{ post.get_absolute_url }}" class="comment-success-button">Back to Post</a>
+                <a href="{% url 'blog:all_posts_list' %}" class="comment-success-link">Back to Posts</a>
+            </div>
+        </section>
     {% else %}
         {% include "blog/comment/add_comment.html" %}
     {% endif %}
+</section>
 {% endblock %}

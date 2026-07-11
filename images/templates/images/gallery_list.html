@@ -4,36 +4,40 @@
 
 {% block content %}
 <style>
+    .gallery-shell {
+        display: grid;
+        gap: 24px;
+    }
+
     .gallery-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 16px;
-        margin-bottom: 24px;
-        padding-bottom: 16px;
-        border-bottom: 1px solid #d8dee8;
+        background: linear-gradient(135deg, #172033, #0f766e 62%, #d7b56d 135%);
+        color: #fff;
+        box-sizing: border-box;
     }
 
     .gallery-title {
-        margin: 0;
-        font-size: 38px;
         line-height: 1.1;
+        color: #fff;
     }
 
     .gallery-subtitle {
-        margin: 8px 0 0;
-        color: #5f6b7a;
+        color: rgba(255, 255, 255, 0.92);
     }
 
     .gallery-action {
-        display: inline-block;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        margin-top: 18px;
         padding: 12px 18px;
         border-radius: 999px;
-        background: #0f766e;
+        background: rgba(255,255,255,.16);
+        border: 1px solid rgba(255,255,255,.24);
         color: #fff;
         text-decoration: none;
-        font-weight: 600;
+        font-weight: 700;
         white-space: nowrap;
+        width: fit-content;
     }
 
     .gallery-grid {
@@ -168,24 +172,26 @@
     }
 </style>
 
-<section class="gallery-header">
-    <div>
-        <h1 class="gallery-title">Gallery</h1>
-        <p class="gallery-subtitle">Browse uploaded images. Logged-in users can upload local files or paste images from the clipboard.</p>
-    </div>
+<section class="page-shell gallery-shell">
+<section class="gallery-header page-hero">
+    <h1 class="gallery-title page-hero-title">Gallery</h1>
+    <p class="gallery-subtitle page-hero-copy">Browse uploaded images. Logged-in users can upload local files or paste images from the clipboard.</p>
     {% if user.is_authenticated %}
         <a class="gallery-action" href="{% url 'blog:images:gallery_upload' %}">Upload or Paste Images</a>
     {% endif %}
 </section>
 
+</section>
+
 {% if images %}
+    <section class="page-shell">
     <section class="gallery-grid">
         {% for image in images %}
             <article class="gallery-card">
                 <a class="gallery-media-link" href="{% url 'blog:images:gallery_detail' image.id %}">
                     <img
                         class="gallery-media"
-                        src="{{ image.image.url }}"
+                        src="{{ image.get_image_proxy_url }}"
                         alt="{{ image.title }}"
                         loading="lazy"
                         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
@@ -204,9 +210,10 @@
                 </div>
             </article>
         {% endfor %}
-    </section>
+        </section>
+</section>
     {% if page_obj and page_obj.paginator.num_pages > 1 %}
-        <nav class="gallery-pagination">
+        <nav class="page-shell gallery-pagination">
             {% if page_obj.has_previous %}
                 <a href="?page={{ page_obj.previous_page_number }}">Prev</a>
             {% endif %}

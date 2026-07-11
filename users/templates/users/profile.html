@@ -1,11 +1,11 @@
 {% extends "blog/base.html" %}
 {% load blog_tags %}
 
-{% block title %}{{ user.username }}'s Profile{% endblock %}
+{% block title %}{{ profile_user.username }}'s Profile{% endblock %}
 
 {% block content %}
 <style>
-    .profile-shell { max-width: 1100px; margin: 0 auto 36px; }
+    .profile-shell { max-width: 1180px; margin: 0 auto 36px; }
     .profile-hero {
         margin-bottom: 24px;
         padding: 30px;
@@ -15,26 +15,21 @@
         box-shadow: 0 24px 54px rgba(15,23,42,.2);
     }
     .profile-hero h1 { margin: 0 0 10px; border: 0; font-size: 42px; font-weight: 800; letter-spacing: -.03em; }
-    .profile-hero p { margin: 0; max-width: 760px; color: rgba(255,255,255,.92); line-height: 1.7; font-size: 16px; }
-    .profile-grid { display: grid; grid-template-columns: minmax(0,1.2fr) minmax(300px,.8fr); gap: 22px; }
-    .profile-panel { padding: 24px; border-radius: 22px; border: 1px solid #d7e1ea; background: #fff; box-shadow: 0 16px 36px rgba(15,23,42,.08); }
+    .profile-hero p { margin: 0; max-width: 820px; color: rgba(255,255,255,.92); line-height: 1.7; font-size: 16px; }
+    .profile-grid { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 22px; align-items:start; }
+    .profile-grid > *, .upload-grid > * { min-width:0; }
+    .profile-panel { padding: 24px; border-radius: 22px; border: 1px solid #d7e1ea; background: #fff; box-shadow: 0 16px 36px rgba(15,23,42,.08); height: 100%; }
     .profile-panel h2, .profile-panel h3 { margin: 0 0 14px; color: #16283a; }
     .profile-head { display: grid; grid-template-columns: 120px minmax(0,1fr); gap: 20px; align-items: center; margin-bottom: 24px; }
-    .profile-avatar, .profile-avatar-empty {
-        width: 120px; height: 120px; border-radius: 50%; overflow: hidden;
-        display: flex; align-items: center; justify-content: center;
-        background: #eef4f8; border: 1px solid #d6e0e8;
-    }
+    .profile-avatar, .profile-avatar-empty { width: 120px; height: 120px; border-radius: 50%; overflow: hidden; display: flex; align-items: center; justify-content: center; background: #eef4f8; border: 1px solid #d6e0e8; }
     .profile-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
     .profile-avatar-empty span { font-size: 42px; color: #95a4b1; font-weight: 700; }
     .profile-meta { display: grid; gap: 8px; color: #4f6577; line-height: 1.6; }
     .profile-meta strong { color: #173042; }
+    .profile-title-row { display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:10px; }
+    .admin-badge { display:inline-flex; align-items:center; justify-content:center; padding:8px 14px; border-radius:999px; background:#b42318; color:#fff; font-size:13px; font-weight:800; letter-spacing:.02em; }
     .profile-actions { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 18px; }
-    .profile-button, .profile-link {
-        display: inline-flex; align-items: center; justify-content: center;
-        min-width: 148px; border-radius: 999px; padding: 12px 20px;
-        font-size: 14px; font-weight: 700; line-height: 1.2; text-decoration: none;
-    }
+    .profile-button, .profile-link { display: inline-flex; align-items: center; justify-content: center; min-width: 148px; border-radius: 999px; padding: 12px 20px; font-size: 14px; font-weight: 700; line-height: 1.2; text-decoration: none; }
     .profile-button { background: linear-gradient(135deg, #0f766e, #14532d); color: #fff; }
     .profile-link { background: #e9eef3; color: #21384b; }
     .profile-list { margin: 0; padding: 0; list-style: none; display: grid; gap: 12px; }
@@ -42,46 +37,52 @@
     .profile-list a { color: #163147; text-decoration: none; font-weight: 700; }
     .profile-list a:hover { text-decoration: underline; }
     .profile-empty { color: #6b7280; line-height: 1.7; }
+    .profile-stack { display:grid; gap:22px; }
+    .upload-grid { display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap:22px; margin-top:22px; align-items:stretch; }
+    .profile-pagination { display:flex; align-items:center; justify-content:center; gap:10px; margin-top:18px; flex-wrap:wrap; }
+    .profile-pagination a, .profile-pagination span { display:inline-block; min-width:42px; padding:10px 14px; border-radius:999px; text-align:center; text-decoration:none; background:#eef3f7; color:#22384a; font-weight:700; }
+    .profile-pagination .is-current { background:#0f766e; color:#fff; }
+    @media screen and (max-width: 920px) { .profile-grid, .upload-grid { grid-template-columns: 1fr; } }
     @media screen and (max-width: 768px) {
         .profile-hero { padding: 24px 20px; }
         .profile-hero h1 { font-size: 32px; }
-        .profile-grid { grid-template-columns: 1fr; }
         .profile-panel { padding: 18px; }
         .profile-head { grid-template-columns: 1fr; }
     }
 </style>
 
-<section class="profile-shell">
-    <div class="profile-hero">
-        <h1>{{ user.username }}'s Profile</h1>
-        <p>Review published work, comment activity, and account details from a cleaner profile layout that matches the rest of the updated site.</p>
+<section class="profile-shell page-shell">
+    <div class="profile-hero page-hero">
+        <div class="profile-title-row">
+            <h1 class="page-hero-title">{{ profile_user.username }}'s Profile</h1>
+            {% if profile_user.is_superuser %}<span class="admin-badge">Administrator</span>{% endif %}
+        </div>
+        <p class="page-hero-copy">Review account details, posts, comments, and uploaded media from one place.</p>
     </div>
 
     <div class="profile-grid">
         <section class="profile-panel">
             <div class="profile-head">
-                {% if user.profile and user.profile.avatar %}
+                {% if profile_user.profile and profile_user.profile.avatar %}
                     <div class="profile-avatar">
-                        <img src="{{ user.profile.avatar.url }}" alt="{{ user.username }}'s avatar">
+                        <img src="{{ profile_user.profile.get_avatar_proxy_url }}" alt="{{ profile_user.username }}'s avatar">
                     </div>
                 {% else %}
                     <div class="profile-avatar-empty">
-                        <span>{{ user.username|first|upper }}</span>
+                        <span>{{ profile_user.username|first|upper }}</span>
                     </div>
                 {% endif %}
-
                 <div>
                     <div class="profile-meta">
-                        <div><strong>Username:</strong> {{ user.username }}</div>
-                        <div><strong>Email:</strong> {{ user.email }}</div>
-                        <div><strong>Joined:</strong> {{ user.date_joined|date:"F j, Y" }}</div>
-                        <div><strong>Bio:</strong> {{ user.profile.bio|default:"No bio yet." }}</div>
-                        <div><strong>Location:</strong> {{ user.profile.location|default:"Not specified" }}</div>
+                        <div><strong>Username:</strong> {{ profile_user.username }}</div>
+                        <div><strong>Email:</strong> {{ profile_user.email }}</div>
+                        <div><strong>Joined:</strong> {{ profile_user.date_joined|date:"F j, Y" }}</div>
+                        <div><strong>Bio:</strong> {{ profile_user.profile.bio|default:"No bio yet." }}</div>
+                        <div><strong>Location:</strong> {{ profile_user.profile.location|default:"Not specified" }}</div>
                     </div>
-
                     <div class="profile-actions">
-                        <a href="{% url 'blog:user_feed' user.username %}" class="profile-link">RSS Feed</a>
-                        {% if user == request.user %}
+                        <a href="{% url 'blog:user_feed' profile_user.username %}" class="profile-link">RSS Feed</a>
+                        {% if profile_user == request.user %}
                             <a href="{% url 'users:profile_edit' %}" class="profile-button">Edit Profile</a>
                             <a href="{% url 'users:username_change' %}" class="profile-link">Change Username</a>
                         {% endif %}
@@ -89,53 +90,103 @@
                 </div>
             </div>
 
-            <h2>
-                {% if user == request.user %}My Posts{% else %}{{ user.username }}'s Posts{% endif %}
-            </h2>
+            <h2>{% if profile_user == request.user %}My Posts ({{ posts_total_count }}){% else %}{{ profile_user.username }}'s Posts ({{ posts_total_count }}){% endif %}</h2>
             {% if posts %}
                 <ul class="profile-list">
                     {% for post in posts %}
-                        <li>
-                            <a href="{{ post.get_absolute_url }}">{{ post.title }}</a>
-                            <div>{{ post.publish|date:"F j, Y" }}</div>
-                        </li>
+                        <li><a href="{{ post.get_absolute_url }}">{{ post.title }}</a><div>{{ post.publish|date:"F j, Y" }}</div></li>
                     {% endfor %}
                 </ul>
+                {% if posts_page_obj and posts_page_obj.paginator.num_pages > 1 %}
+                    <nav class="profile-pagination">
+                        {% if posts_page_obj.has_previous %}
+                            <a href="?posts_page={{ posts_page_obj.previous_page_number }}">Prev</a>
+                        {% endif %}
+                        {% for page_number in posts_page_obj.paginator.page_range %}
+                            {% if page_number == posts_page_obj.number %}
+                                <span class="is-current">{{ page_number }}</span>
+                            {% else %}
+                                <a href="?posts_page={{ page_number }}">{{ page_number }}</a>
+                            {% endif %}
+                        {% endfor %}
+                        {% if posts_page_obj.has_next %}
+                            <a href="?posts_page={{ posts_page_obj.next_page_number }}">Next</a>
+                        {% endif %}
+                    </nav>
+                {% endif %}
             {% else %}
-                <p class="profile-empty">
-                    {% if user == request.user %}
-                        You have not written any posts yet.
-                    {% else %}
-                        {{ user.username }} has not written any posts yet.
-                    {% endif %}
-                </p>
+                <p class="profile-empty">{% if profile_user == request.user %}You have not written any posts yet.{% else %}{{ profile_user.username }} has not written any posts yet.{% endif %}</p>
             {% endif %}
         </section>
 
-        <aside class="profile-panel">
-            <h3>
-                {% if user == request.user %}My Comments{% else %}{{ user.username }}'s Comments{% endif %}
-            </h3>
-            {% if comments %}
+        <div class="profile-stack">
+            <aside class="profile-panel">
+                <h3>{% if profile_user == request.user %}My Comments{% else %}{{ profile_user.username }}'s Comments{% endif %}</h3>
+                {% if comments %}
+                    <ul class="profile-list">
+                        {% for comment in comments %}
+                            <li><div><strong>On:</strong> <a href="{{ comment.post.get_absolute_url }}">{{ comment.post.title }}</a></div><div>{{ comment.body|truncatewords:20 }}</div><div>{{ comment.created|date:"F j, Y" }}</div></li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="profile-empty">{% if profile_user == request.user %}You have not written any comments yet.{% else %}{{ profile_user.username }} has not written any comments yet.{% endif %}</p>
+                {% endif %}
+            </aside>
+        </div>
+    </div>
+
+    <div class="upload-grid">
+        <section class="profile-panel">
+            <h3>Gallery Images ({{ gallery_images|length }})</h3>
+            {% if gallery_images %}
                 <ul class="profile-list">
-                    {% for comment in comments %}
-                        <li>
-                            <div><strong>On:</strong> <a href="{{ comment.post.get_absolute_url }}">{{ comment.post.title }}</a></div>
-                            <div>{{ comment.body|truncatewords:20 }}</div>
-                            <div>{{ comment.created|date:"F j, Y" }}</div>
-                        </li>
+                    {% for image in gallery_images %}
+                        <li><a href="{% url 'blog:images:gallery_detail' image.id %}">{{ image.title }}</a><div>{{ image.created|date:"F j, Y" }}</div></li>
                     {% endfor %}
                 </ul>
             {% else %}
-                <p class="profile-empty">
-                    {% if user == request.user %}
-                        You have not written any comments yet.
-                    {% else %}
-                        {{ user.username }} has not written any comments yet.
-                    {% endif %}
-                </p>
+                <p class="profile-empty">No gallery images uploaded yet.</p>
             {% endif %}
-        </aside>
+        </section>
+
+        <section class="profile-panel">
+            <h3>Albums ({{ albums|length }})</h3>
+            {% if albums %}
+                <ul class="profile-list">
+                    {% for album in albums %}
+                        <li><a href="{% url 'blog:images:album_detail' album.id %}">{{ album.title }}</a><div>{{ album.image_count }} image{{ album.image_count|pluralize }} · {{ album.created|date:"F j, Y" }}</div></li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p class="profile-empty">No albums uploaded yet.</p>
+            {% endif %}
+        </section>
+
+        <section class="profile-panel">
+            <h3>Audio Uploads ({{ audio_posts|length }})</h3>
+            {% if audio_posts %}
+                <ul class="profile-list">
+                    {% for audio in audio_posts %}
+                        <li><a href="{% url 'blog:audio_list' %}">{{ audio.music_name|default:audio.get_audio_filename }}</a><div>{{ audio.created|date:"F j, Y" }}</div></li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p class="profile-empty">No audio uploaded yet.</p>
+            {% endif %}
+        </section>
+
+        <section class="profile-panel">
+            <h3>Video Uploads ({{ video_posts|length }})</h3>
+            {% if video_posts %}
+                <ul class="profile-list">
+                    {% for video in video_posts %}
+                        <li><a href="{% url 'blog:video_list' %}">{{ video.title|default:video.get_video_filename }}</a><div>{{ video.created|date:"F j, Y" }}</div></li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p class="profile-empty">No videos uploaded yet.</p>
+            {% endif %}
+        </section>
     </div>
 </section>
 {% endblock %}

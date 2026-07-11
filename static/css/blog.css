@@ -120,20 +120,28 @@ p.date {
    ======================================== */
 
 label {
-    float: left;
-    clear: both;
+    display: block;
+    float: none;
+    clear: none;
     color: #333;
     margin-bottom: 4px;
 }
 
 input, textarea {
-    clear: both;
-    float: left;
+    display: block;
+    clear: none;
+    float: none;
     margin: 0 0 10px;
     background: #ededed;
     border: 0;
     padding: 6px 10px;
     font-size: 12px;
+}
+
+input[type=file],
+input[type=checkbox],
+input[type=radio] {
+    display: inline-block;
 }
 
 input[type=submit] {
@@ -236,7 +244,7 @@ input[type=submit] {
    ======================================== */
 
 /* 手机端（最大宽度 768px，涵盖所有手机和竖屏平板） */
-@media screen and (max-width: 768px) {
+@media screen and (max-width: 1024px) {
 
     /* 1. 将 body 的 flex 布局改为垂直列 */
     body {

@@ -121,7 +121,7 @@
     </div>
 
     <article class="gallery-detail-card">
-        <img class="gallery-detail-image" src="{{ image.image.url }}" alt="{{ image.title }}">
+        <img class="gallery-detail-image" src="{{ image.get_image_proxy_url }}" alt="{{ image.title }}">
         <div class="gallery-detail-body">
             {% if not can_manage %}
                 <div class="gallery-detail-notice">Only the creator or a superuser can edit or delete this image.</div>

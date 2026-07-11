@@ -1,285 +1,187 @@
-# My Site - Django Blog Platform
+# My Site - Django Blog and Media Platform
 
-> A modern, production-ready Django platform for blogging, media publishing, account management, and Docker-based deployment.
+> A Docker-based Django platform for blogging, image galleries, albums, audio publishing, protected media delivery, user profiles, background jobs, and operations tooling.
 
-## ✨ Features
+## Current Feature Set
 
-### Blog Management
-- **Post Publishing**: Create, edit, delete, and manage draft or published posts
-- **Rich Text Editor**: Markdown authoring with live preview via `django-markdownx`
-- **Tagging System**: Tag-based filtering and categorization
-- **Search Functionality**: Full-text style search across posts and comments
-- **RSS Feed**: Built-in content syndication
-- **Audio Upload**: Upload and host audio directly on the platform
-- **Comments**: User comment flow with moderation support
+### Blog
+- Create, edit, publish, and delete posts
+- Markdown-based post authoring
+- Tag filtering and post search
+- RSS feeds for global and per-user content
+- Comment creation, editing, and deletion
+- Profile-linked author browsing
 
-### User Management
-- **User Authentication**: Registration, login, logout, and profile management
-- **Profile Customization**: Bio, location, birth date, and avatar upload
-- **Avatar Rate Limiting**: 3-day cooldown to reduce abuse
-- **Activity Logging**: Track user actions and login history
-- **User Preferences**: Theme and notification settings
-- **Account Management**: Username changes and account deletion
+### Media
+- Gallery uploads with list, detail, edit, and delete pages
+- Album uploads where one batch creates one album
+- Album detail, edit, and delete pages
+- Audio uploads with:
+  - multi-file upload support
+  - list pagination
+  - per-track loop toggle
+  - single-active-player behavior
+  - edit and delete pages
+  - optional cover image editing
+- Video uploads and management for superusers only
+- Public video list page
+- Protected media proxy routes so storage paths are not exposed in normal UI
+- Deleted media moves to `.trash` instead of immediate permanent removal
 
-### Media Management
-- **Image Hosting**: Upload and manage gallery images
-- **Audio Streaming**: Serve audio files from the platform
-- **Automatic Organization**: Date-based media storage layout
+### Accounts and Profiles
+- Registration, login, logout, and account deletion
+- Profile editing with avatar, bio, and location
+- Profile page sections for:
+  - paginated posts
+  - comments
+  - gallery uploads
+  - albums
+  - audio uploads
+  - video uploads
+- Administrator badge for superusers
+- Avatar change cooldown support
 
-### API & Integration
-- **REST API**: API endpoints for posts, comments, and tags
-- **Token Authentication**: Secure token-based access
-- **API Documentation**: Reference available in `API_DOCUMENTATION.md`
-- **Django Admin**: Full backend management interface
+### Caching and Background Work
+- Redis-backed Django cache
+- Media list caching for gallery, audio, and video pages
+- Cache invalidation on media save/delete flows
+- Celery worker and Celery Beat support
+- Media sync helpers for cleaning broken references and orphan files
 
-### DevOps & Monitoring
-- **Docker Deployment**: Compose-based stack with PostgreSQL and Nginx
-- **Automatic Backup**: Scheduled backups with retention
-- **Request Logging**: Audit trail with IP tracking
-- **CI/CD Pipeline**: GitHub Actions workflow support
-- **Unit Tests**: Coverage across models, views, forms, and uploads
+### Operations
+- Docker Compose production stack
+- PostgreSQL, Redis, Elasticsearch, Celery, Flower, Prometheus, Grafana, and Nginx support
+- Health checks in the production stack
+- Audit logging and backup support
 
-## 🚀 Quick Start
+## Main Routes
 
-### Prerequisites
+### Public
+- `/blog/` - blog homepage
+- `/blog/search/` - post search
+- `/blog/audio/list/` - audio library
+- `/blog/video/list/` - video library
+- `/blog/gallery/` - gallery
+- `/blog/album/` - albums
+- `/users/login/` - login
+- `/users/register/` - register
 
-- Docker and Docker Compose plugin
-- Python 3.12+
-- PostgreSQL 16
+### Authenticated
+- `/blog/create/` - create post
+- `/blog/audio/upload/` - upload audio
+- `/blog/gallery/upload/` - upload one image
+- `/blog/album/upload/` - upload one album batch
+- `/users/profile/` - profile page
+- `/users/profile_edit/` - edit profile
 
-### Installation
+### Superuser-only
+- `/blog/video/upload/` - upload video
+- `/blog/video/<id>/` - video detail
+- `/blog/video/<id>/edit/` - video edit
+- `/blog/video/<id>/delete/` - video delete
 
-1. **Enter the project directory**
+## Production Stack
+
+Default services:
+- `web`
+- `db`
+- `redis`
+- `elasticsearch`
+- `celery`
+- `celery-beat`
+
+Optional profile services:
+- `flower`
+- `prometheus`
+- `grafana`
+- `celery-exporter`
+- `nginx`
+
+## Quick Start
+
+### Requirements
+- Docker
+- Docker Compose plugin
+
+### Setup
+
+1. Enter the project directory
 ```bash
-cd my_site_prod-master
+cd /var/www/my_site_prod_repo_new
 ```
 
-2. **Create your environment file**
+2. Create the environment file
 ```bash
 cp .env.example .env
 ```
 
-3. **Start the stack**
+3. Start the main production services
 ```bash
-docker compose up -d
+docker compose -f docker-compose.prod.yml up -d --build web db redis elasticsearch celery celery-beat
 ```
 
-4. **Run migrations**
+4. Run migrations
 ```bash
-docker compose exec web python manage.py migrate
+docker compose -f docker-compose.prod.yml exec web python manage.py migrate
 ```
 
-5. **Create a superuser**
+5. Create a superuser
 ```bash
-docker compose exec web python manage.py createsuperuser
+docker compose -f docker-compose.prod.yml exec web python manage.py createsuperuser
 ```
 
-6. **Collect static files**
+### Optional Operations Stack
 ```bash
-docker compose exec web python manage.py collectstatic --noinput
+docker compose -f docker-compose.prod.yml --profile optional up -d --build flower prometheus grafana celery-exporter nginx
 ```
 
-7. **Open the application**
+## Useful Commands
 
-| Area | URL |
-| --- | --- |
-| Blog | `http://localhost/blog/` |
-| Admin | `http://localhost/admin/` |
-| API | `http://localhost/blog/api/` |
+Rebuild application services:
+```bash
+docker compose -f docker-compose.prod.yml up -d --build web celery celery-beat
+```
 
-## 📁 Project Structure
+Run tests:
+```bash
+docker compose -f docker-compose.prod.yml exec web python manage.py test
+```
+
+Run the focused media/profile regression set:
+```bash
+docker compose -f docker-compose.prod.yml exec web python manage.py test users.tests.test_users.test_profile images.tests.test_gallery_upload blog.tests.test_blog.test_audio blog.tests.test_blog.test_video --keepdb
+```
+
+## Project Structure
 
 ```text
-my_site_prod-master/
-|- blog/              # Blog app: posts, comments, audio
-|- users/             # Authentication and profile management
-|- images/            # Gallery and image hosting
-|- my_site/           # Settings, root URLs, metrics, middleware
-|- media/             # User-uploaded files
-|- staticfiles/       # Collected static assets
-|- logs/              # Application and runtime logs
-|- backups/           # Database backups
-|- docker-compose.yml
+/var/www/my_site_prod_repo_new/
+|- blog/                    # Posts, comments, audio, video, feeds, API
+|- users/                   # Authentication, profile, avatar, account settings
+|- images/                  # Gallery and album features
+|- my_site/                 # Settings, URLs, middleware, media helpers, runtime helpers
+|- media/                   # Uploaded files
+|- staticfiles/             # Collected static assets
+|- logs/                    # Runtime logs
+|- grafana/                 # Grafana provisioning
+|- backups/                 # Backup files
 |- docker-compose.prod.yml
 |- Dockerfile
 |- nginx.conf
+|- prometheus.yml
 |- requirements.txt
-`- manage.py
+|- README.md
+`- my_site/templates/index.html
 ```
 
-## 🔧 Technology Stack
-
-| Layer | Tools |
-| --- | --- |
-| Backend | Django 6.0.2, Django REST Framework, Gunicorn |
-| Data | PostgreSQL 16 |
-| Frontend | Django Templates, HTML, CSS, JavaScript |
-| Media | Pillow, django-markdownx |
-| DevOps | Docker, Docker Compose, GitHub Actions |
-
-### Supporting Libraries
-
-- `django-taggit`
-- `django-markdownx`
-- `Pillow`
-- `python-decouple`
-
-## 📊 API Documentation
-
-See [API_DOCUMENTATION.md](./API_DOCUMENTATION.md) for the full API reference.
-
-### Common Endpoints
-
-```text
-GET    /blog/api/posts/           List all posts
-POST   /blog/api/posts/           Create a post
-GET    /blog/api/posts/{id}/      Retrieve one post
-PUT    /blog/api/posts/{id}/      Update one post
-DELETE /blog/api/posts/{id}/      Delete one post
-
-GET    /blog/api/comments/        List comments
-POST   /blog/api/comments/        Create a comment
-GET    /blog/api/tags/            List tags
-```
-
-## 🧪 Testing
-
-Run the full test suite:
-
-```bash
-docker compose exec web python manage.py test
-```
-
-Run tests by app:
-
-```bash
-docker compose exec web python manage.py test blog
-docker compose exec web python manage.py test users
-docker compose exec web python manage.py test images
-```
-
-Verbose output:
-
-```bash
-docker compose exec web python manage.py test --verbosity=2
-```
-
-<details>
-<summary>Coverage Areas</summary>
-
-- Blog models and views
-- User authentication and profile flows
-- API endpoints
-- Image and audio uploads
-
-</details>
-
-## 🔐 Security Features
-
-- CSRF protection enabled
-- ORM-based SQL injection protection
-- Template escaping for XSS mitigation
-- Secure password hashing
-- HTTPS-ready deployment settings
-- Authentication required for sensitive actions
-- Validation on forms and uploads
-- Login rate limiting after repeated failures
-- Upload size and file-type restrictions for avatars, cover images, and audio
-
-## 📈 Monitoring & Logs
-
-### Log Files
-
-- `logs/YYYY-MM/django-YYYY-MM-DD.log`
-- `logs/YYYY-MM/error-YYYY-MM-DD.log`
-- `logs/YYYY-MM/gunicorn-access-YYYY-MM-DD.log`
-- `logs/YYYY-MM/gunicorn-error-YYYY-MM-DD.log`
-- `logs/backup.log`
-
-Legacy flat files may still exist, but active logging targets the dated files under `logs/YYYY-MM/`.
-
-### Audit Log
-
-- Request tracking in Django Admin
-- User action history
-- IP address logging
-
-### Database Backups
-
-- Stored in `backups/db/`
-- Automatic backup schedule with retention
-- Manual Linux backup: `./backup_db.sh`
-- Manual PowerShell backup: `.\backup_db.ps1`
-- Restore drill: `.\restore_test.ps1`
-
-## 🚀 Deployment
-
-### Development
-
-```bash
-docker compose up
-```
-
-### Production
-
-1. Set values in `.env`
-2. Enable HTTPS in `nginx.conf`
-3. Set `DEBUG=False`
-4. Configure `ALLOWED_HOSTS`
-5. Configure `CSRF_TRUSTED_ORIGINS`
-6. Install SSL certificates
-7. Start services with:
-```bash
-docker compose -f docker-compose.prod.yml up --build -d
-```
-8. Run deploy checks:
-```bash
-bash ./deploy-prod.sh
-```
-
-## 📝 Configuration
-
-### Environment Variables
-
-Use `.env.example` as the committed template.
-
-```env
-SECRET_KEY=your-django-secret-key
-DEBUG=False
-ALLOWED_HOSTS=yourdomain.com,www.yourdomain.com
-CSRF_TRUSTED_ORIGINS=https://yourdomain.com
-
-DB_NAME=my_site_db
-DB_USER=my_site_user
-DB_PASSWORD=your-strong-password
-DB_HOST=db
-DB_PORT=5432
-
-SECURE_SSL_REDIRECT=True
-SESSION_COOKIE_SECURE=True
-CSRF_COOKIE_SECURE=True
-CSRF_COOKIE_HTTPONLY=True
-SESSION_COOKIE_HTTPONLY=True
-SECURE_HSTS_SECONDS=31536000
-```
-
-Do not commit the real `.env`. Commit `.env.example` only.
-
-Validate production values before deployment:
-
-```bash
-python validate_prod_env.py
-```
-
-## 📚 Related Docs
-
-- [DOCKER_GUIDE.md](./DOCKER_GUIDE.md)
-- [PROJECT_OPERATIONS_GUIDE.md](./PROJECT_OPERATIONS_GUIDE.md)
-- [PRODUCTION_VERIFICATION.md](./PRODUCTION_VERIFICATION.md)
-- [OBSERVABILITY_RUNBOOK.md](./OBSERVABILITY_RUNBOOK.md)
-- [TEST_INDEX.md](./TEST_INDEX.md)
+## Security Notes
+- Protected media is served through proxy routes instead of exposing storage paths in normal UI
+- Superuser-only video management routes redirect unauthorized users to blog home
+- Denied protected routes return no-store / no-cache headers where configured
+- Uploads are validated by file type and size
+- Sensitive actions require authentication and ownership or superuser permission
 
 ## Current Notes
-
-- The production stack in this repository includes more than a minimal blog because it also carries observability and operational tooling.
-- Some security warnings may still appear if local `.env` values are intentionally development-oriented.
+- Media list caching is active for gallery, audio, and video pages
+- Deleted media is moved to `.trash`
+- The project includes helper code for media cache invalidation and media file existence checks

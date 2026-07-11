@@ -1,0 +1,18 @@
+{% extends "admin/index.html" %}
+
+{% block content %}
+{{ block.super }}
+<div class="app-blog module" style="margin-top: 24px;">
+  <table>
+    <caption>System Monitoring</caption>
+    <tbody>
+      <tr class="model-systemstatus">
+        <th scope="row">
+          <a href="{% url 'admin:system_status' %}">System Status</a>
+        </th>
+        <td>View daily logs and database backup status.</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+{% endblock %}

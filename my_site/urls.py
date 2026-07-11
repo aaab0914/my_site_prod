@@ -3,12 +3,13 @@
 # ========================================
 
 from django.contrib import admin
+from django.contrib.auth.decorators import login_required
 # Django's built-in administration module
-# Provides the admin interface at /admin/
+# Provides the admin interface at /secure-console-7f9a2c-secure-console-7f9a2c-admin/
 
 from django.urls import path, include
 # path: Function for defining URL patterns
-# Example: path('admin/', admin.site.urls)
+# Example: path('secure-console-7f9a2c-admin/', admin.site.urls)
 # include: Function for including other URL configurations
 # Example: include('blog.urls', namespace='blog')
 
@@ -18,6 +19,7 @@ from django.contrib.sitemaps.views import sitemap
 # Generates /sitemap.xml with all public URLs
 
 from markdownx import urls as markdownx_urls
+from markdownx.views import ImageUploadView
 # markdownx_urls: URL patterns for django-markdownx
 # Provides routes for Markdown live preview functionality
 # For example: /markdownx/upload/ for image uploads
@@ -57,8 +59,8 @@ urlpatterns = [
     path("", TemplateView.as_view(template_name="index.html"), name="site_index"),
     # ===== ADMIN INTERFACE =====
     # Django Admin dashboard for managing models
-    # Accessible at: http://localhost:8001/admin/
-    path("admin/", admin.site.urls),
+    # Accessible at: http://localhost:8001/secure-console-7f9a2c-secure-console-7f9a2c-admin/
+    path(settings.ADMIN_URL_PATH, admin.site.urls),
 
     # ===== BLOG APPLICATION =====
     # All blog-related URLs (posts, comments, tags, etc.)
@@ -78,9 +80,8 @@ urlpatterns = [
     ),
 
     # ===== MARKDOWNX =====
-    # URL patterns for django-markdownx library
-    # Provides live preview and image upload functionality
-    # Accessible at: /markdownx/upload/ for image uploads
+    # Protect image uploads while keeping markdownx routes available.
+    path('markdownx/upload/', login_required(ImageUploadView.as_view()), name='markdownx_upload'),
     path('markdownx/', include(markdownx_urls)),
 
     # ===== USERS APPLICATION =====
@@ -95,7 +96,8 @@ urlpatterns = [
 # Serve user-uploaded files (images, avatars, etc.) during development
 # This is only active when DEBUG=True in settings.py
 # In production, media files should be served by nginx or a CDN
-urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 # ========================================
 # ADDITIONAL INFORMATION
@@ -105,7 +107,7 @@ urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 # ┌─────────────────────────────────────────────┐
 # │ http://localhost:8001/ (Base URL)           │
 # │   │                                         │
-# │   ├─ admin/        → Django Admin           │
+# │   ├─ secure-console-7f9a2c-admin/        → Django Admin           │
 # │   ├─ blog/         → Blog app (posts)       │
 # │   │   ├─ all/      → All posts list         │
 # │   │   ├─ create/   → Create new post        │

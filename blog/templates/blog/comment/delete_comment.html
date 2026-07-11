@@ -1,19 +1,57 @@
 {% extends 'blog/base.html' %}
 
-{% block title %}Comment Delete Confirm{% endblock title %}
+{% block title %}Delete Comment{% endblock title %}
 
 {% block content %}
-<h1>Are you sure want to delete this Comment?</h1>
+<style>
+    .comment-delete-shell { max-width: 960px; margin: 0 auto 36px; }
+    .comment-delete-hero {
+        margin-bottom: 24px; padding: 30px; border-radius: 28px;
+        background: radial-gradient(circle at top right, rgba(255,255,255,.2), transparent 28%), linear-gradient(135deg, #3f1d24, #8b2635 58%, #df9a76 155%);
+        color: #fff; box-shadow: 0 24px 54px rgba(15,23,42,.18);
+    }
+    .comment-delete-hero h1 { margin: 0 0 10px; border: 0; font-size: 42px; font-weight: 800; letter-spacing: -0.03em; }
+    .comment-delete-hero p { margin: 0; max-width: 760px; color: rgba(255,255,255,.9); line-height: 1.7; font-size: 16px; }
+    .comment-delete-layout { display: grid; grid-template-columns: minmax(0,1.45fr) minmax(280px,.85fr); gap: 22px; }
+    .comment-delete-panel { padding: 24px; border-radius: 22px; border: 1px solid #ead7db; background: #fff; box-shadow: 0 16px 36px rgba(15,23,42,.08); }
+    .comment-delete-panel h2, .comment-delete-panel h3 { margin: 0 0 14px; color: #2f1b22; }
+    .comment-delete-quote { padding: 18px; border-radius: 18px; background: #f8fafc; border: 1px solid #dbe5ed; color: #536576; line-height: 1.7; }
+    .comment-delete-actions { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 24px; }
+    .comment-delete-button, .comment-delete-link { display: inline-flex; align-items: center; justify-content: center; min-width: 148px; border-radius: 999px; padding: 12px 20px; font-size: 14px; font-weight: 700; line-height: 1.2; text-decoration: none; border: 0; }
+    .comment-delete-button { background: linear-gradient(135deg, #b42318, #7f1d1d); color: #fff; cursor: pointer; }
+    .comment-delete-link { background: #e9eef3; color: #21384b; }
+    .comment-delete-note { padding: 18px; border-radius: 18px; background: #fdf4f4; border: 1px solid #f4cdd2; color: #7a4a56; line-height: 1.7; }
+    @media screen and (max-width: 768px) {
+        .comment-delete-hero { padding: 24px 20px; }
+        .comment-delete-hero h1 { font-size: 32px; }
+        .comment-delete-layout { grid-template-columns: 1fr; }
+        .comment-delete-panel { padding: 18px; }
+    }
+</style>
 
-<div class="module">
-    <form action="" method="post">
-        {% csrf_token %}
-        <input type="submit" value="Confirm">
-    </form>
-</div>
+<section class="comment-delete-shell page-shell">
+    <div class="comment-delete-hero page-hero">
+        <h1 class="page-hero-title">Delete Comment</h1>
+        <p class="page-hero-copy">Review the comment before removal. This action permanently deletes the comment from the post.</p>
+    </div>
 
-<p>
-    <a href="{% url 'blog:post_detail' comment.post.publish.year comment.post.publish.month comment.post.publish.day comment.post.slug %}">Cancel</a>
-</p>
+    <div class="comment-delete-layout">
+        <section class="comment-delete-panel">
+            <h2>Comment Preview</h2>
+            <div class="comment-delete-quote">{{ comment.body }}</div>
+            <form method="post">
+                {% csrf_token %}
+                <div class="comment-delete-actions">
+                    <button type="submit" class="comment-delete-button">Delete Comment</button>
+                    <a href="{% url 'blog:post_detail' comment.post.publish.year comment.post.publish.month comment.post.publish.day comment.post.slug %}" class="comment-delete-link">Back to Post</a>
+                </div>
+            </form>
+        </section>
 
+        <aside class="comment-delete-panel comment-delete-note">
+            <h3>Before You Delete</h3>
+            <p>Removing the comment clears it from the post discussion immediately. Check the content first in case this was meant to be edited instead.</p>
+        </aside>
+    </div>
+</section>
 {% endblock content %}

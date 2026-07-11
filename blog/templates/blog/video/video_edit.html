@@ -1,0 +1,46 @@
+{% extends "blog/base.html" %}
+
+{% block title %}Edit Video{% endblock %}
+
+{% block content %}
+<style>
+.video-edit-shell { max-width: 1120px; margin: 0 auto 36px; display: grid; gap: 22px; }
+.video-edit-hero { padding: 30px; border-radius: 28px; background: radial-gradient(circle at top right, rgba(255,255,255,.24), transparent 28%), linear-gradient(135deg, #18263f, #7c3aed 58%, #ea580c 155%); color: #fff; box-shadow: 0 24px 54px rgba(15,23,42,.2); }
+.video-edit-hero h1 { margin: 0 0 10px; border: 0; font-size: 42px; }
+.video-edit-card { padding: 24px; border-radius: 22px; border: 1px solid #dbe4ec; background: #fff; box-shadow: 0 12px 30px rgba(15,23,42,.07); }
+.video-edit-card label { display: block; margin-bottom: 8px; font-weight: 700; color: #173042; }
+.video-edit-card input[type="text"], .video-edit-card input[type="file"], .video-edit-card textarea { width: 100%; margin: 0 0 16px; padding: 12px 14px; border: 1px solid #c6d3df; border-radius: 14px; background: #f8fbfd; }
+.video-edit-card textarea { min-height: 140px; resize: vertical; }
+.video-current-file { margin: 0 0 18px; padding: 14px 16px; border-radius: 16px; background: #f8fafc; color: #526476; }
+.video-errors { margin-bottom: 16px; padding: 14px 16px; border-radius: 14px; background: #fff1f1; color: #a61b1b; }
+.video-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+.video-button-primary, .video-button-secondary { display: inline-flex; align-items: center; justify-content: center; min-width: 112px; border-radius: 999px; padding: 10px 16px; font-size: 13px; font-weight: 700; text-decoration: none; border: 0; cursor: pointer; }
+.video-button-primary { background: #7c3aed; color: #fff; }
+.video-button-secondary { background: #e9eef3; color: #21384b; }
+</style>
+<section class="video-edit-shell page-shell">
+    <header class="video-edit-hero page-hero">
+        <h1 class="page-hero-title">Edit Video</h1>
+        <p class="page-hero-copy">Update the title, description, or replace the uploaded video file without exposing the media storage path.</p>
+    </header>
+    <form method="post" enctype="multipart/form-data" class="video-edit-card">
+        {% csrf_token %}
+        {% if form.errors %}<div class="video-errors">{{ form.errors }}</div>{% endif %}
+        <div class="video-current-file"><strong>Current video file:</strong> {{ videopost.get_video_filename }}</div>
+
+        <label for="{{ form.title.id_for_label }}">Title:</label>
+        {{ form.title }}
+
+        <label for="{{ form.video_file.id_for_label }}">Replace video file:</label>
+        {{ form.video_file }}
+
+        <label for="{{ form.description.id_for_label }}">Description:</label>
+        {{ form.description }}
+
+        <div class="video-actions">
+            <button type="submit" class="video-button-primary">Save Changes</button>
+            <a href="{% url 'blog:video_detail' videopost.id %}" class="video-button-secondary">Cancel</a>
+        </div>
+    </form>
+</section>
+{% endblock %}

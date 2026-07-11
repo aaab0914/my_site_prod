@@ -11,16 +11,18 @@
         color: #fff; box-shadow: 0 24px 54px rgba(15,23,42,.2);
     }
     .account-hero h1 { margin: 0 0 10px; border: 0; font-size: 42px; font-weight: 800; letter-spacing: -.03em; }
-    .account-hero p { margin: 0; max-width: 720px; color: rgba(255,255,255,.92); line-height: 1.7; font-size: 16px; }
+    .account-hero p { margin: 0; max-width: 760px; color: rgba(255,255,255,.92); line-height: 1.7; font-size: 16px; }
     .account-layout { display: grid; grid-template-columns: minmax(0,1.45fr) minmax(280px,.85fr); gap: 22px; }
     .account-panel { padding: 24px; border-radius: 22px; border: 1px solid #d7e1ea; background: #fff; box-shadow: 0 16px 36px rgba(15,23,42,.08); }
     .account-panel h2,.account-panel h3 { margin: 0 0 14px; color: #16283a; }
-    .account-form { display: grid; gap: 16px; }
-    .account-form p { margin: 0; }
-    .account-form label { display: block; float: none !important; margin-bottom: 8px; font-weight: 700; color: #173042; }
-    .account-form input,.account-form textarea,.account-form select { width: 100%; display: block; float: none !important; margin: 0; padding: 13px 15px; border: 1px solid #c8d5df; border-radius: 15px; background: #f7fafc; font-size: 14px; box-sizing: border-box; }
-    .account-form input[type="file"] { padding: 14px 15px; }
-    .account-form textarea { min-height: 130px; resize: vertical; }
+    .account-field { margin-bottom: 18px; }
+    .account-field label { display: block; float: none !important; margin-bottom: 8px; font-weight: 700; color: #173042; }
+    .account-field input,.account-field textarea,.account-field select { width: 100%; display: block; float: none !important; margin: 0; padding: 13px 15px; border: 1px solid #c8d5df; border-radius: 15px; background: #f7fafc; font-size: 14px; box-sizing: border-box; }
+    .account-field input[type="file"] { padding: 14px 15px; }
+    .account-field textarea { min-height: 130px; resize: vertical; }
+    .account-help { display: block; margin-top: 8px; color: #627486; font-size: 13px; line-height: 1.6; }
+    .account-error { display: block; margin-top: 8px; color: #b42318; font-size: 14px; }
+    .account-errors { margin-bottom: 18px; padding: 14px 16px; border-radius: 16px; background: #fff1f1; color: #ab1f1f; }
     .account-status { padding: 14px 16px; border-radius: 16px; font-size: 14px; line-height: 1.6; }
     .account-status.ok { background: #ecfdf3; color: #166534; border: 1px solid #bbf7d0; }
     .account-status.wait { background: #fff7ed; color: #9a3412; border: 1px solid #fed7aa; }
@@ -39,18 +41,46 @@
     }
 </style>
 
-<section class="account-shell">
-    <div class="account-hero">
-        <h1>Edit Profile</h1>
-        <p>Update your public profile, avatar, and personal details from a page that matches the rest of the site’s newer interface.</p>
+<section class="account-shell page-shell">
+    <div class="account-hero page-hero">
+        <h1 class="page-hero-title">Edit Profile</h1>
+        <p class="page-hero-copy">Update your public profile, avatar, and personal details from a page that matches the rest of the site’s newer interface.</p>
     </div>
 
     <div class="account-layout">
         <section class="account-panel">
             <h2>Profile Settings</h2>
-            <form method="post" enctype="multipart/form-data" class="account-form">
+            <form method="post" enctype="multipart/form-data">
                 {% csrf_token %}
-                {{ form.as_p }}
+
+                {% if form.non_field_errors %}
+                    <div class="account-errors">{{ form.non_field_errors }}</div>
+                {% endif %}
+
+                <div class="account-field">
+                    <label for="{{ form.avatar.id_for_label }}">Avatar</label>
+                    {{ form.avatar }}
+                    <div class="account-help">Choose a clear profile image. Avatar updates may be limited by your cooldown rule.</div>
+                    {% if form.avatar.errors %}
+                        <div class="account-error">{{ form.avatar.errors }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="account-field">
+                    <label for="{{ form.bio.id_for_label }}">Bio</label>
+                    {{ form.bio }}
+                    {% if form.bio.errors %}
+                        <div class="account-error">{{ form.bio.errors }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="account-field">
+                    <label for="{{ form.location.id_for_label }}">Location</label>
+                    {{ form.location }}
+                    {% if form.location.errors %}
+                        <div class="account-error">{{ form.location.errors }}</div>
+                    {% endif %}
+                </div>
 
                 {% if remaining_days > 0 %}
                     <div class="account-status wait">You can change your avatar again in <strong>{{ remaining_days }} day(s)</strong>.</div>

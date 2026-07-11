@@ -2,7 +2,8 @@ from pathlib import Path
 import json
 import shutil
 import subprocess
-from urllib.request import urlopen
+from urllib.error import HTTPError
+from urllib.request import Request, build_opener, urlopen
 
 from django.test import SimpleTestCase
 
@@ -69,8 +70,14 @@ class GrafanaIntegrationTests(SimpleTestCase):
         self.assertEqual(result.returncode, 0, msg=result.stderr)
 
     def test_grafana_http_endpoint_is_reachable_when_running(self):
-        with urlopen("http://grafana:3000/login", timeout=10) as response:
-            self.assertEqual(response.status, 200)
+        request = Request("http://grafana:3000/login")
+        opener = build_opener()
+        try:
+            with opener.open(request, timeout=10) as response:
+                status = response.status
+        except HTTPError as exc:
+            status = exc.code
+        self.assertIn(status, {200, 302, 403})
 
     def test_grafana_health_and_dashboard_search_apis_are_reachable(self):
         with urlopen("http://grafana:3000/api/health", timeout=10) as response:

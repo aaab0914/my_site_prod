@@ -28,3 +28,11 @@ CACHES = {
         "TIMEOUT": 120,
     }
 }
+
+if TESTING:
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+            "LOCATION": "test-suite",
+        }
+    }

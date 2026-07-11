@@ -1,10 +1,45 @@
 {% extends 'blog/base.html' %}
 
-{% block title %}Success!{% endblock title %}
+{% block title %}Post Deleted{% endblock title %}
 
 {% block content %}
-{#  <h1>Now, You are deleted "{{ object }}" Post.</h1>#}
-  <p>
-      Now, You can return to <a href="{% url 'blog:all_posts_list' %}">Home Page.</a>
-  </p>
+<style>
+    .post-delete-success-shell { max-width: 960px; margin: 0 auto 36px; }
+    .post-delete-success-hero {
+        margin-bottom: 24px; padding: 30px; border-radius: 28px;
+        background: radial-gradient(circle at top right, rgba(255,255,255,.24), transparent 28%), linear-gradient(135deg, #17263d, #7c2d12 58%, #d8b36a 155%);
+        color: #fff; box-shadow: 0 24px 54px rgba(15,23,42,.2);
+    }
+    .post-delete-success-hero h1 { margin: 0 0 10px; border: 0; font-size: 42px; font-weight: 800; letter-spacing: -0.03em; }
+    .post-delete-success-hero p { margin: 0; max-width: 760px; color: rgba(255,255,255,.92); line-height: 1.7; font-size: 16px; }
+    .post-delete-success-panel { padding: 24px; border-radius: 22px; border: 1px solid #d7e1ea; background: #fff; box-shadow: 0 16px 36px rgba(15,23,42,.08); }
+    .post-delete-success-panel p { margin: 0 0 18px; color: #546779; line-height: 1.7; }
+    .post-delete-success-actions { display: flex; gap: 12px; flex-wrap: wrap; }
+    .post-delete-success-button, .post-delete-success-link {
+        display: inline-flex; align-items: center; justify-content: center; min-width: 148px;
+        border-radius: 999px; padding: 12px 20px; font-size: 14px; font-weight: 700; line-height: 1.2; text-decoration: none;
+    }
+    .post-delete-success-button { background: linear-gradient(135deg, #7c2d12, #9a3412); color: #fff; }
+    .post-delete-success-link { background: #e9eef3; color: #21384b; }
+    @media screen and (max-width: 768px) {
+        .post-delete-success-hero { padding: 24px 20px; }
+        .post-delete-success-hero h1 { font-size: 32px; }
+        .post-delete-success-panel { padding: 18px; }
+    }
+</style>
+
+<section class="post-delete-success-shell page-shell">
+    <div class="post-delete-success-hero page-hero">
+        <h1 class="page-hero-title">Post Deleted</h1>
+        <p class="page-hero-copy">The selected post has been removed successfully.</p>
+    </div>
+
+    <section class="post-delete-success-panel">
+        <p>You can return to the post list to keep managing published entries, or create a new post from the editor page.</p>
+        <div class="post-delete-success-actions">
+            <a href="{% url 'blog:all_posts_list' %}" class="post-delete-success-button">Back to Posts</a>
+            <a href="{% url 'blog:post_create' %}" class="post-delete-success-link">Create Post</a>
+        </div>
+    </section>
+</section>
 {% endblock content %}

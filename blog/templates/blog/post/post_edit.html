@@ -1,0 +1,126 @@
+{% extends "blog/base.html" %}
+{% load blog_tags %}
+
+{% block title %}Edit {{ post.title }}{% endblock %}
+
+{% block content %}
+<style>
+    .post-edit-plain {
+        max-width: 860px;
+        padding-right: 96px;
+    }
+    .post-edit-plain h1 {
+        margin-bottom: 20px;
+    }
+    .post-edit-plain-field {
+        margin-bottom: 20px;
+    }
+    .post-edit-plain-field label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 700;
+    }
+    .post-edit-plain-field input,
+    .post-edit-plain-field textarea {
+        width: 100%;
+        max-width: 100%;
+        padding: 10px 12px;
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+        background: #fff;
+        color: #0f172a;
+        font: inherit;
+        box-sizing: border-box;
+    }
+    .post-edit-plain-field textarea {
+        min-height: 320px;
+        resize: vertical;
+        line-height: 1.8;
+    }
+    .post-edit-plain-help {
+        margin-top: 8px;
+        color: #64748b;
+        font-size: 13px;
+        line-height: 1.6;
+    }
+    .post-edit-plain-errors {
+        margin: 0 0 18px;
+        padding: 12px 14px;
+        border: 1px solid #fecaca;
+        background: #fff1f2;
+        color: #b91c1c;
+        border-radius: 8px;
+    }
+    .post-edit-plain-error {
+        margin-top: 8px;
+        color: #b91c1c;
+        font-size: 14px;
+    }
+    .post-edit-plain-actions {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        margin-top: 28px;
+    }
+    .post-edit-plain-button,
+    .post-edit-plain-link {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 110px;
+        padding: 10px 16px;
+        border-radius: 10px;
+        text-decoration: none;
+        font-weight: 700;
+    }
+    .post-edit-plain-button {
+        border: 0;
+        background: #0f766e;
+        color: #fff;
+        cursor: pointer;
+    }
+    .post-edit-plain-link {
+        background: #e5e7eb;
+        color: #1f2937;
+    }
+</style>
+
+<div class="post-edit-plain">
+    <h1>Edit Post</h1>
+
+    <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="post_action" value="save_post">
+
+        {% if form.non_field_errors %}
+            <div class="post-edit-plain-errors">{{ form.non_field_errors }}</div>
+        {% endif %}
+
+        <div class="post-edit-plain-field">
+            <label for="{{ form.title.id_for_label }}">Title</label>
+            {{ form.title }}
+            {% if form.title.errors %}<div class="post-edit-plain-error">{{ form.title.errors }}</div>{% endif %}
+        </div>
+
+        <div class="post-edit-plain-field">
+            <label for="{{ form.body.id_for_label }}">Description</label>
+            {{ form.body }}
+            <div class="post-edit-plain-help">This updates the main post body shown on the details page.</div>
+            {% if form.body.errors %}<div class="post-edit-plain-error">{{ form.body.errors }}</div>{% endif %}
+        </div>
+
+        <div class="post-edit-plain-field">
+            <label for="{{ form.tags.id_for_label }}">Tags</label>
+            {{ form.tags }}
+            <div class="post-edit-plain-help">Use commas between tags, for example: #heart, #love, #relationship</div>
+            {% if form.tags.errors %}<div class="post-edit-plain-error">{{ form.tags.errors }}</div>{% endif %}
+        </div>
+
+        <div class="post-edit-plain-actions">
+            <a href="{{ post.get_absolute_url }}" class="post-edit-plain-link">Back to Details</a>
+            <button type="submit" class="post-edit-plain-button">Save Post</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

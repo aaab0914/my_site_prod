@@ -40,7 +40,7 @@ class MediaSyncMiddlewareTests(SimpleTestCase):
         self.assertEqual(response.status_code, 404)
 
 
-@override_settings(MEDIA_SYNC_INTERVAL_SECONDS=10)
+@override_settings(MEDIA_SYNC_INTERVAL_SECONDS=10, MEDIA_SYNC_ENABLED=True)
 class MediaSyncThrottleTests(SimpleTestCase):
     def setUp(self):
         patcher = patch("my_site.media_sync.sync_site_media", return_value={"missing_actions": [], "trashed_files": []})

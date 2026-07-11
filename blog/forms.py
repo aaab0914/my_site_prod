@@ -11,6 +11,7 @@ and image compression logic.
 # =============================================================================
 
 from io import BytesIO
+import re
 # BytesIO: In-memory buffer for binary data, used to store compressed images.
 
 from django import forms
@@ -25,7 +26,7 @@ from django.core.files.uploadedfile import InMemoryUploadedFile
 from PIL import Image
 # PIL.Image: Python Imaging Library, used for opening and processing image files.
 
-from .models import Post, Comment, AudioPost
+from .models import Post, Comment, AudioPost, VideoPost
 
 
 # Post: The main blog post model.
@@ -63,9 +64,13 @@ class SearchForm(forms.Form):
 
 
 class PostCreateForm(forms.ModelForm):
+    TAG_NAME_RE = re.compile(r"#?[A-Za-z0-9_-]+")
+
     """
     Form for creating new blog posts with optional cover image compression.
     """
+
+    tags = forms.CharField(required=False, widget=forms.TextInput(attrs={"class": "form-control", "placeholder": "#heart, #love, #relationship"}))
 
     class Meta:
         model = Post
@@ -74,8 +79,46 @@ class PostCreateForm(forms.ModelForm):
             "title": forms.TextInput(attrs={"class": "form-control"}),
             "body": forms.Textarea(attrs={"class": "form-control", "rows": 10}),
             "cover_image": forms.FileInput(attrs={"class": "form-control"}),
-            "tags": forms.TextInput(attrs={"class": "form-control"}),
         }
+
+    def clean_tags(self):
+        raw_value = (self.cleaned_data.get("tags") or "").strip()
+        if not raw_value:
+            return ""
+
+        cleaned_tags = []
+        seen = set()
+        for match in self.TAG_NAME_RE.findall(raw_value):
+            tag = match.strip()
+            if not tag:
+                continue
+            if not tag.startswith("#"):
+                tag = f"#{tag}"
+            normalized = tag.lower()
+            if normalized in seen:
+                continue
+            seen.add(normalized)
+            cleaned_tags.append(normalized)
+
+        return ", ".join(cleaned_tags)
+
+    def save(self, commit=True):
+        post = super().save(commit=commit)
+        if commit:
+            tags_value = self.cleaned_data.get("tags", "")
+            post.tags.set([tag for tag in tags_value.split(", ") if tag])
+        else:
+            self._pending_tags = [tag for tag in self.cleaned_data.get("tags", "").split(", ") if tag]
+        return post
+
+    def save_m2m(self):
+        super_method = getattr(super(), "save_m2m", None)
+        if callable(super_method):
+            super_method()
+        if getattr(self, "instance", None) and getattr(self.instance, "pk", None):
+            pending_tags = getattr(self, "_pending_tags", None)
+            if pending_tags is not None:
+                self.instance.tags.set(pending_tags)
 
     def clean_cover_image(self):
         """
@@ -132,6 +175,14 @@ class PostCreateForm(forms.ModelForm):
 # COMMENT FORMS
 # =============================================================================
 
+class PostEditForm(PostCreateForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance and getattr(self.instance, "pk", None):
+            self.initial["tags"] = ", ".join(tag.name for tag in self.instance.tags.all())
+
+
+
 class CommentForm(forms.ModelForm):
     """
     Form for adding comments to blog posts.
@@ -149,33 +200,72 @@ class CommentForm(forms.ModelForm):
 # AUDIO FORMS
 # =============================================================================
 
+class AudioMultipleFileInput(forms.ClearableFileInput):
+    allow_multiple_selected = True
+
+
+class AudioMultipleFileField(forms.FileField):
+    def clean(self, data, initial=None):
+        if not data:
+            if initial:
+                return initial
+            if self.required:
+                raise ValidationError("Please choose at least one audio file.")
+            return []
+
+        files = data if isinstance(data, (list, tuple)) else [data]
+        return [super(AudioMultipleFileField, self).clean(file, initial) for file in files]
+
+
+
+
+class AudioEditFileInput(forms.ClearableFileInput):
+    template_name = "widgets/audio_clearable_file_input.html"
+    initial_text = "Current audio file"
+    input_text = "Choose replacement audio file"
+    clear_checkbox_label = "Remove current audio file"
+
+
+class AudioEditCoverInput(forms.ClearableFileInput):
+    template_name = "widgets/audio_clearable_file_input.html"
+    initial_text = "Current cover image"
+    input_text = "Choose replacement cover image"
+    clear_checkbox_label = "Remove current cover image"
+
+
 class AudioUploadForm(forms.ModelForm):
     """
     Form for uploading audio files.
     Includes validation for file type and size.
     """
 
+    audio_file = AudioMultipleFileField(
+        required=False,
+        widget=AudioMultipleFileInput(attrs={"accept": ".mp3,.wav,.ogg,audio/mpeg,audio/mp3,audio/wav,audio/x-wav,audio/ogg"}),
+    )
+
     class Meta:
         model = AudioPost
-        fields = ["music_name", "audio_file", "description"]
+        fields = ["music_name", "audio_file", "cover_image", "description"]
         widgets = {
+            "music_name": forms.TextInput(attrs={"placeholder": "Required for single upload"}),
+            "cover_image": AudioEditCoverInput(attrs={"accept": ".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"}),
             "description": forms.Textarea(attrs={"row": 3}),
         }
 
-    def clean_audio_file(self):
-        """
-        Validate a newly uploaded audio file.
+    def clean(self):
+        cleaned_data = super().clean()
+        audio_files = cleaned_data.get("audio_file") or []
+        music_name = (cleaned_data.get("music_name") or "").strip()
 
-        When editing an existing AudioPost, leaving the upload field blank keeps
-        the current file and must not trigger upload validation.
-        """
-        audio_file = self.cleaned_data.get("audio_file")
+        if audio_files and len(audio_files) == 1 and not music_name:
+            self.add_error("music_name", "Track title is required when uploading a single audio file.")
+
+        return cleaned_data
+
+    @staticmethod
+    def validate_audio_upload(audio_file):
         if not audio_file:
-            return audio_file
-
-        # Existing FieldFile objects from the model instance have no upload
-        # metadata like content_type. Only validate real newly uploaded files.
-        if not hasattr(audio_file, "content_type"):
             return audio_file
 
         allowed_types = {
@@ -190,9 +280,31 @@ class AudioUploadForm(forms.ModelForm):
             raise ValidationError("Audio upload must be an MP3, WAV, or OGG file.")
         if not audio_file.name.lower().endswith(allowed_extensions):
             raise ValidationError("Audio file extension must be .mp3, .wav, or .ogg.")
-        if audio_file.size > 10 * 1024 * 1024:
-            raise ValidationError("Audio upload must be 10MB or smaller.")
+        if audio_file.size > 25 * 1024 * 1024:
+            raise ValidationError("Audio upload must be 25MB or smaller.")
         return audio_file
+
+    def clean_audio_file(self):
+        """
+        Validate newly uploaded audio files.
+
+        When editing an existing AudioPost, leaving the upload field blank keeps
+        the current file and must not trigger upload validation.
+        """
+        audio_files = self.cleaned_data.get("audio_file")
+        if not audio_files:
+            return audio_files
+
+        if not isinstance(audio_files, (list, tuple)):
+            audio_files = [audio_files]
+
+        validated = []
+        for audio_file in audio_files:
+            if not hasattr(audio_file, "content_type"):
+                validated.append(audio_file)
+                continue
+            validated.append(self.validate_audio_upload(audio_file))
+        return validated
 
 # ┌─────────────────────────────────────────────────────────────────────────────┐
 # │                         blog/forms.py                                      │
@@ -257,3 +369,91 @@ class AudioUploadForm(forms.ModelForm):
 # │                      │  │   - Validate size    │  │                      │
 # │                      │  │     (max 10MB)       │  │                      │
 # └──────────────────────┘  └──────────────────────┘  └──────────────────────┘
+
+class AudioPostEditForm(forms.ModelForm):
+    audio_file = forms.FileField(
+        required=False,
+        widget=AudioEditFileInput(attrs={"accept": ".mp3,.wav,.ogg,audio/mpeg,audio/mp3,audio/wav,audio/x-wav,audio/ogg"}),
+    )
+
+    class Meta:
+        model = AudioPost
+        fields = ["music_name", "audio_file", "cover_image", "description"]
+        widgets = {
+            "music_name": forms.TextInput(),
+            "cover_image": forms.FileInput(attrs={"accept": ".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"}),
+            "description": forms.Textarea(attrs={"row": 3}),
+        }
+
+    def clean_audio_file(self):
+        audio_file = self.cleaned_data.get("audio_file")
+        if not audio_file or not hasattr(audio_file, "content_type"):
+            return self.instance.audio_file
+        return AudioUploadForm.validate_audio_upload(audio_file)
+
+    def clean_cover_image(self):
+        image = self.cleaned_data.get("cover_image")
+        if not image or not hasattr(image, "content_type"):
+            return self.instance.cover_image
+
+        allowed_types = {"image/jpeg", "image/png", "image/webp"}
+        allowed_extensions = (".jpg", ".jpeg", ".png", ".webp")
+        if getattr(image, "content_type", "") not in allowed_types:
+            raise ValidationError("Cover image must be a JPEG, PNG, or WebP image.")
+        if not image.name.lower().endswith(allowed_extensions):
+            raise ValidationError("Cover image extension must be .jpg, .jpeg, .png, or .webp.")
+        if image.size > 3 * 1024 * 1024:
+            raise ValidationError("Cover image must be 3MB or smaller.")
+        return image
+
+
+
+
+
+class VideoPostEditForm(forms.ModelForm):
+    video_file = forms.FileField(
+        required=False,
+        widget=forms.FileInput(attrs={"accept": ".mp4,.webm,.mov,video/mp4,video/webm,video/quicktime"}),
+    )
+
+    class Meta:
+        model = VideoPost
+        fields = ["title", "video_file", "description"]
+        widgets = {
+            "title": forms.TextInput(attrs={"placeholder": "Video title"}),
+            "description": forms.Textarea(attrs={"rows": 4}),
+        }
+
+    def clean_video_file(self):
+        video_file = self.cleaned_data.get("video_file")
+        if not video_file or not hasattr(video_file, "content_type"):
+            return self.instance.video_file
+        return VideoUploadForm.validate_video_file(video_file)
+
+class VideoUploadForm(forms.ModelForm):
+    class Meta:
+        model = VideoPost
+        fields = ["title", "video_file", "description"]
+        widgets = {
+            "title": forms.TextInput(attrs={"class": "form-control", "placeholder": "Optional title"}),
+            "video_file": forms.FileInput(attrs={"accept": ".mp4,.webm,.mov,video/mp4,video/webm,video/quicktime"}),
+            "description": forms.Textarea(attrs={"rows": 4}),
+        }
+
+    @staticmethod
+    def validate_video_file(video_file):
+        allowed_types = {"video/mp4", "video/webm", "video/quicktime"}
+        allowed_extensions = (".mp4", ".webm", ".mov")
+        if getattr(video_file, "content_type", "") not in allowed_types:
+            raise ValidationError("Video upload must be an MP4, WebM, or MOV file.")
+        if not video_file.name.lower().endswith(allowed_extensions):
+            raise ValidationError("Video file extension must be .mp4, .webm, or .mov.")
+        if video_file.size > 200 * 1024 * 1024:
+            raise ValidationError("Video upload must be 200MB or smaller.")
+        return video_file
+
+    def clean_video_file(self):
+        video_file = self.cleaned_data.get("video_file")
+        if not video_file:
+            raise ValidationError("Please choose a video file.")
+        return self.validate_video_file(video_file)

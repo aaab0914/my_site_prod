@@ -2,15 +2,25 @@ from pathlib import Path
 
 from django.conf import settings
 
+from blog.models import Post
 from my_site.media_cleanup import move_media_file_to_trash
+
 from .models import ImagePost
 
 
 def sync_gallery_media():
+    if not getattr(settings, "MEDIA_SYNC_ENABLED", True):
+        return {
+            "deleted_records": 0,
+            "created_records": 0,
+            "trashed_files": [],
+        }
+
     media_root = Path(settings.MEDIA_ROOT)
     posts_root = media_root / "posts"
     referenced_names = set()
     missing_ids = []
+    created_records = 0
 
     for image in ImagePost.objects.exclude(image="").only("id", "image"):
         image_name = (image.image.name or "").replace("\\", "/").strip("/")
@@ -24,6 +34,25 @@ def sync_gallery_media():
     if missing_ids:
         ImagePost.objects.filter(id__in=missing_ids).delete()
 
+    for post in Post.objects.exclude(cover_image="").exclude(cover_image__isnull=True).select_related("author"):
+        image_name = (post.cover_image.name or "").replace("\\", "/").strip("/")
+        if not image_name:
+            continue
+        if not (media_root / image_name).is_file():
+            continue
+
+        referenced_names.add(image_name)
+        _, created = ImagePost.objects.get_or_create(
+            image=image_name,
+            defaults={
+                "title": post.title[:200],
+                "description": "",
+                "uploaded_by": post.author,
+            },
+        )
+        if created:
+            created_records += 1
+
     trashed_files = []
     if posts_root.exists():
         for file_path in posts_root.rglob("*"):
@@ -33,12 +62,10 @@ def sync_gallery_media():
             if relative_name not in referenced_names:
                 trash_name = move_media_file_to_trash(relative_name)
                 if trash_name:
-                    trashed_files.append(
-                        {
-                            "from": relative_name,
-                            "to": trash_name,
-                        }
-                    )
+                    trashed_files.append({
+                        "from": relative_name,
+                        "to": trash_name,
+                    })
 
         for directory in sorted(
             (path for path in posts_root.rglob("*") if path.is_dir()),
@@ -52,5 +79,6 @@ def sync_gallery_media():
 
     return {
         "deleted_records": len(missing_ids),
+        "created_records": created_records,
         "trashed_files": trashed_files,
     }

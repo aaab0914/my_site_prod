@@ -1,0 +1,119 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+  <a href="{% url 'admin:index' %}">Home</a>
+  &rsaquo; System Status
+</div>
+{% endblock %}
+
+{% block content %}
+<div id="content-main" style="max-width: 1180px;">
+  <div class="app-blog module">
+    <table>
+      <caption>Database Backup Status</caption>
+      <tbody>
+        <tr><th scope="row">Latest status</th><td>{% if latest_backup_success %}<strong style="color:#0f766e;">Healthy</strong>{% else %}<strong style="color:#b91c1c;">Warning</strong>{% endif %}</td></tr>
+        <tr><th scope="row">Latest message</th><td>{{ latest_backup_message }}</td></tr>
+        <tr><th scope="row">Latest backup file</th><td>{% if latest_backup %}{{ latest_backup.name }}{% else %}-{% endif %}</td></tr>
+        <tr><th scope="row">Latest backup size</th><td>{{ latest_backup_size }}</td></tr>
+        <tr><th scope="row">Latest backup modified</th><td>{% if latest_backup_mtime %}{{ latest_backup_mtime }}{% else %}-{% endif %}</td></tr>
+        <tr><th scope="row">Backup file count</th><td>{{ backup_count }}</td></tr>
+        <tr><th scope="row">Backup log</th><td>{{ backup_log_path }}</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="app-blog module" style="margin-top: 24px;">
+    <table>
+      <caption>Today Log Files</caption>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Exists</th>
+          <th>Size</th>
+          <th>Last Modified</th>
+          <th>Path</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in log_statuses %}
+        <tr>
+          <th scope="row">{{ item.label }}</th>
+          <td>{% if item.exists %}Yes{% else %}No{% endif %}</td>
+          <td>{{ item.size }}</td>
+          <td>{% if item.modified %}{{ item.modified }}{% else %}-{% endif %}</td>
+          <td>{{ item.path }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="app-blog module" style="margin-top: 24px;">
+    <table>
+      <caption>Latest Backup Files</caption>
+      <thead>
+        <tr>
+          <th>Filename</th>
+          <th>Modified</th>
+          <th>Size</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in backup_files %}
+        <tr>
+          <th scope="row">{{ item.name }}</th>
+          <td>{{ item.modified }}</td>
+          <td>{{ item.size }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="3">No backup files found.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="app-blog module" style="margin-top: 24px;">
+    <table>
+      <caption>Backup Log Tail</caption>
+      <tbody>
+        {% for line in backup_log_tail %}
+        <tr><td><code>{{ line }}</code></td></tr>
+        {% empty %}
+        <tr><td>No backup log entries found.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="app-blog module" style="margin-top: 24px;">
+    <table>
+      <caption>Today Log Tail</caption>
+      <thead>
+        <tr>
+          <th>Log Type</th>
+          <th>Recent Lines</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in log_statuses %}
+        <tr>
+          <th scope="row">{{ item.label }}</th>
+          <td>
+            {% if item.tail %}
+              {% for line in item.tail %}
+                <div><code>{{ line }}</code></div>
+              {% endfor %}
+            {% else %}
+              -
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

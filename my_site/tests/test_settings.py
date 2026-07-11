@@ -17,9 +17,9 @@ class SettingsSplitTests(SimpleTestCase):
         dockerfile = (self._base_dir() / "Dockerfile").read_text(encoding="utf-8")
         self.assertIn("DJANGO_SETTINGS_MODULE=my_site.settings.prod", dockerfile)
 
-    def test_dev_compose_explicitly_sets_dev_settings_module(self):
+    def test_compose_explicitly_sets_prod_settings_module(self):
         compose = (self._base_dir() / "docker-compose.yml").read_text(encoding="utf-8")
-        self.assertIn("DJANGO_SETTINGS_MODULE: my_site.settings.dev", compose)
+        self.assertIn("DJANGO_SETTINGS_MODULE: my_site.settings.prod", compose)
 
     def test_prod_compose_explicitly_sets_prod_settings_module(self):
         compose = (self._base_dir() / "docker-compose.prod.yml").read_text(encoding="utf-8")
@@ -172,3 +172,42 @@ class SecurityHeadersRuntimeTests(SimpleTestCase):
     def test_security_middleware_sets_referrer_policy_header(self):
         response = self.client.get("/security-header-probe/")
         self.assertEqual(response["Referrer-Policy"], "same-origin")
+
+
+
+class IndexPortalTests(SimpleTestCase):
+    def test_index_uses_blog_media_routes_instead_of_legacy_root_shortcuts(self):
+        index_html = (self._base_dir() / "my_site" / "templates" / "index.html").read_text(encoding="utf-8")
+        self.assertIn('data-path="/blog/gallery/"', index_html)
+        self.assertIn('data-path="/blog/gallery/upload/"', index_html)
+        self.assertIn('data-path="/blog/album/"', index_html)
+        self.assertIn('data-path="/blog/album/upload/"', index_html)
+        self.assertNotIn('data-path="/gallery/"', index_html)
+        self.assertNotIn('data-path="/gallery/upload/"', index_html)
+
+
+
+    def test_index_loads_lobster_font_and_uses_portal_title(self):
+        index_html = (self._base_dir() / "my_site" / "templates" / "index.html").read_text(encoding="utf-8")
+        self.assertIn("fonts.googleapis.com/css2?family=Lobster&display=swap", index_html)
+        self.assertIn("<title>my_site Portal</title>", index_html)
+
+    @staticmethod
+    def _base_dir():
+        return Path(__file__).resolve().parent.parent.parent
+
+
+
+class TemplateStructureTests(SimpleTestCase):
+    def test_template_dirs_use_project_template_directory(self):
+        base_settings = (self._base_dir() / "my_site" / "settings" / "base.py").read_text(encoding="utf-8")
+        self.assertIn('BASE_DIR / "my_site" / "templates"', base_settings)
+        self.assertNotIn('"DIRS": [BASE_DIR]', base_settings)
+
+    def test_site_index_template_lives_under_project_templates(self):
+        template_path = self._base_dir() / "my_site" / "templates" / "index.html"
+        self.assertTrue(template_path.exists())
+
+    @staticmethod
+    def _base_dir():
+        return Path(__file__).resolve().parent.parent.parent

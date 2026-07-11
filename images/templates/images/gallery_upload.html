@@ -5,25 +5,25 @@
 {% block content %}
 <style>
     .upload-shell {
-        max-width: 980px;
+        max-width: 1120px;
         margin: 0 auto 32px;
     }
 
     .upload-hero {
         margin-bottom: 24px;
-        padding: 28px 30px;
-        border-radius: 24px;
+        padding: 30px;
+        border-radius: 28px;
         background: linear-gradient(135deg, #103c52, #1d6a70 58%, #d9efe3 140%);
         color: #fff;
-        box-shadow: 0 18px 40px rgba(16, 60, 82, 0.22);
+        box-shadow: 0 24px 54px rgba(16, 60, 82, 0.22);
     }
 
     .upload-hero h1 {
         margin: 0 0 10px;
         padding: 0;
         border: 0;
-        font-size: 40px;
-        font-weight: 700;
+        font-size: 42px;
+        font-weight:  800;
     }
 
     .upload-hero p {
@@ -236,23 +236,23 @@
     }
 </style>
 
-<section class="upload-shell">
-    <div class="upload-hero">
-        <h1>Upload Images</h1>
-        <p>Logged-in users can submit up to 99 images in one pass. Choose local files, or click the paste area and press Ctrl+V to drop clipboard images straight into the queue.</p>
+<section class="upload-shell page-shell">
+    <div class="upload-hero page-hero">
+        <h1 class="page-hero-title">Upload Images</h1>
+        <p class="page-hero-copy">Logged-in users can submit Upload exactly 1 image per submission. Choose local files, or click the paste area and press Ctrl+V to drop clipboard images straight into the queue.</p>
     </div>
 
     <div class="upload-grid">
         <form method="post" enctype="multipart/form-data" id="gallery-upload-form" class="upload-panel">
             {% csrf_token %}
-            <h2>Add Images to Gallery</h2>
+            <h2>Add One Image to Gallery</h2>
 
             {% if form.non_field_errors %}
                 <div class="upload-errors">{{ form.non_field_errors }}</div>
             {% endif %}
 
             <div class="upload-field">
-                <label for="{{ form.images.id_for_label }}">Local image files</label>
+                <label for="{{ form.images.id_for_label }}">Local image file</label>
                 {{ form.images }}
                 {% if form.images.errors %}
                     <div class="upload-error">{{ form.images.errors }}</div>
@@ -275,7 +275,7 @@
             {{ form.pasted_images_data }}
 
             <div class="upload-actions">
-                <button type="submit" class="upload-submit">Upload to Gallery</button>
+                <button type="submit" class="upload-submit">Upload Image</button>
                 <button type="button" class="upload-clear" id="clear-selection">Clear Selection</button>
             </div>
         </form>
@@ -292,6 +292,7 @@
                 <h3>Rules</h3>
                 <ul>
                     <li>Only logged-in users can upload.</li>
+                    <li>Supported formats: JPEG, PNG, WebP.</li>
                     <li>JPEG, PNG, and WebP are supported.</li>
                     <li>You can submit up to 99 images at one time.</li>
                     <li>Large images are optimized before saving.</li>

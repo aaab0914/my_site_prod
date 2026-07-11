@@ -75,6 +75,16 @@ post_urlpatterns = [
         views.post_create,
         name="post_create",
     ),
+    path(
+        "<int:pk>/edit/",
+        views.post_edit,
+        name="post_edit",
+    ),
+    path(
+        "media/post-cover/<int:pk>/",
+        views.post_cover_image,
+        name="post_cover_image",
+    ),
     # Delete a post (requires login and ownership/superuser permission).
     path(
         "<int:pk>/delete/",
@@ -95,6 +105,11 @@ post_urlpatterns = [
 # =============================================================================
 
 comment_urlpatterns = [
+    path(
+        "media/comment-image/<int:comment_id>/",
+        views.comment_image,
+        name="comment_image",
+    ),
     # Add a new comment to a post (POST only, requires login).
     path(
         "<int:post_id>/comment/",
@@ -121,6 +136,16 @@ comment_urlpatterns = [
 # =============================================================================
 
 audio_urlpatterns = [
+    path(
+        "media/audio/<int:pk>/",
+        views.audio_file_proxy,
+        name="audio_file_proxy",
+    ),
+    path(
+        "media/audio-cover/<int:pk>/",
+        views.audio_cover_image_proxy,
+        name="audio_cover_image_proxy",
+    ),
     # Upload a new audio post (requires login).
     path(
         "audio/upload/",
@@ -148,8 +173,46 @@ audio_urlpatterns = [
     # Success page shown after an audio post is deleted.
     path(
         "audio/delete/success/",
-        views.post_delete_success,
+        views.audio_post_delete_success,
         name="audio_post_delete_success",
+    ),
+]
+
+
+# =============================================================================
+# VIDEO URL PATTERNS
+# =============================================================================
+
+video_urlpatterns = [
+    path(
+        "video/<int:pk>/",
+        views.video_detail,
+        name="video_detail",
+    ),
+    path(
+        "video/<int:pk>/edit/",
+        views.video_edit,
+        name="video_edit",
+    ),
+    path(
+        "video/<int:pk>/delete/",
+        views.video_delete,
+        name="video_delete",
+    ),
+    path(
+        "video/list/",
+        views.video_list,
+        name="video_list",
+    ),
+    path(
+        "media/video/<int:pk>/",
+        views.video_file_proxy,
+        name="video_file_proxy",
+    ),
+    path(
+        "video/upload/",
+        views.video_upload,
+        name="video_upload",
     ),
 ]
 
@@ -228,9 +291,10 @@ urlpatterns = [
     # Expand all URL pattern lists into the master urlpatterns list.
     *post_urlpatterns,
     *user_urlpatterns,
+    *audio_urlpatterns,
+    *video_urlpatterns,
     *comment_urlpatterns,
     *api_urlpatterns,
-    *audio_urlpatterns,
 ]
 
 # ┌─────────────────────────────────────────────────────────────────────────────┐

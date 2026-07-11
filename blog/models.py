@@ -148,6 +148,11 @@ class Post(models.Model):
     def get_markdown_body(self):
         return markdown.markdown(self.body)
 
+    def get_cover_image_proxy_url(self):
+        if not self.cover_image:
+            return ""
+        return reverse("blog:post_cover_image", args=[self.pk])
+
 
 # =============================================================================
 # COMMENT MODEL
@@ -185,6 +190,11 @@ class Comment(models.Model):
             return self.author.username
         return self.email.split("@", 1)[0]
 
+    def get_image_proxy_url(self):
+        if not self.image:
+            return ""
+        return reverse("blog:comment_image", args=[self.pk])
+
 
 # =============================================================================
 # AUDIO POST MODEL
@@ -201,6 +211,7 @@ class AudioPost(models.Model):
         - Automatic timestamp tracking
     """
     audio_file = models.FileField(upload_to="audio/%Y/%m/%d")
+    cover_image = models.ImageField(upload_to="audio/covers/%Y/%m/%d", blank=True, null=True)
     description = models.TextField(blank=True)
     uploaded_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="audio_posts")
     music_name = models.CharField(max_length=200, blank=True)
@@ -219,6 +230,61 @@ class AudioPost(models.Model):
         if not self.music_name and self.audio_file:
             self.music_name = os.path.splitext(os.path.basename(self.audio_file.name))[0]
         super().save(*args, **kwargs)
+
+    def get_audio_filename(self):
+        if not self.audio_file:
+            return ""
+        return self.audio_file.name.rsplit("/", 1)[-1]
+
+    def get_cover_filename(self):
+        if not self.cover_image:
+            return ""
+        return self.cover_image.name.rsplit("/", 1)[-1]
+
+    def get_audio_proxy_url(self):
+        if not self.audio_file:
+            return ""
+        version = int((self.updated or self.created).timestamp()) if (self.updated or self.created) else self.pk
+        return f'{reverse("blog:audio_file_proxy", args=[self.pk])}?v={version}'
+
+    def get_cover_image_proxy_url(self):
+        if not self.cover_image:
+            return ""
+        version = int((self.updated or self.created).timestamp()) if (self.updated or self.created) else self.pk
+        return f'{reverse("blog:audio_cover_image_proxy", args=[self.pk])}?v={version}'
+
+
+
+class VideoPost(models.Model):
+    video_file = models.FileField(upload_to="videos/%Y/%m/%d")
+    title = models.CharField(max_length=200, blank=True)
+    description = models.TextField(blank=True)
+    uploaded_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="video_posts")
+    created = models.DateTimeField(auto_now_add=True)
+    updated = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-created"]
+        indexes = [models.Index(fields=["created"])]
+
+    def __str__(self):
+        return self.title or self.get_video_filename()
+
+    def save(self, *args, **kwargs):
+        if not self.title and self.video_file:
+            self.title = os.path.splitext(os.path.basename(self.video_file.name))[0]
+        super().save(*args, **kwargs)
+
+    def get_video_filename(self):
+        if not self.video_file:
+            return ""
+        return self.video_file.name.rsplit("/", 1)[-1]
+
+    def get_video_proxy_url(self):
+        if not self.video_file:
+            return ""
+        version = int((self.updated or self.created).timestamp()) if (self.updated or self.created) else self.pk
+        return f'{reverse("blog:video_file_proxy", args=[self.pk])}?v={version}'
 
 
 # =============================================================================

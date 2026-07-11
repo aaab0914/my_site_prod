@@ -4,10 +4,77 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{% block title %}{% endblock %}</title>
     <link href="{% static "css/blog.css" %}" rel="stylesheet">
 </head>
 <body>
+<style>
+    .messages { display: grid; gap: 12px; width: min(100%, 1120px); max-width: 1120px; margin: 0 auto 20px; }
+    .message { padding: 14px 16px; border-radius: 16px; border: 1px solid transparent; line-height: 1.6; box-shadow: 0 10px 24px rgba(15,23,42,.06); }
+    .message-success { background: #edf9f2; color: #14532d; border-color: #b7e4c7; }
+    .message-error { background: #fff1f2; color: #9f1239; border-color: #fecdd3; }
+    .message-warning { background: #fff8e8; color: #92400e; border-color: #fcd34d; }
+    .message-info { background: #eef6ff; color: #1d4ed8; border-color: #bfdbfe; }
+
+    .page-shell {
+        width: min(100%, 1120px) !important;
+        max-width: 1120px !important;
+        margin: 0 auto 36px !important;
+    }
+    .page-hero {
+        min-height: 184px !important;
+        margin-bottom: 24px !important;
+        padding: 30px !important;
+        border-radius: 28px !important;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: center !important;
+        box-shadow: 0 24px 54px rgba(15,23,42,.2) !important;
+    }
+    .page-hero.page-hero {
+        min-height: 184px !important;
+    }
+    .page-hero-title,
+    .page-hero.page-hero .page-hero-title {
+        margin: 0 0 10px !important;
+        padding: 0 !important;
+        border: 0 !important;
+        font-size: 42px !important;
+        font-weight: 800 !important;
+        letter-spacing: -.03em !important;
+    }
+    .page-hero-copy,
+    .page-hero.page-hero .page-hero-copy {
+        margin: 0 !important;
+        max-width: 760px !important;
+        font-size: 16px !important;
+        line-height: 1.7 !important;
+    }
+    @media screen and (max-width: 900px) {
+        .page-shell {
+            width: 100% !important;
+            margin: 0 auto 24px !important;
+        }
+        .page-hero {
+            min-height: 0 !important;
+            padding: 24px 20px !important;
+        }
+        .page-hero-title,
+        .page-hero.page-hero .page-hero-title {
+            font-size: 32px !important;
+        }
+    }
+
+    .sidebar-inline-icon {
+        display: inline-block;
+        width: 1.05em;
+        margin-right: 4px;
+        text-align: center;
+        font-size: 0.95em;
+        vertical-align: -0.05em;
+    }
+</style>
 
 <div id="content">
     <p class="blog-home">
@@ -15,7 +82,7 @@
     </p>
 
     {% if messages %}
-        <div class="messages">
+        <div class="messages page-shell">
             {% for message in messages %}
                 <div class="message message-{{ message.tags }}">{{ message }}</div>
             {% endfor %}
@@ -31,32 +98,36 @@
         <p>Welcome, {{ request.user.username }}!</p>
 
         <p>
-            <a href="{% url 'blog:post_create' %}">✏️ Create New Post</a>
+            <a href="{% url 'blog:post_create' %}"><span class="sidebar-inline-icon">✏️</span>Create New Post</a>
         </p>
 
         <p>
-            <a href="{% url 'blog:audio_upload' %}">🎵 Upload Audio</a> |
-            <a href="{% url 'blog:audio_list' %}">Audio List</a>
+            <a href="{% url 'blog:audio_upload' %}"><span class="sidebar-inline-icon">🎵</span>Upload Audio</a> |
+            <a href="{% url 'blog:audio_list' %}"><span class="sidebar-inline-icon">🎧</span>Audio List</a>
+            {% if request.user.is_superuser %}| <a href="{% url 'blog:video_upload' %}"><span class="sidebar-inline-icon">🎬</span>Upload Video</a>{% endif %} |
+            <a href="{% url 'blog:video_list' %}"><span class="sidebar-inline-icon">📺</span>Video List</a>
         </p>
 
         <p>
-            <a href="{% url 'blog:images:gallery_list' %}">🖼 Gallery</a> |
-            <a href="{% url 'blog:images:gallery_upload' %}">Upload Images</a>
+            <a href="{% url 'blog:images:gallery_list' %}"><span class="sidebar-inline-icon">🖼️</span>Gallery</a> |
+            <a href="{% url 'blog:images:album_list' %}"><span class="sidebar-inline-icon">🗂️</span>Album</a> |
+            <a href="{% url 'blog:images:gallery_upload' %}"><span class="sidebar-inline-icon">📷</span>Upload Images</a> |
+            <a href="{% url 'blog:images:album_upload' %}"><span class="sidebar-inline-icon">🧾</span>Upload Album</a>
         </p>
 
         <p>
-            <a href="{% url 'users:profile' %}">My Profile</a> |
-            <a href="{% url 'users:logout' %}">Logout</a>
+            <a href="{% url 'users:profile' %}"><span class="sidebar-inline-icon">👤</span>My Profile</a> |
+            <a href="{% url 'users:logout' %}"><span class="sidebar-inline-icon">↩️</span>Logout</a>
         </p>
         <p>
             <a href="{% url 'users:account_delete' %}" style="color: #cc0000;">
-                Delete Account
+                <span class="sidebar-inline-icon">🗑️</span>Delete Account
             </a>
         </p>
 
         <div class="search-button-container">
             <a href="{% url 'blog:post_search' %}" class="search-button-link">
-                🔍 Search Posts
+                <span class="sidebar-inline-icon">🔍</span>Search Posts
             </a>
         </div>
 
@@ -87,16 +158,18 @@
         {% endif %}
     {% else %}
         <p>
-            <a href="{% url 'users:login' %}">Log in</a> |
-            <a href="{% url 'users:register' %}">Register</a>
+            <a href="{% url 'users:login' %}"><span class="sidebar-inline-icon">🔐</span>Log in</a> |
+            <a href="{% url 'users:register' %}"><span class="sidebar-inline-icon">📝</span>Register</a>
         </p>
 
         <p>
-            <a href="{% url 'blog:audio_list' %}">🎵 Audio List</a>
+            <a href="{% url 'blog:audio_list' %}"><span class="sidebar-inline-icon">🎧</span>Audio List</a> |
+            <a href="{% url 'blog:video_list' %}"><span class="sidebar-inline-icon">📺</span>Video List</a>
         </p>
 
         <p>
-            <a href="{% url 'blog:images:gallery_list' %}">🖼 Gallery</a>
+            <a href="{% url 'blog:images:gallery_list' %}"><span class="sidebar-inline-icon">🖼️</span>Gallery</a> |
+            <a href="{% url 'blog:images:album_list' %}"><span class="sidebar-inline-icon">🗂️</span>Album</a>
         </p>
     {% endif %}
 </div>

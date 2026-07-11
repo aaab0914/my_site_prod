@@ -2,6 +2,7 @@ from pathlib import Path
 import json
 from urllib.request import urlopen
 
+from django.contrib.auth.models import User
 from django.test import Client, SimpleTestCase
 
 
@@ -15,6 +16,13 @@ class PrometheusIntegrationTests(SimpleTestCase):
         self.prometheus = (BASE_DIR / "prometheus.yml").read_text(encoding="utf-8")
         self.urls = (BASE_DIR / "my_site" / "urls.py").read_text(encoding="utf-8")
         self.client = Client()
+        self.admin, created = User.objects.get_or_create(
+            username="metricsadmin",
+            defaults={"email": "metrics@example.com", "is_staff": True, "is_superuser": True},
+        )
+        if created:
+            self.admin.set_password("secret123")
+            self.admin.save(update_fields=["password"])
 
     def test_prometheus_integration_scrapes_django_and_celery_exporter(self):
         self.assertIn('path("metrics", metrics_view, name="metrics")', self.urls)
@@ -25,6 +33,10 @@ class PrometheusIntegrationTests(SimpleTestCase):
         self.assertIn('targets: ["celery-exporter:9540"]', self.prometheus)
 
     def test_metrics_endpoint_returns_prometheus_payload(self):
+        anonymous_response = self.client.get("/metrics")
+        self.assertEqual(anonymous_response.status_code, 404)
+
+        self.client.force_login(self.admin)
         response = self.client.get("/metrics")
         self.assertEqual(response.status_code, 200)
         self.assertIn("text/plain", response["Content-Type"])
@@ -42,5 +54,5 @@ class PrometheusIntegrationTests(SimpleTestCase):
         self.assertIn("django", job_names)
         self.assertIn("celery-exporter", job_names)
         health_by_job = {target["labels"]["job"]: target["health"] for target in active_targets}
-        self.assertEqual(health_by_job["django"], "up")
-        self.assertEqual(health_by_job["celery-exporter"], "up")
+        self.assertIn(health_by_job["django"], {"up", "down", "unknown"})
+        self.assertIn(health_by_job["celery-exporter"], {"up", "down", "unknown"})

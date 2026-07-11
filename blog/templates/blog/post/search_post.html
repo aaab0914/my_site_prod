@@ -31,7 +31,7 @@
 
     .search-hero p {
         margin: 0;
-        max-width: 720px;
+        max-width: 760px;
         color: rgba(255, 255, 255, 0.92);
         line-height: 1.7;
         font-size: 16px;
@@ -210,11 +210,11 @@
     }
 </style>
 
-<section class="search-shell">
+<section class="search-shell page-shell">
     {% if query %}
-        <div class="search-hero">
-            <h1>Search Results</h1>
-            <p>Review matching posts for your query and jump straight into the content that matters.</p>
+        <div class="search-hero page-hero">
+            <h1 class="page-hero-title">Search Results</h1>
+            <p class="page-hero-copy">Review matching posts for your query and jump straight into the content that matters.</p>
         </div>
 
         <div class="search-layout">
@@ -222,7 +222,7 @@
                 {% with results.count as total_results %}
                     <div class="search-results-meta">
                         Results for <strong>"{{ query }}"</strong><br>
-                        Found {{ total_results }} match{{ total_results|pluralize }}.
+                        Found {{ total_results }} result{{ total_results|pluralize }}.
                     </div>
                 {% endwith %}
 
@@ -259,7 +259,7 @@
             </aside>
         </div>
     {% else %}
-        <div class="search-hero">
+        <div class="search-hero page-hero">
             <h1>Search Posts</h1>
             <p>Find posts by topic, title, or phrase with a cleaner search page that fits the newer upload screens.</p>
         </div>

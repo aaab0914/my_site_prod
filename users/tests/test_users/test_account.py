@@ -73,3 +73,24 @@ class UsernameChangeTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.user.refresh_from_db()
         self.assertEqual(self.user.username, "testuser")
+
+
+class LogoutViewTests(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.user = User.objects.create_user(username="logoutuser", password="testpass123")
+        self.client.login(username="logoutuser", password="testpass123")
+        self.url = reverse("users:logout")
+
+    def test_logout_get_only_shows_confirmation(self):
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.wsgi_request.user.is_authenticated)
+        self.assertContains(response, "Confirm Logout")
+
+    def test_logout_requires_post_to_end_session(self):
+        response = self.client.post(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Logged Out")
+        follow_up = self.client.get(reverse("users:profile"))
+        self.assertEqual(follow_up.status_code, 302)

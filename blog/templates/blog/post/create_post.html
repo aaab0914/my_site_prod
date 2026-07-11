@@ -1,13 +1,453 @@
 {% extends "blog/base.html" %}
 {% load blog_tags %}
 
-{% block title %}Create New Post{% endblock %}
+{% block title %}Create Post{% endblock %}
 
 {% block content %}
-    <h1>Create New Post</h1>
-    <form method="post" enctype="multipart/form-data">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit" class="btn btn-primary">Publish</button>
-    </form>
+<style>
+    .post-create-shell {
+        max-width: 1120px;
+        margin: 0 auto 36px;
+        overflow: hidden;
+    }
+
+    .post-create-shell *,
+    .post-create-shell *::before,
+    .post-create-shell *::after {
+        box-sizing: border-box;
+    }
+
+    .post-create-shell label,
+    .post-create-shell input,
+    .post-create-shell textarea,
+    .post-create-shell button {
+        float: none !important;
+        clear: none !important;
+    }
+
+    .post-create-shell form::after,
+    .post-create-field::after,
+    .post-create-actions::after {
+        content: "";
+        display: block;
+        clear: both;
+    }
+
+    .post-create-hero {
+        margin-bottom: 24px;
+        padding: 30px;
+        border-radius: 28px;
+        background:
+            radial-gradient(circle at top right, rgba(255, 255, 255, 0.24), transparent 28%),
+            linear-gradient(135deg, #18263f, #1d4f7b 58%, #d5ab63 150%);
+        color: #fff;
+        box-shadow: 0 24px 54px rgba(15, 23, 42, 0.2);
+    }
+
+    .post-create-hero h1 {
+        margin: 0 0 10px;
+        border: 0;
+        font-size: 42px;
+        font-weight: 800;
+        letter-spacing: -0.03em;
+    }
+
+    .post-create-hero p {
+        max-width: 760px;
+        margin: 0;
+        color: rgba(255, 255, 255, 0.92);
+        line-height: 1.7;
+        font-size: 16px;
+    }
+
+    .post-create-pills {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-top: 18px;
+    }
+
+    .post-create-pill {
+        display: inline-flex;
+        align-items: center;
+        padding: 10px 14px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.16);
+        backdrop-filter: blur(8px);
+        font-size: 13px;
+        font-weight: 700;
+    }
+
+    .post-create-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1.5fr) minmax(280px, 0.9fr);
+        gap: 22px;
+        align-items: start;
+    }
+
+    .post-create-panel {
+        min-width: 0;
+        padding: 24px;
+        border-radius: 22px;
+        border: 1px solid #d7e1ea;
+        background: #fff;
+        box-shadow: 0 16px 36px rgba(15, 23, 42, 0.08);
+    }
+
+    .post-create-panel h2,
+    .post-create-panel h3 {
+        margin: 0 0 14px;
+        color: #16283a;
+    }
+
+    .post-create-field {
+        display: block;
+        width: 100%;
+        margin-bottom: 18px;
+    }
+
+    .post-create-field label {
+        display: block;
+        width: 100%;
+        margin: 0 0 8px;
+        font-weight: 700;
+        color: #173042;
+    }
+
+    .post-create-field input,
+    .post-create-field textarea {
+        width: 100%;
+        max-width: 100%;
+        display: block;
+        margin: 0;
+        padding: 13px 15px;
+        border: 1px solid #c8d5df;
+        border-radius: 15px;
+        background: #f7fafc;
+        font-size: 14px;
+        box-sizing: border-box;
+    }
+
+    .post-create-field input[type="file"] {
+        padding: 14px 15px;
+    }
+
+    .post-create-field textarea {
+        min-height: 240px;
+        resize: vertical;
+    }
+
+    .post-create-help {
+        display: block;
+        width: 100%;
+        margin-top: 8px;
+        color: #627486;
+        font-size: 13px;
+        line-height: 1.6;
+    }
+
+    .post-create-errors {
+        margin-bottom: 18px;
+        padding: 14px 16px;
+        border-radius: 16px;
+        background: #fff1f1;
+        color: #ab1f1f;
+    }
+
+    .post-create-error {
+        display: block;
+        width: 100%;
+        margin-top: 8px;
+        color: #b42318;
+        font-size: 14px;
+    }
+
+    .post-create-dropzone {
+        display: block;
+        width: 100%;
+        margin-bottom: 18px;
+        padding: 22px;
+        border: 2px dashed #7ca4b4;
+        border-radius: 20px;
+        background: linear-gradient(180deg, #f7fbfd, #eef5fa);
+        transition: border-color 0.18s ease, background 0.18s ease, transform 0.18s ease;
+        cursor: pointer;
+    }
+
+    .post-create-dropzone.is-active {
+        border-color: #1d4f7b;
+        background: linear-gradient(180deg, #eff7fc, #e2eef9);
+        transform: translateY(-1px);
+    }
+
+    .post-create-dropzone strong {
+        display: block;
+        margin-bottom: 8px;
+        color: #163147;
+        font-size: 18px;
+    }
+
+    .post-create-dropzone p {
+        margin: 0;
+        color: #597084;
+        line-height: 1.6;
+    }
+
+    .post-create-actions {
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 12px;
+        flex-wrap: wrap;
+        width: 100%;
+        margin-top: 22px;
+    }
+
+    .post-create-submit,
+    .post-create-reset {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: auto;
+        min-width: 148px;
+        max-width: 100%;
+        border: 0;
+        border-radius: 999px;
+        padding: 12px 20px;
+        font-size: 14px;
+        font-weight: 700;
+        line-height: 1.2;
+        cursor: pointer;
+        white-space: nowrap;
+    }
+
+    .post-create-submit {
+        background: linear-gradient(135deg, #1d4f7b, #17365d);
+        color: #fff;
+    }
+
+    .post-create-reset {
+        background: #e9eef3;
+        color: #21384b;
+    }
+
+    .post-create-side {
+        display: grid;
+        gap: 14px;
+        min-width: 0;
+    }
+
+    .post-create-note {
+        padding: 18px;
+        border-radius: 18px;
+        background: #f8fafc;
+        border: 1px solid #dbe5ed;
+    }
+
+    .post-create-note p,
+    .post-create-note li {
+        color: #536576;
+        line-height: 1.6;
+    }
+
+    .post-create-note ul {
+        margin: 0;
+        padding-left: 18px;
+    }
+
+    .post-create-file-name {
+        font-weight: 700;
+        color: #173042;
+    }
+
+    @media screen and (max-width: 768px) {
+        .post-create-hero {
+            padding: 24px 20px;
+        }
+
+        .post-create-hero h1 {
+            font-size: 32px;
+        }
+
+        .post-create-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .post-create-panel {
+            padding: 18px;
+        }
+    }
+</style>
+
+<section class="post-create-shell page-shell">
+    <div class="post-create-hero page-hero">
+        <h1 class="page-hero-title">Create Post</h1>
+        <p class="page-hero-copy">Write the title, body, tags, and optional cover image in a cleaner layout. Cover images support click, drag-and-drop, and clipboard paste for faster publishing.</p>
+        <div class="post-create-pills">
+            <span class="post-create-pill">Status: Published immediately</span>
+            <span class="post-create-pill">Cover: JPEG, PNG, WebP</span>
+            <span class="post-create-pill">Cover limit: 3 MB before optimization</span>
+        </div>
+    </div>
+
+    <div class="post-create-grid">
+        <form method="post" enctype="multipart/form-data" class="post-create-panel" id="post-create-form">
+            {% csrf_token %}
+            <h2>Post Details</h2>
+
+            {% if form.non_field_errors %}
+                <div class="post-create-errors">{{ form.non_field_errors }}</div>
+            {% endif %}
+
+            <div class="post-create-field">
+                <label for="{{ form.title.id_for_label }}">Title</label>
+                {{ form.title }}
+                {% if form.title.errors %}
+                    <div class="post-create-error">{{ form.title.errors }}</div>
+                {% endif %}
+            </div>
+
+            <div class="post-create-field">
+                <label for="{{ form.body.id_for_label }}">Body</label>
+                {{ form.body }}
+                <div class="post-create-help">Use clear paragraphs. The editor keeps the structure simple and close to the final post output.</div>
+                {% if form.body.errors %}
+                    <div class="post-create-error">{{ form.body.errors }}</div>
+                {% endif %}
+            </div>
+
+            <div class="post-create-dropzone" id="post-create-dropzone" tabindex="0">
+                <strong>Choose or paste a cover image</strong>
+                <p>Click to pick a file, drag one into this area, or paste an image from the clipboard. Only one cover image is kept.</p>
+            </div>
+
+            <div class="post-create-field">
+                <label for="{{ form.cover_image.id_for_label }}">Cover image</label>
+                {{ form.cover_image }}
+                <div class="post-create-help" id="post-cover-file-name">No file selected.</div>
+                {% if form.cover_image.errors %}
+                    <div class="post-create-error">{{ form.cover_image.errors }}</div>
+                {% endif %}
+            </div>
+
+            <div class="post-create-field">
+                <label for="{{ form.tags.id_for_label }}">Tags</label>
+                {{ form.tags }}
+                <div class="post-create-help">Separate tags with commas so the post stays searchable from the sidebar and archive views.</div>
+                {% if form.tags.errors %}
+                    <div class="post-create-error">{{ form.tags.errors }}</div>
+                {% endif %}
+            </div>
+
+            <div class="post-create-actions">
+                <button type="submit" class="post-create-submit">Publish Post</button>
+                <button type="reset" class="post-create-reset" id="post-create-reset">Reset</button>
+            </div>
+        </form>
+
+        <aside class="post-create-side">
+            <section class="post-create-panel post-create-note">
+                <h3>Publishing Notes</h3>
+                <ul>
+                    <li>The post is published as soon as the form passes validation.</li>
+                    <li>The cover image is converted to an optimized JPEG after upload.</li>
+                    <li>Pasted images work best when the clipboard contains a direct image item.</li>
+                </ul>
+            </section>
+
+            <section class="post-create-panel post-create-note">
+                <h3>Current Cover Selection</h3>
+                <div id="post-cover-preview" class="post-create-help">No file selected.</div>
+            </section>
+        </aside>
+    </div>
+</section>
+
+<script>
+(() => {
+    const fileInput = document.getElementById("{{ form.cover_image.id_for_label }}");
+    const fileName = document.getElementById("post-cover-file-name");
+    const preview = document.getElementById("post-cover-preview");
+    const resetButton = document.getElementById("post-create-reset");
+    const dropzone = document.getElementById("post-create-dropzone");
+
+    if (!fileInput || !fileName || !preview || !resetButton || !dropzone) {
+        return;
+    }
+
+    const allowedImageTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
+    const imageTypeAllowed = (file) => file && file.type && allowedImageTypes.has(file.type.toLowerCase());
+
+    const renderFile = (file) => {
+        if (!file) {
+            fileName.textContent = "No file selected.";
+            preview.textContent = "No file selected.";
+            return;
+        }
+
+        fileName.innerHTML = `<span class="post-create-file-name">${file.name}</span>`;
+        preview.innerHTML = `<span class="post-create-file-name">${file.name}</span> (${Math.max(1, Math.round(file.size / 1024))} KB)`;
+    };
+
+    const syncFile = (file) => {
+        if (!imageTypeAllowed(file)) {
+            return;
+        }
+        const transfer = new DataTransfer();
+        transfer.items.add(file);
+        fileInput.files = transfer.files;
+        renderFile(file);
+    };
+
+    fileInput.addEventListener("change", () => {
+        renderFile(fileInput.files && fileInput.files[0]);
+    });
+
+    dropzone.addEventListener("click", () => fileInput.click());
+    dropzone.addEventListener("keydown", (event) => {
+        if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            fileInput.click();
+        }
+    });
+
+    dropzone.addEventListener("paste", (event) => {
+        const file = Array.from(event.clipboardData?.files || []).find(imageTypeAllowed);
+        if (!file) {
+            return;
+        }
+        event.preventDefault();
+        syncFile(file);
+    });
+
+    ["dragenter", "dragover"].forEach((eventName) => {
+        dropzone.addEventListener(eventName, (event) => {
+            event.preventDefault();
+            dropzone.classList.add("is-active");
+        });
+    });
+
+    ["dragleave", "dragend", "drop"].forEach((eventName) => {
+        dropzone.addEventListener(eventName, () => {
+            dropzone.classList.remove("is-active");
+        });
+    });
+
+    dropzone.addEventListener("drop", (event) => {
+        event.preventDefault();
+        const file = Array.from(event.dataTransfer?.files || []).find(imageTypeAllowed);
+        if (!file) {
+            return;
+        }
+        syncFile(file);
+    });
+
+    resetButton.addEventListener("click", () => {
+        window.setTimeout(() => {
+            renderFile(null);
+            dropzone.classList.remove("is-active");
+        }, 0);
+    });
+})();
+</script>
 {% endblock %}

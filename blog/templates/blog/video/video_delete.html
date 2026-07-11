@@ -1,0 +1,32 @@
+{% extends "blog/base.html" %}
+
+{% block title %}Delete Video{% endblock %}
+
+{% block content %}
+<style>
+.video-delete-shell { max-width: 920px; margin: 0 auto 36px; display: grid; gap: 22px; }
+.video-delete-hero { padding: 30px; border-radius: 28px; background: radial-gradient(circle at top right, rgba(255,255,255,.18), transparent 28%), linear-gradient(135deg, #3f1d1d, #991b1b 58%, #ea580c 155%); color: #fff; box-shadow: 0 24px 54px rgba(15,23,42,.2); }
+.video-delete-hero h1 { margin: 0 0 10px; border: 0; font-size: 42px; }
+.video-delete-card { padding: 24px; border-radius: 22px; border: 1px solid #f3d0d0; background: #fff; box-shadow: 0 12px 30px rgba(15,23,42,.07); }
+.video-delete-card p { color: #526476; line-height: 1.7; }
+.video-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 18px; }
+.video-button-danger, .video-button-secondary { display: inline-flex; align-items: center; justify-content: center; min-width: 112px; border-radius: 999px; padding: 10px 16px; font-size: 13px; font-weight: 700; text-decoration: none; border: 0; cursor: pointer; }
+.video-button-danger { background: #b42318; color: #fff; }
+.video-button-secondary { background: #e9eef3; color: #21384b; }
+</style>
+<section class="video-delete-shell page-shell">
+    <header class="video-delete-hero page-hero">
+        <h1 class="page-hero-title">Delete Video</h1>
+        <p class="page-hero-copy">Confirm before removing this uploaded video from the video library.</p>
+    </header>
+    <form method="post" class="video-delete-card">
+        {% csrf_token %}
+        <p><strong>{{ videopost.title|default:videopost.get_video_filename }}</strong></p>
+        <p>This action removes the current video entry from the site.</p>
+        <div class="video-actions">
+            <button type="submit" class="video-button-danger">Delete Video</button>
+            <a href="{% url 'blog:video_detail' videopost.id %}" class="video-button-secondary">Cancel</a>
+        </div>
+    </form>
+</section>
+{% endblock %}

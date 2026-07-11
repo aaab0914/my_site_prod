@@ -1,37 +1,76 @@
-{% extends 'blog/base.html' %}
+{% extends "blog/base.html" %}
 
-{% block title %}
-  Delete Audio Post
-{% endblock %}
+{% block title %}Delete Audio{% endblock %}
 
 {% block content %}
-  <div class="delete-container" style="max-width: 600px; margin: 40px auto; padding: 20px;
-border: 1px solid #e0e0e0; border-radius: 8px; background: #fff9f9">
-    <h1 style="color: #cc0000;">
-      Are you sure want to delete this audio post?
-    </h1>
-    <div class="audio-info" style="margin: 20px; padding: 15px; background: #f5f5f5; border-radius: 6px"></div>
-      <p><strong>Title:</strong> {{ audiopost.music_name }}</p>
-      <p><strong>Description:</strong> {{ audiopost.description|default:"No description" }}</p>
-      <p><strong>Uploaded by:</strong> {{ audiopost.uploaded_by.username }}</p>
-      <p><strong>Uploaded at:</strong> {{ audiopost.created|date:"F j, Y, g:i a" }}</p>
-      {% if audiopost.audio_file %}
-        <p><strong>File</strong> <a href="{{ audiopost.audio_file.url }}" target="
-_blank"> {{ audiopost.audio_file.name }}</a></p>
-      {% endif %}
-  </div>
+<style>
+    .audio-delete-shell { max-width: 1040px; margin: 0 auto 36px; }
+    .audio-delete-hero {
+        margin-bottom: 24px; padding: 30px; border-radius: 28px;
+        background: radial-gradient(circle at top right, rgba(255,255,255,.2), transparent 28%), linear-gradient(135deg, #3f1d24, #8b2635 58%, #df9a76 155%);
+        color: #fff; box-shadow: 0 24px 54px rgba(15,23,42,.18);
+    }
+    .audio-delete-hero h1 { margin: 0 0 10px; border: 0; font-size: 42px; font-weight: 800; letter-spacing: -.03em; }
+    .audio-delete-hero p { margin: 0; max-width: 760px; color: rgba(255,255,255,.9); line-height: 1.7; font-size: 16px; }
+    .audio-delete-layout { display: grid; grid-template-columns: minmax(0,1.45fr) minmax(280px,.85fr); gap: 22px; }
+    .audio-delete-panel { padding: 24px; border-radius: 22px; border: 1px solid #ead7db; background: #fff; box-shadow: 0 16px 36px rgba(15,23,42,.08); }
+    .audio-delete-panel h2, .audio-delete-panel h3 { margin: 0 0 14px; color: #2f1b22; }
+    .audio-delete-details { display: grid; gap: 12px; color: #5f6f7d; line-height: 1.7; }
+    .audio-delete-details strong { color: #21384b; }
+    .audio-delete-actions { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 24px; }
+    .audio-delete-button, .audio-delete-link {
+        display: inline-flex; align-items: center; justify-content: center; min-width: 148px;
+        border-radius: 999px; padding: 12px 20px; font-size: 14px; font-weight: 700; line-height: 1.2; text-decoration: none; border: 0;
+    }
+    .audio-delete-button { background: linear-gradient(135deg, #b42318, #7f1d1d); color: #fff; cursor: pointer; }
+    .audio-delete-link { background: #e9eef3; color: #21384b; }
+    .audio-delete-note { padding: 18px; border-radius: 18px; background: #fdf4f4; border: 1px solid #f4cdd2; color: #7a4a56; line-height: 1.7; }
+    .audio-delete-cover { width: 100%; aspect-ratio: 1 / 1; object-fit: cover; display: block; margin-top: 16px; border-radius: 18px; border: 1px solid #ead7db; background: #f7e9ec; }
+    @media screen and (max-width: 768px) {
+        .audio-delete-hero { padding: 24px 20px; }
+        .audio-delete-hero h1 { font-size: 32px; }
+        .audio-delete-layout { grid-template-columns: 1fr; }
+        .audio-delete-panel { padding: 18px; }
+    }
+</style>
 
-  <form method="post">
-    {% csrf_token %}
-    <div class="action-button" style="display: flex; gap: 10px; margin-top: 20px;">
-      <button type="submit" class="btn btn-danger" style="padding: 10px 20px;
-background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer;">
-        Yes, delete it
-      </button>
-      <a href="{% url 'blog:audio_list' %}" class="btn btn-secondary" style="padding:10px 20px;
-background: #6c757d; color: white; text-decoration: none; border-radius: 4px;">
-        Cancel
-      </a>
+<section class="audio-delete-shell page-shell">
+    <div class="audio-delete-hero page-hero">
+        <h1 class="page-hero-title">Delete Audio Track</h1>
+        <p class="page-hero-copy">Review the track details before removal. This action deletes the audio item from the list and should only be used when you are sure.</p>
     </div>
-  </form>
+
+    <div class="audio-delete-layout">
+        <section class="audio-delete-panel">
+            <h2>Track Summary</h2>
+            <div class="audio-delete-details">
+                <div><strong>Title:</strong> {{ audiopost.music_name }}</div>
+                <div><strong>Description:</strong> {{ audiopost.description|default:"No description" }}</div>
+                <div><strong>Uploaded by:</strong> {{ audiopost.uploaded_by.username }}</div>
+                <div><strong>Uploaded at:</strong> {{ audiopost.created|date:"F j, Y, g:i a" }}</div>
+                {% if audiopost.audio_file %}
+                    <div><strong>File:</strong> <a href="{{ audiopost.get_audio_proxy_url }}" target="_blank">{{ audiopost.get_audio_filename }}</a></div>
+                {% endif %}
+                {% if audiopost.cover_image %}
+                    <img class="audio-delete-cover" src="{{ audiopost.get_cover_image_proxy_url }}" alt="{{ audiopost.music_name }} cover">
+                {% else %}
+                    <div><strong>Cover:</strong> No cover image uploaded.</div>
+                {% endif %}
+            </div>
+
+            <form method="post">
+                {% csrf_token %}
+                <div class="audio-delete-actions">
+                    <button type="submit" class="audio-delete-button">Delete Track</button>
+                    <a href="{% url 'blog:audio_list' %}" class="audio-delete-link">Back to Library</a>
+                </div>
+            </form>
+        </section>
+
+        <aside class="audio-delete-panel audio-delete-note">
+            <h3>Before You Delete</h3>
+            <p>Deleting a track removes it from the shared audio library immediately. Double-check the title and file before confirming the action.</p>
+        </aside>
+    </div>
+</section>
 {% endblock %}

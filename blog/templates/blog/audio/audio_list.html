@@ -1,34 +1,160 @@
 {% extends "blog/base.html" %}
 
+{% block title %}Audio Library{% endblock %}
+
 {% block content %}
-<div class="container mt-5">
-    <h2>音频列表</h2>
-    <div class="row">
-        {% for audio in audios %}
-        <div class="col-md-6 mb-4">
-            <div class="card">
-                <div class="card-body">
-                    <h5 class="card-title">{{ audio.music_name }}</h5>
-                    <p class="card-text text-muted">上传者: {{ audio.uploaded_by.username }}</p>
-                    <audio controls style="width: 100%;">
-                        <source src="{{ audio.audio_file.url }}" type="audio/mpeg">
-                        您的浏览器不支持音频播放。
-                    </audio>
-                    {% if user.is_superuser %}
-                    <div style="margin-top: 10px;">
-                        <a href="{% url 'blog:audio_post_edit' audio.id %}" class="btn btn-primary" style="padding: 6px 12px; background: #007bff; color: white; text-decoration: none; border-radius: 4px; font-size: 12px;">编辑</a>
-                        <a href="{% url 'blog:audio_post_delete' audio.id %}" class="btn btn-danger" style="padding: 6px 12px; background: #dc3545; color: white; text-decoration: none; border-radius: 4px; font-size: 12px;">删除</a>
-                    </div>
-                    {% elif user == audio.uploaded_by %}
-                    <div style="margin-top: 10px;">
-                        <a href="{% url 'blog:audio_post_edit' audio.id %}" class="btn btn-primary" style="padding: 6px 12px; background: #007bff; color: white; text-decoration: none; border-radius: 4px; font-size: 12px;">编辑</a>
-                        <a href="{% url 'blog:audio_post_delete' audio.id %}" class="btn btn-danger" style="padding: 6px 12px; background: #dc3545; color: white; text-decoration: none; border-radius: 4px; font-size: 12px;">删除</a>
-                    </div>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-        {% endfor %}
+<style>
+    .audio-library-shell { max-width: 1120px; margin: 0 auto 36px; }
+    .audio-library-hero {
+        margin-bottom: 24px; padding: 30px; border-radius: 28px;
+        background: radial-gradient(circle at top right, rgba(255,255,255,.24), transparent 28%), linear-gradient(135deg, #18263f, #1a726d 58%, #d8b46b 155%);
+        color: #fff; box-shadow: 0 24px 54px rgba(15,23,42,.2);
+    }
+    .audio-library-hero h1 { margin: 0 0 10px; border: 0; font-size: 42px; font-weight: 800; letter-spacing: -.03em; }
+    .audio-library-hero p { margin: 0; max-width: 760px; color: rgba(255,255,255,.92); line-height: 1.7; font-size: 16px; }
+    .audio-list { display: grid; gap: 16px; }
+    .audio-row {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        align-items: stretch;
+        padding: 18px 20px;
+        border-radius: 20px;
+        border: 1px solid #d7e1ea;
+        background: #fff;
+        box-shadow: 0 12px 30px rgba(15,23,42,.07);
+    }
+    .audio-row-main h2 { margin: 0 0 6px; color: #16283a; font-size: 24px; }
+    .audio-meta { margin: 0; color: #607284; line-height: 1.6; font-size: 14px; }
+    .audio-description { margin-top: 8px; color: #44586c; line-height: 1.6; font-size: 14px; }
+    .audio-player-shell { width: 100%; min-width: 0; }
+    .audio-player {
+        display: block;
+        width: 100%;
+        min-width: 0;
+        min-height: 54px;
+        background: #f8fafc;
+        border-radius: 14px;
+    }
+    .audio-side {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+    .audio-loop-label { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; color: #495b6c; cursor: pointer; white-space: nowrap; }
+    .audio-actions { display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
+    .audio-button-secondary, .audio-button-danger { display: inline-flex; align-items: center; justify-content: center; min-width: 96px; border-radius: 999px; padding: 10px 16px; font-size: 13px; font-weight: 700; text-decoration: none; }
+    .audio-button-secondary { background: #e9eef3; color: #21384b; }
+    .audio-button-danger { background: #fee2e2; color: #b42318; }
+    .audio-empty { padding: 24px; border-radius: 22px; border: 1px solid #dbe5ed; background: #f8fafc; color: #5e7284; line-height: 1.7; }
+    .audio-pagination { display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 24px; flex-wrap: wrap; }
+    .audio-pagination a, .audio-pagination span { display: inline-block; min-width: 42px; padding: 10px 14px; border-radius: 999px; text-align: center; text-decoration: none; background: #eef3f7; color: #22384a; font-weight: 700; }
+    .audio-pagination .is-current { background: #0f766e; color: #fff; }
+    @supports (-webkit-touch-callout: none) {
+        .audio-player { min-height: 58px; }
+    }
+    @media screen and (max-width: 768px) {
+        .audio-library-hero { padding: 24px 20px; }
+        .audio-library-hero h1 { font-size: 32px; }
+        .audio-row { padding: 16px; }
+        .audio-side, .audio-actions { justify-content: flex-start; }
+    }
+</style>
+
+<section class="audio-library-shell page-shell">
+    <div class="audio-library-hero page-hero">
+        <h1 class="page-hero-title">Audio Library</h1>
+        <p class="page-hero-copy">Browse uploaded tracks in a clean list, keep loop control on each track, and make sure only one audio player runs at a time.</p>
     </div>
-</div>
+
+    {% if audios %}
+        <div class="audio-list">
+            {% for audio in audios %}
+                <article class="audio-row">
+                    <div class="audio-row-main">
+                        <h2>{{ audio.music_name }}</h2>
+                        <p class="audio-meta">Uploaded by {{ audio.uploaded_by_username }} on {{ audio.created|slice:":16"|cut:"T"|add:"" }}</p>
+                        {% if audio.description %}
+                            <div class="audio-description">{{ audio.description }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="audio-player-shell">
+                        <audio
+                            controls
+                            preload="metadata"
+                            playsinline
+                            webkit-playsinline
+                            class="audio-player"
+                            id="audio-player-{{ audio.id }}"
+                            src="{{ audio.audio_url }}"
+                        >
+                            Your browser does not support audio playback.
+                        </audio>
+                    </div>
+
+                    <div class="audio-side">
+                        <label class="audio-loop-label">
+                            <input type="checkbox" class="audio-loop-toggle" data-audio-id="{{ audio.id }}">
+                            <span>Loop this track</span>
+                        </label>
+                        {% if user.is_superuser or user == audio.uploaded_by %}
+                            <div class="audio-actions">
+                                <a href="{% url 'blog:audio_post_edit' audio.id %}" class="audio-button-secondary">Edit</a>
+                                <a href="{% url 'blog:audio_post_delete' audio.id %}" class="audio-button-danger">Delete</a>
+                            </div>
+                        {% endif %}
+                    </div>
+                </article>
+            {% endfor %}
+        </div>
+
+        {% if page_obj and page_obj.paginator.num_pages > 1 %}
+            <nav class="audio-pagination">
+                {% if page_obj.has_previous %}
+                    <a href="?page={{ page_obj.previous_page_number }}">Prev</a>
+                {% endif %}
+                {% for page_number in page_obj.paginator.page_range %}
+                    {% if page_number == page_obj.number %}
+                        <span class="is-current">{{ page_number }}</span>
+                    {% else %}
+                        <a href="?page={{ page_number }}">{{ page_number }}</a>
+                    {% endif %}
+                {% endfor %}
+                {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}">Next</a>
+                {% endif %}
+            </nav>
+        {% endif %}
+    {% else %}
+        <div class="audio-empty">No audio tracks have been uploaded yet.</div>
+    {% endif %}
+</section>
+<script>
+(() => {
+    const players = Array.from(document.querySelectorAll('audio[id^="audio-player-"]'));
+
+    document.querySelectorAll('.audio-loop-toggle').forEach((toggle) => {
+        toggle.addEventListener('change', () => {
+            const player = document.getElementById(`audio-player-${toggle.dataset.audioId}`);
+            if (!player) {
+                return;
+            }
+            player.loop = toggle.checked;
+        });
+    });
+
+    players.forEach((player) => {
+        player.addEventListener('play', () => {
+            players.forEach((otherPlayer) => {
+                if (otherPlayer !== player && !otherPlayer.paused) {
+                    otherPlayer.pause();
+                }
+            });
+        });
+    });
+})();
+</script>
 {% endblock %}

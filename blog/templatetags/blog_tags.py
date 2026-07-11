@@ -22,6 +22,7 @@ from django import template
 # Provides Library class for registering custom tags
 
 from django.db.models import Count
+from django.core.cache import cache
 # Count: Aggregation function for counting related objects
 # Used to count number of comments per post
 
@@ -111,7 +112,13 @@ def show_latest_posts(count=5):
     # Order posts by publication date descending (newest first)
     # Use published manager (only published posts)
     # Slice to limit the number of results
-    latest_posts = Post.published.order_by('-publish')[:count]
+    cache_key = f"blog_tags:latest_posts:{count}"
+    latest_post_ids = cache.get(cache_key)
+    if latest_post_ids is None:
+        latest_post_ids = list(Post.published.order_by('-publish').values_list('id', flat=True)[:count])
+        cache.set(cache_key, latest_post_ids, 300)
+    latest_posts = list(Post.published.filter(id__in=latest_post_ids).select_related('author'))
+    latest_posts.sort(key=lambda item: latest_post_ids.index(item.id))
 
     # Return dict where keys become variables in the inclusion template
     return {'latest_posts': latest_posts}
@@ -151,13 +158,22 @@ def get_most_commented_posts(count=5):
     # 3. Filter to only posts with at least 1 comment
     # 4. Order by total_comments descending (most commented first)
     # 5. Slice to limit results
-    return Post.published.annotate(
-        total_comments=Count('comments')  # Count comments via related_name='comments'
-    ).filter(
-        total_comments__gt=0  # Only posts with at least one comment
-    ).order_by(
-        '-total_comments'  # Descending order (highest first)
-    )[:count]  # Limit to 'count' number of results
+    cache_key = f"blog_tags:most_commented:{count}"
+    post_ids = cache.get(cache_key)
+    if post_ids is None:
+        post_ids = list(
+            Post.published.annotate(
+                total_comments=Count('comments')
+            ).filter(
+                total_comments__gt=0
+            ).order_by(
+                '-total_comments'
+            ).values_list('id', flat=True)[:count]
+        )
+        cache.set(cache_key, post_ids, 300)
+    posts = list(Post.published.filter(id__in=post_ids).select_related('author'))
+    posts.sort(key=lambda item: post_ids.index(item.id))
+    return posts
 
 
 # =====================

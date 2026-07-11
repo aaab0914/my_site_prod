@@ -1,0 +1,50 @@
+{% extends "blog/base.html" %}
+
+{% block title %}Video Details{% endblock %}
+
+{% block content %}
+<style>
+.video-detail-shell { max-width: 1120px; margin: 0 auto 36px; display: grid; gap: 22px; }
+.video-detail-hero { padding: 30px; border-radius: 28px; background: radial-gradient(circle at top right, rgba(255,255,255,.24), transparent 28%), linear-gradient(135deg, #18263f, #7c3aed 58%, #ea580c 155%); color: #fff; box-shadow: 0 24px 54px rgba(15,23,42,.2); }
+.video-detail-hero h1 { margin: 0 0 10px; border: 0; font-size: 42px; }
+.video-detail-hero p { margin: 0; color: rgba(255,255,255,.92); line-height: 1.7; }
+.video-detail-grid { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(320px, .8fr); gap: 20px; }
+.video-card { padding: 22px; border-radius: 22px; border: 1px solid #dbe4ec; background: #fff; box-shadow: 0 12px 30px rgba(15,23,42,.07); }
+.video-player { width: 100%; max-height: 520px; border-radius: 18px; background: #000; }
+.video-meta { display: grid; gap: 12px; color: #526476; line-height: 1.7; }
+.video-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 18px; }
+.video-button-primary, .video-button-secondary, .video-button-danger { display: inline-flex; align-items: center; justify-content: center; min-width: 108px; border-radius: 999px; padding: 10px 16px; font-size: 13px; font-weight: 700; text-decoration: none; border: 0; }
+.video-button-primary { background: #ede9fe; color: #5b21b6; }
+.video-button-secondary { background: #e9eef3; color: #21384b; }
+.video-button-danger { background: #fee2e2; color: #b42318; }
+@media screen and (max-width: 900px) { .video-detail-grid { grid-template-columns: 1fr; } .video-detail-hero h1 { font-size: 32px; } }
+</style>
+<section class="video-detail-shell page-shell">
+    <header class="video-detail-hero page-hero">
+        <h1 class="page-hero-title">{{ video.title|default:filename }}</h1>
+        <p class="page-hero-copy">Manage one uploaded video, review its metadata, and keep all media access behind the video proxy route.</p>
+    </header>
+    <div class="video-detail-grid">
+        <section class="video-card">
+            <video controls preload="metadata" class="video-player">
+                <source src="{{ video_url }}">
+                Your browser does not support video playback.
+            </video>
+        </section>
+        <aside class="video-card">
+            <div class="video-meta">
+                <div><strong>Filename:</strong> {{ filename }}</div>
+                <div><strong>Uploaded by:</strong> {{ video.uploaded_by.username }}</div>
+                <div><strong>Created:</strong> {{ video.created|date:"Y-m-d H:i" }}</div>
+                <div><strong>Updated:</strong> {{ video.updated|date:"Y-m-d H:i" }}</div>
+                {% if video.description %}<div><strong>Description:</strong><br>{{ video.description }}</div>{% endif %}
+            </div>
+            <div class="video-actions">
+                <a href="{% url 'blog:video_list' %}" class="video-button-secondary">Back to List</a>
+                <a href="{% url 'blog:video_edit' video.id %}" class="video-button-primary">Edit</a>
+                <a href="{% url 'blog:video_delete' video.id %}" class="video-button-danger">Delete</a>
+            </div>
+        </aside>
+    </div>
+</section>
+{% endblock %}

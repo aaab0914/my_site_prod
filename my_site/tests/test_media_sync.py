@@ -2,6 +2,7 @@ import shutil
 import tempfile
 from pathlib import Path
 
+from django.conf import settings
 from django.contrib.auth.models import User
 from django.test import TestCase, override_settings
 
@@ -15,7 +16,7 @@ def _write_media_file(path, content=b"test"):
     path.write_bytes(content)
 
 
-@override_settings(MEDIA_SYNC_INTERVAL_SECONDS=0)
+@override_settings(MEDIA_SYNC_INTERVAL_SECONDS=0, MEDIA_SYNC_ENABLED=True)
 class MediaSyncTests(TestCase):
     def setUp(self):
         self.media_root = tempfile.mkdtemp(prefix="media-sync-tests-")
@@ -76,7 +77,7 @@ class MediaSyncTests(TestCase):
         self.assertTrue(
             any(item["from"] == "comments/2026/07/07/orphan.jpg" for item in result["trashed_files"])
         )
-        self.assertTrue(any(Path(self.media_root, item["to"]).exists() for item in result["trashed_files"]))
+        self.assertTrue(any(Path(settings.BASE_DIR, item["to"]).exists() for item in result["trashed_files"]))
 
     def test_sync_keeps_referenced_files(self):
         audio_path = Path(self.media_root) / "audio" / "2026" / "07" / "07" / "track.mp3"
@@ -114,3 +115,37 @@ class MediaSyncTests(TestCase):
 
         self.assertFalse(comment.image)
         self.assertTrue(Comment.objects.filter(id=comment.id).exists())
+
+
+
+
+class AuditMiddlewareTests(TestCase):
+    def test_audit_middleware_ignores_authenticated_objects_without_primary_key(self):
+        from unittest.mock import patch
+
+        from my_site.audit_middleware import AuditLoggingMiddleware
+
+        class UnsavedAuthenticatedUser:
+            is_authenticated = True
+            pk = None
+
+        request = type(
+            "Request",
+            (),
+            {
+                "method": "GET",
+                "path": "/audit-probe/",
+                "META": {"REMOTE_ADDR": "127.0.0.1"},
+                "user": UnsavedAuthenticatedUser(),
+            },
+        )()
+        response = type("Response", (), {"status_code": 200})()
+
+        middleware = AuditLoggingMiddleware(lambda req: response)
+
+        with patch("my_site.audit_middleware.AuditLog.objects.create") as mocked_create:
+            returned = middleware(request)
+
+        self.assertIs(returned, response)
+        mocked_create.assert_called_once()
+        self.assertIsNone(mocked_create.call_args.kwargs["user"])

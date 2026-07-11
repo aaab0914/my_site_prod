@@ -8,7 +8,7 @@ from django import forms
 from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import InMemoryUploadedFile, SimpleUploadedFile
 
-from .models import ImagePost
+from .models import Album, AlbumImage, ImagePost
 
 
 class ImagePostForm(forms.ModelForm):
@@ -31,10 +31,10 @@ class MultipleImageInput(forms.ClearableFileInput):
     allow_multiple_selected = True
 
 
-class GalleryUploadForm(forms.Form):
+class GallerySingleUploadForm(forms.Form):
     images = forms.CharField(
         required=False,
-        widget=MultipleImageInput(attrs={"class": "form-control", "accept": "image/*"}),
+        widget=MultipleImageInput(attrs={"class": "form-control", "accept": ".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"}),
     )
     description = forms.CharField(
         required=False,
@@ -52,8 +52,8 @@ class GalleryUploadForm(forms.Form):
 
         if not all_uploads:
             raise ValidationError("Please upload at least one image.")
-        if len(all_uploads) > 99:
-            raise ValidationError("You can upload at most 99 images at one time.")
+        if len(all_uploads) > 1:
+            raise ValidationError("Gallery upload allows only 1 image at a time.")
 
         optimized_uploads = []
         for image in all_uploads:
@@ -166,3 +166,96 @@ def optimize_uploaded_image(image):
         img_io.tell(),
         None,
     )
+
+
+class AlbumImageEditForm(forms.ModelForm):
+    class Meta:
+        model = AlbumImage
+        fields = ['title', 'description']
+        widgets = {
+            'title': forms.TextInput(attrs={'class': 'form-control'}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 6}),
+        }
+
+
+class AlbumUploadForm(forms.Form):
+    images = forms.CharField(
+        required=False,
+        widget=MultipleImageInput(attrs={"class": "form-control", "accept": ".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"}),
+    )
+    description = forms.CharField(
+        required=False,
+        widget=forms.Textarea(attrs={"class": "form-control", "rows": 4}),
+    )
+    pasted_images_data = forms.CharField(required=False, widget=forms.HiddenInput())
+
+    def clean_images(self):
+        return self.extract_uploads()
+
+    def extract_uploads(self):
+        file_uploads = list(self.files.getlist("images"))
+        pasted_uploads = self._decode_pasted_images()
+        all_uploads = file_uploads + pasted_uploads
+
+        if not all_uploads:
+            raise ValidationError("Please upload at least one image.")
+        if len(all_uploads) > 99:
+            raise ValidationError("You can upload at most 99 images at one time.")
+
+        optimized_uploads = []
+        for image in all_uploads:
+            optimized_uploads.append(optimize_uploaded_image(image))
+
+        return optimized_uploads
+
+    def build_title(self, image, index):
+        base_name = image.name.rsplit(".", 1)[0].strip() or "album-image"
+        return f"{base_name[:180]}-{index}"
+
+    def _decode_pasted_images(self):
+        raw_value = self.data.get("pasted_images_data", "").strip()
+        if not raw_value:
+            return []
+
+        try:
+            items = json.loads(raw_value)
+        except json.JSONDecodeError as exc:
+            raise ValidationError("Pasted image data is invalid.") from exc
+
+        uploads = []
+        for index, item in enumerate(items, start=1):
+            data_url = item.get("data_url", "")
+            if ";base64," not in data_url:
+                raise ValidationError("Pasted image data is invalid.")
+
+            header, encoded = data_url.split(";base64,", 1)
+            mime_type = header.replace("data:", "", 1).strip().lower()
+            if mime_type not in {"image/jpeg", "image/png", "image/webp"}:
+                raise ValidationError("Image must be a JPEG, PNG, or WebP file.")
+
+            try:
+                encoded = encoded.replace(" ", "+")
+                content = base64.b64decode(encoded)
+            except (binascii.Error, ValueError) as exc:
+                raise ValidationError("Pasted image data is invalid.") from exc
+
+            extension = mime_type.split("/")[-1]
+            uploads.append(
+                SimpleUploadedFile(
+                    item.get("name") or f"pasted-image-{index}.{extension}",
+                    content,
+                    content_type=mime_type,
+                )
+            )
+
+        return uploads
+
+
+class AlbumEditForm(forms.ModelForm):
+    class Meta:
+        model = Album
+        fields = ["title", "description"]
+        widgets = {
+            "title": forms.TextInput(attrs={"class": "form-control"}),
+            "description": forms.Textarea(attrs={"class": "form-control", "rows": 6}),
+        }

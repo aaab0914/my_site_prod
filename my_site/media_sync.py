@@ -7,10 +7,11 @@ from django.conf import settings
 from django.db.models import FileField
 
 from .media_cleanup import move_media_file_to_trash
+from images.sync import sync_gallery_media
 
 _SYNC_LOCK = threading.Lock()
 _LAST_SYNC_AT = 0.0
-_PROTECTED_PREFIXES = ("audio/",)
+_PROTECTED_PREFIXES = ()
 
 
 def _iter_file_fields():
@@ -54,6 +55,11 @@ def _handle_missing_file(instance, field):
 
 
 def sync_site_media():
+    if not getattr(settings, "MEDIA_SYNC_ENABLED", True):
+        return {
+            "missing_actions": [],
+            "trashed_files": [],
+        }
     media_root = Path(settings.MEDIA_ROOT)
     referenced_names = set()
     missing_actions = []
@@ -103,14 +109,19 @@ def sync_site_media():
             except OSError:
                 pass
 
+    gallery_sync = sync_gallery_media()
     return {
         "missing_actions": missing_actions,
         "trashed_files": trashed_files,
+        "gallery_sync": gallery_sync,
     }
 
 
 def maybe_sync_site_media():
     global _LAST_SYNC_AT
+
+    if not getattr(settings, "MEDIA_SYNC_ENABLED", True):
+        return None
 
     interval = max(0, int(getattr(settings, "MEDIA_SYNC_INTERVAL_SECONDS", 10)))
     now = time.monotonic()

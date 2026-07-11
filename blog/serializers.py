@@ -56,7 +56,7 @@ class CommentSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Comment
-        fields = ['id', 'name', 'email', 'body', 'created', 'active']
+        fields = ['id', 'name', 'body', 'created']
         read_only_fields = ['created']
         # read_only_fields: These fields cannot be modified via API requests.
 

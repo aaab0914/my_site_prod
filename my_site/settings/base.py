@@ -7,6 +7,7 @@
 # ============================================================================
 
 import os  # Provides operating system independent functionality, used to read environment variables
+import sys
 from pathlib import Path  # Object-oriented filesystem path handling (modern replacement for os.path)
 
 # django-decouple: Used to manage settings via environment variables, keeping secrets out of version control
@@ -25,6 +26,7 @@ from sentry_sdk.integrations.django import DjangoIntegration
 # __file__ is the current file's path, resolved to absolute path, then go up 3 levels
 # This allows consistent path references regardless of where the app is run
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
+TESTING = "test" in sys.argv
 
 # ============================================================================
 # SECURITY & CORE SETTINGS
@@ -54,6 +56,7 @@ CSRF_TRUSTED_ORIGINS = config("CSRF_TRUSTED_ORIGINS", default="", cast=Csv())
 # SITE_ID: Identifies the current site when using Django's sites framework
 # Required for sitemap generation and multi-site support
 SITE_ID = 1
+ADMIN_URL_PATH = config("ADMIN_URL_PATH", default="secure-console-7f9a2c-admin/")
 
 # ============================================================================
 # INSTALLED APPLICATIONS
@@ -146,7 +149,7 @@ ROOT_URLCONF = "my_site.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",  # Django template engine
-        "DIRS": [BASE_DIR],  # Include project root so index.html can serve the root landing page
+        "DIRS": [BASE_DIR / "my_site" / "templates"],  # Project-level templates such as the public homepage
         "APP_DIRS": True,  # Whether to look for templates inside each app's 'templates/' directory
         "OPTIONS": {
             "context_processors": [  # Functions that add variables to every template context
@@ -225,6 +228,11 @@ ELASTICSEARCH_DSL = {
 
 # AUTH_PASSWORD_VALIDATORS: Password strength validation rules
 # Prevents users from choosing common or easily guessable passwords
+if TESTING:
+    PASSWORD_HASHERS = [
+        "django.contrib.auth.hashers.MD5PasswordHasher",
+    ]
+
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
     # Password can't be similar to user info
@@ -262,6 +270,7 @@ MEDIA_URL = "/media/"
 # MEDIA_ROOT: Filesystem path for storing user-uploaded files
 MEDIA_ROOT = BASE_DIR / "media"
 MEDIA_SYNC_INTERVAL_SECONDS = config("MEDIA_SYNC_INTERVAL_SECONDS", default=10, cast=int)
+MEDIA_SYNC_ENABLED = config("MEDIA_SYNC_ENABLED", default=(not TESTING), cast=bool)
 
 # ============================================================================
 # LOGGING CONFIGURATION

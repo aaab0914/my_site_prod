@@ -1,10 +1,14 @@
+from pathlib import Path
+
+from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import Client, TestCase
 from django.urls import reverse
 from django.utils import timezone
 
-from blog.models import Comment, Post
+from blog.models import AudioPost, Comment, Post, VideoPost
+from images.models import Album, AlbumImage, ImagePost
 
 
 class UserProfileViewTests(TestCase):
@@ -16,13 +20,13 @@ class UserProfileViewTests(TestCase):
     def test_view_own_profile(self):
         response = self.client.get(reverse("users:profile"))
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.context["user"], self.user)
+        self.assertEqual(response.context["profile_user"], self.user)
 
     def test_view_other_profile(self):
         other_user = User.objects.create_user(username="otheruser", password="pass")
         response = self.client.get(reverse("users:profile_by_username", kwargs={"username": "otheruser"}))
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.context["user"], other_user)
+        self.assertEqual(response.context["profile_user"], other_user)
 
     def test_view_other_profile_hides_draft_posts_and_inactive_comments(self):
         other_user = User.objects.create_user(username="otheruser", password="pass")
@@ -111,3 +115,39 @@ class UserProfileViewTests(TestCase):
         )
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Upload a valid image.")
+
+    def test_profile_hides_media_records_when_underlying_files_are_missing(self):
+        gallery = ImagePost.objects.create(
+            title="Gallery item",
+            image=SimpleUploadedFile("gallery.jpg", b"gallery-bytes", content_type="image/jpeg"),
+            uploaded_by=self.user,
+        )
+        album = Album.objects.create(title="Album", description="", uploaded_by=self.user)
+        album_image = AlbumImage.objects.create(
+            album=album,
+            title="Album image",
+            image=SimpleUploadedFile("album.jpg", b"album-bytes", content_type="image/jpeg"),
+            uploaded_by=self.user,
+        )
+        audio = AudioPost.objects.create(
+            audio_file=SimpleUploadedFile("sample.mp3", b"audio-bytes", content_type="audio/mpeg"),
+            uploaded_by=self.user,
+            music_name="Sample audio",
+        )
+        video = VideoPost.objects.create(
+            video_file=SimpleUploadedFile("sample.mp4", b"video-bytes", content_type="video/mp4"),
+            uploaded_by=self.user,
+            title="Sample video",
+        )
+
+        for relative_name in [gallery.image.name, album_image.image.name, audio.audio_file.name, video.video_file.name]:
+            media_file = Path(settings.MEDIA_ROOT) / relative_name
+            if media_file.exists():
+                media_file.unlink()
+
+        response = self.client.get(reverse("users:profile"))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(list(response.context["gallery_images"]), [])
+        self.assertEqual(list(response.context["albums"]), [])
+        self.assertEqual(list(response.context["audio_posts"]), [])
+        self.assertEqual(list(response.context["video_posts"]), [])

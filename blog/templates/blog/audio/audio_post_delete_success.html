@@ -1,0 +1,45 @@
+{% extends "blog/base.html" %}
+
+{% block title %}Audio Deleted{% endblock %}
+
+{% block content %}
+<style>
+    .audio-success-shell { max-width: 960px; margin: 0 auto 36px; }
+    .audio-success-hero {
+        margin-bottom: 24px; padding: 30px; border-radius: 28px;
+        background: radial-gradient(circle at top right, rgba(255,255,255,.24), transparent 28%), linear-gradient(135deg, #17263d, #0f766e 58%, #d8b36a 155%);
+        color: #fff; box-shadow: 0 24px 54px rgba(15,23,42,.2);
+    }
+    .audio-success-hero h1 { margin: 0 0 10px; border: 0; font-size: 42px; font-weight: 800; letter-spacing: -.03em; }
+    .audio-success-hero p { margin: 0; max-width: 760px; color: rgba(255,255,255,.92); line-height: 1.7; font-size: 16px; }
+    .audio-success-panel { padding: 24px; border-radius: 22px; border: 1px solid #d7e1ea; background: #fff; box-shadow: 0 16px 36px rgba(15,23,42,.08); }
+    .audio-success-panel p { margin: 0 0 18px; color: #546779; line-height: 1.7; }
+    .audio-success-actions { display: flex; gap: 12px; flex-wrap: wrap; }
+    .audio-success-button, .audio-success-link {
+        display: inline-flex; align-items: center; justify-content: center; min-width: 148px;
+        border-radius: 999px; padding: 12px 20px; font-size: 14px; font-weight: 700; line-height: 1.2; text-decoration: none;
+    }
+    .audio-success-button { background: linear-gradient(135deg, #0f766e, #14532d); color: #fff; }
+    .audio-success-link { background: #e9eef3; color: #21384b; }
+    @media screen and (max-width: 768px) {
+        .audio-success-hero { padding: 24px 20px; }
+        .audio-success-hero h1 { font-size: 32px; }
+        .audio-success-panel { padding: 18px; }
+    }
+</style>
+
+<section class="audio-success-shell page-shell">
+    <div class="audio-success-hero page-hero">
+        <h1 class="page-hero-title">Audio Deleted</h1>
+        <p class="page-hero-copy">The selected audio track has been removed successfully.</p>
+    </div>
+
+    <section class="audio-success-panel">
+        <p>You can return to the audio library to continue managing tracks, or upload a new audio file from the upload page.</p>
+        <div class="audio-success-actions">
+            <a href="{% url 'blog:audio_list' %}" class="audio-success-button">Back to Library</a>
+            <a href="{% url 'blog:audio_upload' %}" class="audio-success-link">Upload Audio</a>
+        </div>
+    </section>
+</section>
+{% endblock %}

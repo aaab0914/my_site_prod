@@ -1,0 +1,52 @@
+{% extends "blog/base.html" %}
+
+{% block title %}Upload Video{% endblock %}
+
+{% block content %}
+<style>
+.video-upload-shell { width: min(100%, 1120px); display:grid; gap:24px; margin:0 auto 36px; }
+.video-upload-hero { padding:30px; border-radius:28px; background: linear-gradient(135deg, #172033, #6b21a8 62%, #c2410c 135%); color:#fff; box-shadow:0 24px 54px rgba(15,23,42,.2); }
+.video-upload-hero h1 { margin:0 0 10px; border:0; padding:0; color:#fff; font-size:42px; font-weight:800; letter-spacing:-.03em; }
+.video-upload-hero p { margin:0; max-width:760px; line-height:1.7; color:rgba(255,255,255,.92); font-size:16px; }
+.video-upload-grid { display:grid; grid-template-columns:minmax(0, 1.1fr) minmax(320px, .9fr); gap:22px; }
+.video-card { padding:24px; border:1px solid #d9e2ea; border-radius:20px; background:#fff; box-shadow:0 14px 34px rgba(15,23,42,.08); }
+.video-card h2 { margin:0 0 14px; }
+.video-card label { display:block; margin-bottom:8px; font-weight:700; color:#173042; }
+.video-card input[type="text"], .video-card input[type="file"], .video-card textarea { width:100%; margin:0 0 16px; padding:12px 14px; border:1px solid #c6d3df; border-radius:14px; background:#f8fbfd; }
+.video-submit { border:0; border-radius:999px; padding:12px 18px; background:#6b21a8; color:#fff; font-weight:700; cursor:pointer; }
+.video-list { display:grid; gap:14px; }
+.video-item { padding:16px; border:1px solid #dbe4ec; border-radius:18px; background:#f8fafc; }
+.video-item a { color:#15283a; font-weight:700; text-decoration:none; }
+.video-item-meta { margin-top:8px; color:#66768a; font-size:14px; }
+.video-errors { margin-bottom:16px; padding:14px 16px; border-radius:14px; background:#fff1f1; color:#a61b1b; }
+@media screen and (max-width: 900px) { .video-upload-shell { width:100%; } .video-upload-grid { grid-template-columns:1fr; } }
+</style>
+<section class="video-upload-shell page-shell">
+    <header class="video-upload-hero page-hero">
+        <h1 class="page-hero-title">Upload Video</h1>
+        <p class="page-hero-copy">This page is available to superusers only. Other users are redirected to the blog home automatically.</p>
+    </header>
+    <div class="video-upload-grid">
+        <form method="post" enctype="multipart/form-data" class="video-card">
+            {% csrf_token %}
+            <h2>New Video</h2>
+            {% if form.errors %}<div class="video-errors">{{ form.errors }}</div>{% endif %}
+            {{ form.as_p }}
+            <button class="video-submit" type="submit">Upload Video</button>
+        </form>
+        <section class="video-card">
+            <h2>Recent Videos</h2>
+            <div class="video-list">
+                {% for video in recent_videos %}
+                    <article class="video-item">
+                        <a href="{{ video.get_video_proxy_url }}">{{ video.title|default:video.get_video_filename }}</a>
+                        <div class="video-item-meta">{{ video.get_video_filename }} by {{ video.uploaded_by.username }} on {{ video.created|date:"Y-m-d H:i" }}</div>
+                    </article>
+                {% empty %}
+                    <div class="video-item">No videos uploaded yet.</div>
+                {% endfor %}
+            </div>
+        </section>
+    </div>
+</section>
+{% endblock %}

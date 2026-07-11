@@ -31,7 +31,7 @@
     }
 
     .audio-upload-hero p {
-        max-width: 700px;
+        max-width: 760px;
         margin: 0;
         color: rgba(255, 255, 255, 0.92);
         line-height: 1.7;
@@ -145,6 +145,14 @@
         border: 2px dashed #7ca4b4;
         border-radius: 20px;
         background: linear-gradient(180deg, #f7fbfd, #eef5fa);
+        transition: border-color 0.18s ease, background 0.18s ease, transform 0.18s ease;
+        cursor: pointer;
+    }
+
+    .audio-upload-dropzone.is-active {
+        border-color: #0f766e;
+        background: linear-gradient(180deg, #effcf8, #e0f2f1);
+        transform: translateY(-1px);
     }
 
     .audio-upload-dropzone strong {
@@ -222,12 +230,23 @@
         padding-left: 18px;
     }
 
+    .audio-upload-file-list {
+        margin: 0;
+        padding-left: 18px;
+        color: #173042;
+    }
+
     .audio-upload-file-name {
         font-weight: 700;
         color: #173042;
     }
 
     @media screen and (max-width: 768px) {
+        .audio-upload-shell {
+            width: calc(100% - 24px);
+            margin: 0 12px 36px 0;
+        }
+
         .audio-upload-hero {
             padding: 24px 20px;
         }
@@ -246,13 +265,13 @@
     }
 </style>
 
-<section class="audio-upload-shell">
-    <div class="audio-upload-hero">
-        <h1>Upload Audio</h1>
-        <p>Publish a track with a clean title, a supported audio file, and a short description. The page is tuned for fast submissions without unnecessary visual noise.</p>
+<section class="audio-upload-shell page-shell">
+    <div class="audio-upload-hero page-hero">
+        <h1 class="page-hero-title">Upload Audio</h1>
+        <p class="page-hero-copy">Publish a track with a clean title, a supported audio file, and a short description. The page is tuned for fast submissions without unnecessary visual noise.</p>
         <div class="audio-upload-stats">
             <span class="audio-upload-pill">Formats: MP3, WAV, OGG</span>
-            <span class="audio-upload-pill">Max file size: 10 MB</span>
+            <span class="audio-upload-pill">Max file size: 25 MB</span>
             <span class="audio-upload-pill">Login required</span>
         </div>
     </div>
@@ -274,17 +293,26 @@
                 {% endif %}
             </div>
 
-            <div class="audio-upload-dropzone">
-                <strong>Choose your audio file</strong>
-                <p>Select one local file to upload. After choosing a file, its name will appear below so you can confirm the selection before submitting.</p>
+            <div class="audio-upload-dropzone" id="audio-upload-dropzone" tabindex="0">
+                <strong>Choose or paste audio files</strong>
+                <p>Click to pick files, or paste from the clipboard directly into this area. You can add up to 10 audio files in one submission.</p>
             </div>
 
             <div class="audio-upload-field">
                 <label for="{{ form.audio_file.id_for_label }}">Audio file</label>
                 {{ form.audio_file }}
-                <div class="audio-upload-help" id="audio-file-name">No file selected.</div>
+                <div class="audio-upload-help" id="audio-file-name">No files selected.</div>
                 {% if form.audio_file.errors %}
                     <div class="audio-upload-error">{{ form.audio_file.errors }}</div>
+                {% endif %}
+            </div>
+
+            <div class="audio-upload-field">
+                <label for="{{ form.cover_image.id_for_label }}">Cover image</label>
+                {{ form.cover_image }}
+                <div class="audio-upload-help">Optional. Supported: JPG, PNG, WebP. Max 3MB. Applied when uploading a single track.</div>
+                {% if form.cover_image.errors %}
+                    <div class="audio-upload-error">{{ form.cover_image.errors }}</div>
                 {% endif %}
             </div>
 
@@ -307,10 +335,10 @@
             <section class="audio-upload-panel audio-upload-note">
                 <h3>Upload Checklist</h3>
                 <ul>
-                    <li>Use a short, readable track title.</li>
-                    <li>Keep the file within 10 MB.</li>
-                    <li>Supported extensions are `.mp3`, `.wav`, and `.ogg`.</li>
-                    <li>Descriptions are optional but useful for discovery.</li>
+                    <li>Single upload must include a track title.</li>
+                    <li>Paste or select up to 10 files per submission.</li>
+                    <li>Each file must stay within 25 MB.</li>
+                    <li>Supported formats: MP3, WAV, OGG.</li>
                 </ul>
             </section>
 
@@ -327,21 +355,91 @@
     const fileInput = document.getElementById("{{ form.audio_file.id_for_label }}");
     const fileName = document.getElementById("audio-file-name");
     const resetButton = document.getElementById("audio-upload-reset");
+    const dropzone = document.getElementById("audio-upload-dropzone");
+    const maxFiles = 10;
 
-    if (!fileInput || !fileName || !resetButton) {
+    if (!fileInput || !fileName || !resetButton || !dropzone) {
         return;
     }
 
+    const syncFiles = (files) => {
+        const pickedFiles = Array.from(files || []).slice(0, maxFiles);
+        const transfer = new DataTransfer();
+        pickedFiles.forEach((file) => transfer.items.add(file));
+        fileInput.files = transfer.files;
+        renderFileList(transfer.files, files && files.length > maxFiles);
+    };
+
+    const renderFileList = (files, truncated = false) => {
+        if (!files || !files.length) {
+            fileName.textContent = "No files selected.";
+            return;
+        }
+
+        const items = Array.from(files)
+            .map((file) => `<li><span class="audio-upload-file-name">${file.name}</span></li>`)
+            .join("");
+        const limitNote = truncated ? '<div class="audio-upload-help">Only the first 10 files were kept.</div>' : "";
+        fileName.innerHTML = `<div>${files.length} file(s) ready.</div><ul class="audio-upload-file-list">${items}</ul>${limitNote}`;
+    };
+
     fileInput.addEventListener("change", () => {
-        const selected = fileInput.files && fileInput.files[0];
-        fileName.innerHTML = selected
-            ? `<span class="audio-upload-file-name">${selected.name}</span>`
-            : "No file selected.";
+        syncFiles(fileInput.files);
+    });
+
+    dropzone.addEventListener("click", () => fileInput.click());
+    dropzone.addEventListener("keydown", (event) => {
+        if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            fileInput.click();
+        }
+    });
+
+    dropzone.addEventListener("paste", (event) => {
+        const allowedAudioTypes = new Set(["audio/mpeg", "audio/mp3", "audio/wav", "audio/x-wav", "audio/ogg"]);
+        const allowedAudioExtensions = [".mp3", ".wav", ".ogg"];
+
+        const isAllowedAudioFile = (file) => {
+            if (!file) return false;
+            const fileName = (file.name || "").toLowerCase();
+            const mimeType = (file.type || "").toLowerCase();
+            return allowedAudioTypes.has(mimeType) || allowedAudioExtensions.some((ext) => fileName.endsWith(ext));
+        };
+
+        const files = Array.from(event.clipboardData?.files || []).filter(isAllowedAudioFile);
+        if (!files.length) {
+            return;
+        }
+        event.preventDefault();
+        syncFiles(files);
+    });
+
+    ["dragenter", "dragover"].forEach((eventName) => {
+        dropzone.addEventListener(eventName, (event) => {
+            event.preventDefault();
+            dropzone.classList.add("is-active");
+        });
+    });
+
+    ["dragleave", "dragend", "drop"].forEach((eventName) => {
+        dropzone.addEventListener(eventName, () => {
+            dropzone.classList.remove("is-active");
+        });
+    });
+
+    dropzone.addEventListener("drop", (event) => {
+        event.preventDefault();
+        const files = Array.from(event.dataTransfer?.files || []).filter(isAllowedAudioFile);
+        if (!files.length) {
+            return;
+        }
+        syncFiles(files);
     });
 
     resetButton.addEventListener("click", () => {
         window.setTimeout(() => {
-            fileName.textContent = "No file selected.";
+            fileName.textContent = "No files selected.";
+            dropzone.classList.remove("is-active");
         }, 0);
     });
 })();

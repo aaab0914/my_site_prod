@@ -1,0 +1,29 @@
+{% extends "blog/base.html" %}
+
+{% block title %}Edit Album{% endblock %}
+
+{% block content %}
+<style>
+.album-edit-wrap { width: min(100%, 760px); margin: 0 32px 32px 0; padding-right: 12px; }
+.album-edit-card { padding: 24px; border: 1px solid #d9e2ea; border-radius: 20px; background: #fff; box-shadow: 0 14px 34px rgba(15, 23, 42, 0.08); }
+.album-edit-card h1 { margin: 0 0 18px; border: 0; padding: 0; }
+.album-edit-card label { display:block; margin-bottom:8px; font-weight:700; color:#173042; }
+.album-edit-card input, .album-edit-card textarea { width:100%; padding:12px 14px; border:1px solid #c6d3df; border-radius:14px; background:#f8fbfd; font-size:14px; margin-bottom:16px; }
+.album-edit-actions { display:flex; gap:12px; flex-wrap:wrap; margin-top:8px; }
+@media screen and (max-width: 900px) { .album-edit-wrap { width: 100%; margin: 0 0 24px; padding-right: 0; } }
+.album-save, .album-cancel { display:inline-flex; align-items:center; justify-content:center; padding:12px 18px; border-radius:999px; text-decoration:none; font-weight:700; border:0; cursor:pointer; }
+.album-save { background:#0f766e; color:#fff; }
+.album-cancel { background:#e8eef3; color:#22384a; }
+</style>
+<section class="album-edit-wrap">
+<form method="post" class="album-edit-card">
+{% csrf_token %}
+<h1>Edit Album</h1>
+{{ form.as_p }}
+<div class="album-edit-actions">
+<button class="album-save" type="submit">Save</button>
+<a class="album-cancel" href="{% url 'blog:images:album_detail' album.id %}">Cancel</a>
+</div>
+</form>
+</section>
+{% endblock %}

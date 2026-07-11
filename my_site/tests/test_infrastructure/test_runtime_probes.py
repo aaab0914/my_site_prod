@@ -14,8 +14,8 @@ class FilesystemPermissionSafetyTests(SimpleTestCase):
         self.dockerfile = (BASE_DIR / "Dockerfile").read_text(encoding="utf-8")
         self.entrypoint = (BASE_DIR / "entrypoint.sh").read_text(encoding="utf-8")
 
-    def test_web_service_bind_mounts_project_code(self):
-        self.assertIn("- .:/code", self.compose)
+    def test_web_service_does_not_bind_mount_project_code(self):
+        self.assertNotIn("- .:/code", self.compose)
 
     def test_bind_mount_risk_is_mitigated_by_external_entrypoint_location(self):
         self.assertIn("COPY entrypoint.sh /usr/local/bin/entrypoint.sh", self.dockerfile)

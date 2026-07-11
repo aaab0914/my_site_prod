@@ -1,0 +1,27 @@
+{% extends "blog/base.html" %}
+
+{% block title %}Delete Album{% endblock %}
+
+{% block content %}
+<style>
+.album-delete-wrap { max-width: 700px; margin: 0 auto 32px; }
+.album-delete-card { padding: 24px; border: 1px solid #ead1d1; border-radius: 20px; background: #fff; box-shadow: 0 14px 34px rgba(15, 23, 42, 0.08); }
+.album-delete-card h1 { margin: 0 0 12px; border: 0; padding: 0; }
+.album-delete-card p { color:#526474; line-height:1.7; }
+.album-delete-actions { display:flex; gap:12px; flex-wrap:wrap; margin-top:18px; }
+.album-delete-confirm, .album-delete-cancel { display:inline-flex; align-items:center; justify-content:center; padding:12px 18px; border-radius:999px; text-decoration:none; font-weight:700; border:0; cursor:pointer; }
+.album-delete-confirm { background:#b42318; color:#fff; }
+.album-delete-cancel { background:#e8eef3; color:#22384a; }
+</style>
+<section class="album-delete-wrap">
+<form method="post" class="album-delete-card">
+{% csrf_token %}
+<h1>Delete Album</h1>
+<p>Delete <strong>{{ album.title }}</strong>? This removes the album and all images inside it.</p>
+<div class="album-delete-actions">
+<button class="album-delete-confirm" type="submit">Delete Album</button>
+<a class="album-delete-cancel" href="{% url 'blog:images:album_detail' album.id %}">Cancel</a>
+</div>
+</form>
+</section>
+{% endblock %}

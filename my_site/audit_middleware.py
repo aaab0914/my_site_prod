@@ -25,7 +25,9 @@ class AuditLoggingMiddleware:
         # 记录请求
         try:
             AuditLog.objects.create(
-                user=request.user if request.user.is_authenticated else None,
+                user=request.user
+                if getattr(request.user, "is_authenticated", False) and getattr(request.user, "pk", None)
+                else None,
                 method=request.method,
                 path=request.path,
                 ip_address=ip,

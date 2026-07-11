@@ -14,6 +14,7 @@ from django.db import models
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.utils import timezone
+from django.urls import reverse
 
 
 class Profile(models.Model):
@@ -40,6 +41,12 @@ class Profile(models.Model):
         if days_since_change >= 3:
             return 0
         return 3 - days_since_change
+
+    def get_avatar_proxy_url(self):
+        if not self.avatar:
+            return ""
+        version = int(self.last_avatar_change.timestamp()) if self.last_avatar_change else self.pk
+        return f'{reverse("users:profile_avatar", args=[self.user.username])}?v={version}'
 
 
 @receiver(post_save, sender=User)

@@ -143,7 +143,7 @@ services:
       SENTRY_PROFILES_SAMPLE_RATE: ${SENTRY_PROFILES_SAMPLE_RATE}
       RUNNING_IN_DOCKER: "true"
     ports:
-      - "127.0.0.1:15555:5555"
+      - "127.0.0.1:15556:5555"
     depends_on:
       redis:
         condition: service_started
@@ -161,7 +161,7 @@ services:
     volumes:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
     ports:
-      - "127.0.0.1:19090:9090"
+      - "127.0.0.1:19098:9090"
     depends_on:
       web:
         condition: service_started
@@ -190,7 +190,7 @@ services:
       - "--broker-url=${CELERY_BROKER_URL}"
       - "--port=9540"
     ports:
-      - "127.0.0.1:19540:9540"
+      - "127.0.0.1:9540:9540"
     depends_on:
       redis:
         condition: service_started

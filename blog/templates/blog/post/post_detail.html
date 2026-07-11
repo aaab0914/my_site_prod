@@ -4,53 +4,80 @@
 {% block title %}{{ post.title }}{% endblock %}
 
 {% block content %}
+<style>
+    .post-detail-content-shift {
+        max-width: 860px;
+        padding-right: 96px;
+    }
+    .post-detail-success {
+        margin: 0 0 20px;
+        padding: 12px 14px;
+        border-radius: 8px;
+        border: 1px solid #b7e4c7;
+        background: #edf9f2;
+        color: #14532d;
+        line-height: 1.6;
+    }
+    .post-detail-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        margin: 24px 0 0;
+        flex-wrap: wrap;
+    }
+    .post-detail-action {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 110px;
+        padding: 10px 16px;
+        border-radius: 10px;
+        color: #fff;
+        text-decoration: none;
+        font-weight: 700;
+    }
+    .post-detail-action-edit { background: #0f766e; }
+    .post-detail-action-delete { background: #ff4b4b; }
+    .post-detail-meta {
+        margin: 0 0 20px;
+        color: #64748b;
+    }
+    .post-detail-body {
+        line-height: 1.8;
+    }
+</style>
+
+{% if post_update_success %}
+    <div class="post-detail-success">Post updated successfully.</div>
+{% endif %}
+
+<div class="post-detail-content-shift">
     <h1>{{ post.title }}</h1>
 
-    <!-- 添加封面图片显示 -->
     {% if post.cover_image %}
-        <div style="margin-bottom: 20px;">
-            <img src="{{ post.cover_image.url }}" alt="{{ post.title }}"
-                 style="max-width: 100%; height: auto; border-radius: 8px;">
+        <div style="margin: 0 0 20px;">
+            <img src="{{ post.get_cover_image_proxy_url }}" alt="{{ post.title }}" style="display: block; width: 100%; max-width: 420px; height: auto; border-radius: 8px;">
         </div>
     {% endif %}
 
-    <p class="date">
+    <p class="date post-detail-meta">
         Published {{ post.publish }} by {{ post.author }}
     </p>
 
-    <!-- 文章正文 -->
-    <div class="post-body">
+    <div class="post-body post-detail-body">
         {{ post.get_markdown_body|safe }}
     </div>
 
-    {% if post.audio_file %}
-      {% if post.author == request.user or request.user.is_superuser %}
-        <div class="audio-actions" style="margin: 20px 0;">
-          <a href="{% url 'blog:audio_post_edit' post.id %}" class="btn btn-primary" style="padding: 8px 15px; background: #007bff; color:white;
-  text-decoration: none; border-radius: 4px;">
-            Edit Audio
-          </a>
-          <a href="{% url 'blog:audio_post_delete' post.id %}" class="btn btn-danger" style="padding: 8px 15px; background: #dc3545; color: white;
-  text-decoration: none; border-radius: 4px;">
-            Delete Audio
-          </a>
-        </div>
-        {% endif %}
-    {% endif %}
-
-    <!-- 删除按钮容器（右下角） -->
-    <div class="post-delete-container">
+    <div class="post-detail-actions">
         {% if user.is_authenticated and user == post.author or user.is_superuser %}
-            <a href="{% url 'blog:post_delete' post.pk %}" class="delete-btn">Delete Post</a>
+            <a href="{% url 'blog:post_edit' post.pk %}" class="post-detail-action post-detail-action-edit">Edit Post</a>
+            <a href="{% url 'blog:post_delete' post.pk %}" class="post-detail-action post-detail-action-delete">Delete Post</a>
         {% endif %}
     </div>
 
-    <!-- 仅登录用户可见的评论 -->
     {% if user.is_authenticated %}
         {% with comments.count as total_comments %}
-            <h2>
-                {{ total_comments }} Comment{{ total_comments|pluralize }}
-            </h2>
+            <h2>{{ total_comments }} Comment{{ total_comments|pluralize }}</h2>
         {% endwith %}
 
         {% for comment in comments %}
@@ -65,7 +92,7 @@
                 </p>
                 {% if comment.image %}
                     <div class="comment-image">
-                        <img src="{{ comment.image.url }}" alt="Comment image" style="max-width: 200px; border-radius: 4px;">
+                        <img src="{{ comment.get_image_proxy_url }}" alt="Comment image" style="max-width: 200px; border-radius: 4px;">
                     </div>
                 {% endif %}
                 {{ comment.body|linebreaks }}
@@ -79,12 +106,11 @@
 
     <h2>Similar Posts</h2>
     {% for post in similar_posts %}
-        <p>
-            <a href="{{ post.get_absolute_url }}">{{ post.title }}</a>
-        </p>
+        <p><a href="{{ post.get_absolute_url }}">{{ post.title }}</a></p>
     {% empty %}
         <p>There are no Similar Posts yet.</p>
     {% endfor %}
 
     {% include "blog/comment/add_comment.html" %}
+</div>
 {% endblock %}

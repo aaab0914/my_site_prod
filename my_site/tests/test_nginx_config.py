@@ -9,6 +9,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 
 class NginxConfigFileTests(SimpleTestCase):
+    databases = "__all__"
     def setUp(self):
         self.nginx_path = BASE_DIR / "nginx.conf"
         self.nginx_text = self.nginx_path.read_text(encoding="utf-8")
@@ -22,8 +23,7 @@ class NginxConfigFileTests(SimpleTestCase):
         self.assertIn("server_name _;", self.nginx_text)
 
     def test_client_upload_limit_is_defined(self):
-        self.assertIn("client_max_body_size 25m;", self.nginx_text)
-        self.assertIn("client_max_body_size 10m;", self.nginx_text)
+        self.assertIn("client_max_body_size 120m;", self.nginx_text)
 
     def test_static_location_is_configured(self):
         self.assertIn("location /static/", self.nginx_text)
@@ -31,11 +31,17 @@ class NginxConfigFileTests(SimpleTestCase):
 
     def test_media_location_is_configured(self):
         self.assertIn("location /media/", self.nginx_text)
-        self.assertIn("alias /media/;", self.nginx_text)
+        self.assertIn("return 404;", self.nginx_text)
 
     def test_root_location_proxies_to_web_container(self):
         self.assertIn("location / {", self.nginx_text)
-        self.assertIn("proxy_pass http://web:8000;", self.nginx_text)
+        self.assertIn("set $django_upstream http://web:8000;", self.nginx_text)
+        self.assertIn("proxy_pass $django_upstream;", self.nginx_text)
+
+
+def test_root_path_is_not_overridden_by_static_portal_page(self):
+    self.assertNotIn("location = / {", self.nginx_text)
+    self.assertNotIn("try_files /port-portal.html =404;", self.nginx_text)
 
     def test_proxy_headers_are_forwarded(self):
         self.assertIn("proxy_set_header Host $host;", self.nginx_text)

@@ -1,46 +1,220 @@
 {% extends 'blog/base.html' %}
 
-{% block title %}
-  Edit Audio Post
-{% endblock %}
+{% block title %}Edit Audio{% endblock %}
 
 {% block content %}
-  <div class="edit-container" style="max-width: 800px; margin: 40px auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px">
-    <h1>Edit Audio Post</h1>
+<style>
+    .audio-edit-shell { max-width: 1040px; margin: 0 auto 36px; }
+    .audio-edit-hero {
+        margin-bottom: 24px; padding: 30px; border-radius: 28px;
+        background: radial-gradient(circle at top right, rgba(255,255,255,.24), transparent 28%), linear-gradient(135deg, #17263d, #0f766e 58%, #d8b36a 155%);
+        color: #fff; box-shadow: 0 24px 54px rgba(15,23,42,.2);
+    }
+    .audio-edit-hero h1 { margin: 0 0 10px; border: 0; font-size: 42px; font-weight: 800; letter-spacing: -0.03em; }
+    .audio-edit-hero p { margin: 0; max-width: 760px; color: rgba(255,255,255,.92); line-height: 1.7; font-size: 16px; }
+    .audio-edit-layout { display: grid; grid-template-columns: minmax(0,1.45fr) minmax(280px,.85fr); gap: 22px; }
+    .audio-edit-panel { padding: 24px; border-radius: 22px; border: 1px solid #d7e1ea; background: #fff; box-shadow: 0 16px 36px rgba(15,23,42,.08); }
+    .audio-edit-panel h2, .audio-edit-panel h3 { margin: 0 0 14px; color: #16283a; }
+    .audio-edit-field { margin-bottom: 18px; }
+    .audio-edit-field label { display: block; margin-bottom: 8px; font-weight: 700; color: #173042; }
+    .audio-edit-field input, .audio-edit-field textarea { width: 100%; display: block; margin: 0; padding: 13px 15px; border: 1px solid #c8d5df; border-radius: 15px; background: #f7fafc; font-size: 14px; box-sizing: border-box; }
+    .audio-edit-field input[type="file"] { padding: 14px 15px; }
+    .audio-edit-dropzone { margin-top: 10px; padding: 18px; border: 2px dashed #7ca4b4; border-radius: 18px; background: linear-gradient(180deg, #f7fbfd, #eef5fa); color: #173042; cursor: pointer; transition: border-color .18s ease, background .18s ease, transform .18s ease; }
+    .audio-edit-dropzone.is-active { border-color: #0f766e; background: linear-gradient(180deg, #effcf8, #e0f2f1); transform: translateY(-1px); }
+    .audio-edit-dropzone strong { display: block; margin-bottom: 8px; font-size: 16px; }
+    .audio-edit-file-list { margin: 8px 0 0; padding-left: 18px; color: #173042; }
+    .audio-edit-field textarea { min-height: 130px; resize: vertical; }
+    .audio-edit-help { display: block; margin-top: 8px; color: #627486; font-size: 13px; line-height: 1.6; }
+    .audio-edit-errors { margin-bottom: 18px; padding: 14px 16px; border-radius: 16px; background: #fff1f1; color: #ab1f1f; }
+    .audio-edit-error { display: block; margin-top: 8px; color: #b42318; font-size: 14px; }
+    .audio-edit-file-box { padding: 18px; border-radius: 18px; background: #f8fafc; border: 1px solid #dbe5ed; }
+    .audio-edit-file-box audio { width: 100%; margin-top: 12px; }
+    .audio-edit-cover-preview { width: 100%; max-width: 260px; aspect-ratio: 1 / 1; object-fit: cover; display: block; margin-top: 12px; border-radius: 18px; border: 1px solid #dbe5ed; background: #eef2f6; }
+    .audio-edit-inline-action { display: inline-flex; align-items: center; justify-content: center; margin-top: 12px; padding: 10px 14px; border: 0; border-radius: 999px; background: #fee2e2; color: #b42318; font-size: 13px; font-weight: 700; cursor: pointer; }
+    .audio-edit-actions { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 22px; }
+    .audio-edit-button, .audio-edit-link, .audio-edit-delete-link { display: inline-flex; align-items: center; justify-content: center; min-width: 148px; border-radius: 999px; padding: 12px 20px; font-size: 14px; font-weight: 700; line-height: 1.2; text-decoration: none; border: 0; }
+    .audio-edit-button { background: linear-gradient(135deg, #0f766e, #14532d); color: #fff; cursor: pointer; }
+    .audio-edit-link { background: #e9eef3; color: #21384b; }
+    .audio-edit-delete-link { background: #fee2e2; color: #b42318; }
+    .audio-edit-note { padding: 18px; border-radius: 18px; background: #f8fafc; border: 1px solid #dbe5ed; }
+    .audio-edit-note p, .audio-edit-note li { color: #536576; line-height: 1.6; }
+    .audio-edit-note ul { margin: 0; padding-left: 18px; }
+    @media screen and (max-width: 768px) {
+        .audio-edit-hero { padding: 24px 20px; }
+        .audio-edit-hero h1 { font-size: 32px; }
+        .audio-edit-layout { grid-template-columns: 1fr; }
+        .audio-edit-panel { padding: 18px; }
+    }
+</style>
 
-    <form method="post" enctype="multipart/form-data">
-      {% csrf_token %}
+<section class="audio-edit-shell page-shell">
+    <div class="audio-edit-hero page-hero">
+        <h1 class="page-hero-title">Edit Audio</h1>
+        <p class="page-hero-copy">Update the track title, replace the file if needed, and keep the description in sync with the audio library.</p>
+    </div>
 
-      {% if form.non_field_errors %}
-        <div class="alert alert-danger" style="background: #f8d7da; padding: 10px; border-radius: 4px; margin-bottom: 15px;">
-          {{ form.non_field_errors }}
-        </div>
-      {% endif %}
+    <div class="audio-edit-layout">
+        <section class="audio-edit-panel">
+            <h2>Track Settings</h2>
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
 
-      {{ form.as_p }}
+                {% if form.non_field_errors %}
+                    <div class="audio-edit-errors">{{ form.non_field_errors }}</div>
+                {% endif %}
 
-      {% if audiopost.audio_file %}
-        <div style="margin: 10px 0; padding: 10px; background: #f0f8ff; border-radius: 4px;">
-          <p><strong>Current Audio File:</strong></p>
-          <audio controls style="width: 100%">
-            <source src="{{ audiopost.audio_file.url }}" type="audio/mpeg">
-            Your browser does not support the audio element.
-          </audio>
-          <p style="margin-top: 5px; font-size: 0.9em; color: #666">
-            <a href="{{ audiopost.audio_file.url }}" target="_blank">Download file</a> |
-            Leave the upload field blank to keep the current file.
-          </p>
-        </div>
-      {% endif %}
+                <div class="audio-edit-field">
+                    <label for="{{ form.music_name.id_for_label }}">Track title</label>
+                    {{ form.music_name }}
+                    {% if form.music_name.errors %}
+                        <div class="audio-edit-error">{{ form.music_name.errors }}</div>
+                    {% endif %}
+                </div>
 
-      <div class="action-buttons" style="margin-top: 20px; display: flex; gap: 10px;">
-        <button type="submit" class="btn btn-primary" style="padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">
-          Save Changes
-        </button>
-        <a href="{% url 'blog:audio_list' %}" class="btn btn-secondary" style="padding: 10px 20px; background: #6c757d; color: white; text-decoration: none; border-radius: 4px">
-          Cancel
-        </a>
-      </div>
-    </form>
-  </div>
+                <div class="audio-edit-field">
+                    <label for="{{ form.audio_file.id_for_label }}">Replace audio file</label>
+                    {{ form.audio_file }}
+                    <div class="audio-edit-help">Leave this blank to keep the current file.</div>
+                    {% if form.audio_file.errors %}
+                        <div class="audio-edit-error">{{ form.audio_file.errors }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="audio-edit-field">
+                    <label for="{{ form.cover_image.id_for_label }}">Cover image</label>
+                    {{ form.cover_image }}
+                    <div class="audio-edit-dropzone" id="cover-edit-dropzone" tabindex="0">
+                        <strong>Choose or paste a cover image</strong>
+                        <p>Click to pick an image, drag one here, or paste directly into this area.</p>
+                    </div>
+                    <div class="audio-edit-help" id="cover-edit-file-name">No new cover selected.</div>
+                    <div class="audio-edit-help">Upload a square cover if possible. Supported: JPG, PNG, WebP. Max 3MB.</div>
+                    {% if audiopost.cover_image %}
+                        <div class="audio-edit-help">Current cover file: {{ audiopost.get_cover_filename }}</div>
+                    {% endif %}
+                    {% if form.cover_image.errors %}
+                        <div class="audio-edit-error">{{ form.cover_image.errors }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="audio-edit-field">
+                    <label for="{{ form.description.id_for_label }}">Description</label>
+                    {{ form.description }}
+                    {% if form.description.errors %}
+                        <div class="audio-edit-error">{{ form.description.errors }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="audio-edit-actions">
+                    <button type="submit" class="audio-edit-button">Save Changes</button>
+                    <a href="{% url 'blog:audio_list' %}" class="audio-edit-link">Back to Library</a>
+                </div>
+            </form>
+        </section>
+
+        <aside class="audio-edit-panel audio-edit-note">
+            <h3>Current File</h3>
+            {% if audiopost.audio_file %}
+                <div class="audio-edit-file-box">
+                    <div><strong>{{ audiopost.music_name|default:"Untitled track" }}</strong></div>
+                    {% if audiopost.cover_image %}
+                        <img class="audio-edit-cover-preview" src="{{ audiopost.get_cover_image_proxy_url }}" alt="{{ audiopost.music_name|default:'Audio cover' }} cover">
+                        <div class="audio-edit-help">Current cover file: {{ audiopost.get_cover_filename }}</div>
+                    {% else %}
+                        <div class="audio-edit-help" style="margin-top:12px;">No cover image uploaded yet.</div>
+                    {% endif %}
+                    <audio controls>
+                        <source src="{{ audiopost.get_audio_proxy_url }}" type="audio/mpeg">
+                        Your browser does not support the audio element.
+                    </audio>
+                    <div class="audio-edit-help"><a href="{{ audiopost.get_audio_proxy_url }}" target="_blank">Open current file</a></div>
+                    <div class="audio-edit-actions" style="margin-top:14px;">
+                        <a href="{% url 'blog:audio_post_delete' audiopost.id %}" class="audio-edit-delete-link">Delete Track</a>
+                    </div>
+                </div>
+            {% endif %}
+
+            <h3 style="margin-top:18px;">Editing Notes</h3>
+            <ul>
+                <li>Replacing the file updates the track stored in the library.</li>
+                <li>Keep titles short so the list view stays clean.</li>
+                <li>Descriptions are optional, but useful for context.</li>
+            </ul>
+        </aside>
+    </div>
+</section>
+<script>
+(() => {
+    const coverInput = document.getElementById("{{ form.cover_image.id_for_label }}");
+    const coverDropzone = document.getElementById("cover-edit-dropzone");
+    const coverFileName = document.getElementById("cover-edit-file-name");
+    const allowedImageTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
+    const allowedImageExtensions = [".jpg", ".jpeg", ".png", ".webp"];
+
+    if (!coverInput || !coverDropzone || !coverFileName) {
+        return;
+    }
+
+    const isAllowedImageFile = (file) => {
+        if (!file) return false;
+        const fileName = (file.name || "").toLowerCase();
+        const mimeType = (file.type || "").toLowerCase();
+        return allowedImageTypes.has(mimeType) || allowedImageExtensions.some((ext) => fileName.endsWith(ext));
+    };
+
+    const syncCoverFile = (file) => {
+        if (!file || !isAllowedImageFile(file)) {
+            return;
+        }
+        const transfer = new DataTransfer();
+        transfer.items.add(file);
+        coverInput.files = transfer.files;
+        coverFileName.textContent = `Selected cover: ${file.name}`;
+    };
+
+    coverInput.addEventListener("change", () => {
+        const file = coverInput.files && coverInput.files[0];
+        coverFileName.textContent = file ? `Selected cover: ${file.name}` : "No new cover selected.";
+    });
+
+    coverDropzone.addEventListener("click", () => coverInput.click());
+    coverDropzone.addEventListener("keydown", (event) => {
+        if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            coverInput.click();
+        }
+    });
+
+    coverDropzone.addEventListener("paste", (event) => {
+        const files = Array.from(event.clipboardData?.files || []).filter(isAllowedImageFile);
+        if (!files.length) {
+            return;
+        }
+        event.preventDefault();
+        syncCoverFile(files[0]);
+    });
+
+    ["dragenter", "dragover"].forEach((eventName) => {
+        coverDropzone.addEventListener(eventName, (event) => {
+            event.preventDefault();
+            coverDropzone.classList.add("is-active");
+        });
+    });
+
+    ["dragleave", "dragend", "drop"].forEach((eventName) => {
+        coverDropzone.addEventListener(eventName, () => {
+            coverDropzone.classList.remove("is-active");
+        });
+    });
+
+    coverDropzone.addEventListener("drop", (event) => {
+        event.preventDefault();
+        const files = Array.from(event.dataTransfer?.files || []).filter(isAllowedImageFile);
+        if (!files.length) {
+            return;
+        }
+        syncCoverFile(files[0]);
+    });
+})();
+</script>
 {% endblock %}

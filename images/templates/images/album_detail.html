@@ -1,0 +1,49 @@
+{% extends "blog/base.html" %}
+
+{% block title %}{{ album.title }}{% endblock %}
+
+{% block content %}
+<style>
+.album-detail-shell { display: grid; gap: 24px; width: min(100%, 1120px); margin: 0 auto 36px; }
+.album-detail-hero { min-height: 200px; padding: 30px; border-radius: 28px; background: linear-gradient(135deg, #172033, #0f766e 62%, #d7b56d 135%); color: #fff; box-shadow: 0 24px 54px rgba(15, 23, 42, 0.2); }
+.album-detail-top { display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap; }
+.album-detail-back { color:#fff; text-decoration:none; font-weight:700; opacity:.95; }
+.album-detail-actions { display:flex; gap:12px; flex-wrap:wrap; }
+.album-edit,.album-delete { display:inline-flex; align-items:center; justify-content:center; padding:10px 16px; border-radius:999px; text-decoration:none; font-weight:700; }
+.album-edit { background:#fff; color:#0f3d3a; }
+.album-delete { background:#b42318; color:#fff; }
+.album-detail-hero h1 { margin: 24px 0 10px; border:0; padding:0; font-size:42px; color:#fff; }
+.album-detail-meta { color:rgba(255,255,255,.9); line-height:1.7; }
+.album-detail-description { margin-top:12px; color:rgba(255,255,255,.92); white-space:pre-wrap; line-height:1.7; }
+.album-grid { display:grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap:20px; }
+.album-item { border-radius:20px; overflow:hidden; background:#fff; border:1px solid #dbe4ec; box-shadow:0 14px 30px rgba(15,23,42,.08); }
+.album-item img { width:100%; height:280px; object-fit:cover; display:block; background:#eef2f6; }
+.album-item-body { padding:16px; color:#4f6274; line-height:1.6; }
+@media screen and (max-width: 900px) { .album-detail-shell { width: 100%; margin: 0 auto 24px; } .album-detail-hero h1 { font-size:32px; } .album-grid { grid-template-columns:1fr; } }
+</style>
+<section class="album-detail-shell page-shell">
+    <header class="album-detail-hero page-hero">
+        <div class="album-detail-top">
+            <a class="album-detail-back" href="{% url 'blog:images:album_list' %}">Back to Album</a>
+            {% if can_manage %}
+                <div class="album-detail-actions">
+                    <a class="album-edit" href="{% url 'blog:images:album_edit' album.id %}">Edit Album</a>
+                    <a class="album-delete" href="{% url 'blog:images:album_delete' album.id %}">Delete Album</a>
+                </div>
+            {% endif %}
+        </div>
+        <h1 class="page-hero-title">{{ album.title }}</h1>
+        <div class="album-detail-meta">{{ images|length }} image{{ images|length|pluralize }} by {{ album.uploaded_by.username }} on {{ album.created|date:"Y-m-d H:i" }}</div>
+        {% if album.description %}<div class="album-detail-description">{{ album.description }}</div>{% endif %}
+    </header>
+
+    <section class="album-grid">
+        {% for image in images %}
+            <article class="album-item">
+                <img src="{{ image.get_image_proxy_url }}" alt="{{ image.title }}" loading="lazy">
+                <div class="album-item-body">{{ image.title }}</div>
+            </article>
+        {% endfor %}
+    </section>
+</section>
+{% endblock %}

@@ -1,10 +1,14 @@
 # Merged from package modules into a single file for simpler navigation.
 
+import mimetypes
+from pathlib import Path
+
 # --- users/views/auth.py ---
 from django.contrib import messages
 from django.contrib.auth import login, logout
 from django.core.cache import cache
-from django.http import HttpResponse
+from django.core.paginator import Paginator
+from django.http import FileResponse, Http404, HttpResponse
 from django.shortcuts import redirect, render
 
 from .forms import UserLoginForm, UserRegisterForm
@@ -58,8 +62,10 @@ def login_view(request):
 
 
 def logout_view(request):
-    logout(request)
-    return render(request, "users/logout.html")
+    if request.method == "POST":
+        logout(request)
+        return render(request, "users/logout.html", {"logged_out": True})
+    return render(request, "users/logout.html", {"logged_out": False})
 
 # --- users/views/account.py ---
 from django.contrib import messages
@@ -67,11 +73,58 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
+from django.utils.http import http_date, parse_http_date_safe, quote_etag
 
-from blog.models import Comment, Post
+from blog.models import AudioPost, Comment, Post, VideoPost
+from images.models import Album, AlbumImage, ImagePost
+from my_site.media_helpers import filter_existing_media_instances, media_file_exists
 
 from .forms import UsernameChangeForm, UserProfileForm
 from .models import Profile
+
+
+def _valid_gallery_images_for_user(user, limit=12):
+    return filter_existing_media_instances(
+        ImagePost.objects.filter(uploaded_by=user).order_by('-created'),
+        'image',
+        limit=limit,
+    )
+
+
+def _valid_albums_for_user(user, limit=12):
+    valid_album_ids = []
+    album_ids = Album.objects.filter(uploaded_by=user).order_by('-created').values_list('id', flat=True)
+    for album_id in album_ids:
+        has_valid_image = False
+        for album_image in AlbumImage.objects.filter(album_id=album_id).only('image'):
+            if media_file_exists(album_image.image):
+                has_valid_image = True
+                break
+        if has_valid_image:
+            valid_album_ids.append(album_id)
+        if len(valid_album_ids) >= limit:
+            break
+    if not valid_album_ids:
+        return []
+    albums = list(Album.objects.filter(id__in=valid_album_ids).order_by('-created'))
+    albums.sort(key=lambda album: valid_album_ids.index(album.id))
+    return albums
+
+
+def _valid_audio_posts_for_user(user, limit=12):
+    return filter_existing_media_instances(
+        AudioPost.objects.filter(uploaded_by=user).order_by('-created'),
+        'audio_file',
+        limit=limit,
+    )
+
+
+def _valid_video_posts_for_user(user, limit=12):
+    return filter_existing_media_instances(
+        VideoPost.objects.filter(uploaded_by=user).order_by('-created'),
+        'video_file',
+        limit=limit,
+    )
 
 
 @login_required
@@ -111,12 +164,62 @@ def profile(request, username=None):
         user = request.user
     viewing_own_profile = user == request.user
     if viewing_own_profile:
-        user_posts = Post.objects.filter(author=user).order_by("-publish")
+        user_posts_queryset = Post.objects.filter(author=user).order_by("-publish")
         user_comments = Comment.objects.filter(author=user).order_by("-created")
     else:
-        user_posts = Post.published.filter(author=user).order_by("-publish")
+        user_posts_queryset = Post.published.filter(author=user).order_by("-publish")
         user_comments = Comment.objects.filter(author=user, active=True).order_by("-created")
-    return render(request, "users/profile.html", {"user": user, "posts": user_posts, "comments": user_comments})
+
+    user_gallery_images = _valid_gallery_images_for_user(user)
+    user_albums = _valid_albums_for_user(user)
+    user_audio_posts = _valid_audio_posts_for_user(user)
+    user_video_posts = _valid_video_posts_for_user(user)
+    posts_paginator = Paginator(user_posts_queryset, 10)
+    posts_page_obj = posts_paginator.get_page(request.GET.get("posts_page"))
+
+    return render(request, "users/profile.html", {
+        "profile_user": user,
+        "posts": posts_page_obj.object_list,
+        "posts_page_obj": posts_page_obj,
+        "posts_total_count": user_posts_queryset.count(),
+        "comments": user_comments,
+        "gallery_images": user_gallery_images,
+        "albums": user_albums,
+        "audio_posts": user_audio_posts,
+        "video_posts": user_video_posts,
+    })
+
+
+def profile_avatar(request, username):
+    user = get_object_or_404(User, username=username)
+    profile = getattr(user, "profile", None)
+    if not profile or not profile.avatar:
+        raise Http404("Avatar not found.")
+
+    file_path = Path(profile.avatar.path)
+    if not file_path.is_file():
+        raise Http404("Avatar not found.")
+
+    stat_result = file_path.stat()
+    last_modified = stat_result.st_mtime
+    etag = quote_etag(f"avatar-{user.pk}-{int(last_modified)}-{stat_result.st_size}")
+
+    if_none_match = request.headers.get("If-None-Match")
+    if if_none_match and if_none_match == etag:
+        response = HttpResponse(status=304)
+    else:
+        if_modified_since = parse_http_date_safe(request.headers.get("If-Modified-Since", ""))
+        if if_modified_since and int(last_modified) <= if_modified_since:
+            response = HttpResponse(status=304)
+        else:
+            content_type, _ = mimetypes.guess_type(file_path.name)
+            response = FileResponse(open(file_path, "rb"), content_type=content_type or "application/octet-stream")
+            response["Content-Disposition"] = f'inline; filename="{file_path.name}"'
+
+    response["Cache-Control"] = "public, max-age=604800"
+    response["ETag"] = etag
+    response["Last-Modified"] = http_date(last_modified)
+    return response
 
 
 @login_required

@@ -1,8 +1,11 @@
 from io import BytesIO
+import shutil
+import tempfile
 
 from django.contrib.auth.models import User
+from django.core.cache import cache
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.test import Client, TestCase
+from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 
 from blog.models import AudioPost
@@ -10,6 +13,11 @@ from blog.models import AudioPost
 
 class AudioRouteTests(TestCase):
     def setUp(self):
+        self.media_root = tempfile.mkdtemp(prefix="audio-route-tests-")
+        self.settings = override_settings(MEDIA_ROOT=self.media_root)
+        self.settings.enable()
+        cache.clear()
+        AudioPost.objects.all().delete()
         self.client = Client()
         self.user = User.objects.create_user(
             username="routeuser",
@@ -17,17 +25,40 @@ class AudioRouteTests(TestCase):
             password="testpass123",
         )
 
-    def test_audio_list_route(self):
-        AudioPost.objects.create(
+    def tearDown(self):
+        cache.clear()
+        self.settings.disable()
+        shutil.rmtree(self.media_root, ignore_errors=True)
+
+    def make_audio_file(self, name="sample.mp3", content=b"ID3 sample audio bytes"):
+        return SimpleUploadedFile(name, content, content_type="audio/mpeg")
+
+    def create_audio_post(self, music_name="Sample Track", description="Sample audio description"):
+        return AudioPost.objects.create(
             uploaded_by=self.user,
-            audio_file="audio/2026/06/25/sample.mp3",
-            description="Sample audio description",
-            music_name="Sample Track",
+            audio_file=self.make_audio_file(),
+            description=description,
+            music_name=music_name,
         )
+
+    def test_audio_list_route(self):
+        self.create_audio_post()
         response = self.client.get(reverse("blog:audio_list"))
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "blog/audio/audio_list.html")
         self.assertContains(response, "Sample Track")
+
+
+
+    def test_audio_list_includes_mobile_and_safari_friendly_player_markup(self):
+        self.create_audio_post()
+        response = self.client.get(reverse("blog:audio_list"))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'class="audio-player-shell"')
+        self.assertContains(response, 'playsinline')
+        self.assertContains(response, 'webkit-playsinline')
+        self.assertContains(response, 'preload="metadata"')
+        self.assertContains(response, '@supports (-webkit-touch-callout: none)')
 
     def test_audio_upload_post_submission(self):
         self.client.login(username="routeuser", password="testpass123")
@@ -55,33 +86,18 @@ class AudioRouteTests(TestCase):
         self.assertIn(reverse("users:login"), response.url)
 
     def test_audio_edit_route_requires_login(self):
-        audio = AudioPost.objects.create(
-            uploaded_by=self.user,
-            audio_file="audio/2026/06/25/sample.mp3",
-            description="Sample audio description",
-            music_name="Sample Track",
-        )
+        audio = self.create_audio_post()
         response = self.client.get(reverse("blog:audio_post_edit", kwargs={"pk": audio.pk}))
         self.assertEqual(response.status_code, 302)
 
     def test_audio_delete_route_requires_login(self):
-        audio = AudioPost.objects.create(
-            uploaded_by=self.user,
-            audio_file="audio/2026/06/25/sample.mp3",
-            description="Sample audio description",
-            music_name="Sample Track",
-        )
+        audio = self.create_audio_post()
         response = self.client.get(reverse("blog:audio_post_delete", kwargs={"pk": audio.pk}))
         self.assertEqual(response.status_code, 302)
 
     def test_audio_delete_get_only_shows_confirmation(self):
         self.client.login(username="routeuser", password="testpass123")
-        audio = AudioPost.objects.create(
-            uploaded_by=self.user,
-            audio_file="audio/2026/06/25/sample.mp3",
-            description="Sample audio description",
-            music_name="Sample Track",
-        )
+        audio = self.create_audio_post()
         response = self.client.get(reverse("blog:audio_post_delete", kwargs={"pk": audio.pk}))
         self.assertEqual(response.status_code, 200)
         self.assertTrue(AudioPost.objects.filter(pk=audio.pk).exists())
@@ -90,7 +106,7 @@ class AudioRouteTests(TestCase):
         owner = User.objects.create_user(username="audioowner", password="testpass123")
         audio = AudioPost.objects.create(
             uploaded_by=owner,
-            audio_file="audio/2026/06/25/sample.mp3",
+            audio_file=SimpleUploadedFile("sample.mp3", b"ID3 sample audio bytes", content_type="audio/mpeg"),
             description="Owner audio",
             music_name="Owner Track",
         )
@@ -111,7 +127,7 @@ class AudioRouteTests(TestCase):
         owner = User.objects.create_user(username="audioowner2", password="testpass123")
         audio = AudioPost.objects.create(
             uploaded_by=owner,
-            audio_file="audio/2026/06/25/sample.mp3",
+            audio_file=SimpleUploadedFile("sample.mp3", b"ID3 sample audio bytes", content_type="audio/mpeg"),
             description="Owner audio",
             music_name="Owner Track",
         )
@@ -121,8 +137,25 @@ class AudioRouteTests(TestCase):
         self.assertTrue(AudioPost.objects.filter(pk=audio.pk).exists())
 
 
+
+    def test_audio_proxy_supports_range_requests(self):
+        self.client.login(username="routeuser", password="testpass123")
+        audio = self.create_audio_post()
+        response = self.client.get(
+            reverse("blog:audio_file_proxy", kwargs={"pk": audio.pk}),
+            HTTP_RANGE="bytes=0-3",
+        )
+        self.assertEqual(response.status_code, 206)
+        self.assertEqual(response["Accept-Ranges"], "bytes")
+        self.assertTrue(response["Content-Range"].startswith("bytes 0-3/"))
+
 class AudioUploadValidationTests(TestCase):
     def setUp(self):
+        self.media_root = tempfile.mkdtemp(prefix="audio-upload-tests-")
+        self.settings = override_settings(MEDIA_ROOT=self.media_root)
+        self.settings.enable()
+        cache.clear()
+        AudioPost.objects.all().delete()
         self.client = Client()
         self.user = User.objects.create_user(
             username="uploaduser",
@@ -130,6 +163,11 @@ class AudioUploadValidationTests(TestCase):
             password="testpass123",
         )
         self.client.login(username="uploaduser", password="testpass123")
+
+    def tearDown(self):
+        cache.clear()
+        self.settings.disable()
+        shutil.rmtree(self.media_root, ignore_errors=True)
 
     def test_audio_upload_accepts_multipart_submission(self):
         audio_file = SimpleUploadedFile("clip.mp3", b"ID3 sample audio bytes", content_type="audio/mpeg")
