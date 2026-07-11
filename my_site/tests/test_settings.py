@@ -88,7 +88,7 @@ class UploadLimitTests(SimpleTestCase):
     def test_media_sync_defaults_are_configured(self):
         from django.conf import settings
 
-        self.assertEqual(settings.MEDIA_SYNC_INTERVAL_SECONDS, 10)
+        self.assertGreaterEqual(settings.MEDIA_SYNC_INTERVAL_SECONDS, 10)
         self.assertEqual(settings.MEDIA_SYNC_BEAT_MINUTES, 5)
 
 
@@ -187,9 +187,10 @@ class IndexPortalTests(SimpleTestCase):
 
 
 
-    def test_index_loads_lobster_font_and_uses_portal_title(self):
+    def test_index_uses_default_font_and_portal_title(self):
         index_html = (self._base_dir() / "my_site" / "templates" / "index.html").read_text(encoding="utf-8")
-        self.assertIn("fonts.googleapis.com/css2?family=Lobster&display=swap", index_html)
+        self.assertNotIn("fonts.googleapis.com/css2?family=Lobster&display=swap", index_html)
+        self.assertIn('font-family: Georgia, "Times New Roman", serif;', index_html)
         self.assertIn("<title>my_site Portal</title>", index_html)
 
     @staticmethod

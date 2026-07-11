@@ -60,15 +60,17 @@ def prime_id_cache(cache_key, queryset, field_name, new_items=None, timeout=MEDI
 
 def prime_serialized_list_cache(ids_key, items_key, queryset, serializer, new_items=None, timeout=MEDIA_CACHE_TIMEOUT):
     if new_items is not None:
-        cached_items = cache.get(items_key) or []
-        existing_ids = {item['id'] for item in cached_items}
-        fresh = [serializer(item) for item in new_items if item.id not in existing_ids]
-        if fresh or cached_items:
-            fresh_ids = {item['id'] for item in fresh}
-            merged = fresh + [item for item in cached_items if item['id'] not in fresh_ids]
-            cache.set(items_key, merged, timeout)
-            cache.set(ids_key, [item['id'] for item in merged], timeout)
-            return merged
+        cached_items = cache.get(items_key)
+        if cached_items:
+            existing_ids = {item['id'] for item in cached_items}
+            fresh = [serializer(item) for item in new_items if item.id not in existing_ids]
+            if fresh:
+                fresh_ids = {item['id'] for item in fresh}
+                merged = fresh + [item for item in cached_items if item['id'] not in fresh_ids]
+                cache.set(items_key, merged, timeout)
+                cache.set(ids_key, [item['id'] for item in merged], timeout)
+                return merged
+            return cached_items
     ids = list(queryset.order_by('-created').values_list('id', flat=True))
     items = [serializer(item) for item in queryset.filter(id__in=ids)]
     items.sort(key=lambda item: ids.index(item['id']))

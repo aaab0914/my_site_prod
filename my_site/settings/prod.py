@@ -1,3 +1,4 @@
+from django.template.loaders.cached import Loader as CachedLoader
 from .base import *  # noqa: F401,F403
 
 
@@ -21,13 +22,26 @@ SECURE_HSTS_SECONDS = config("SECURE_HSTS_SECONDS", default=31536000, cast=int)
 SECURE_HSTS_INCLUDE_SUBDOMAINS = config("SECURE_HSTS_INCLUDE_SUBDOMAINS", default=True, cast=bool)
 SECURE_HSTS_PRELOAD = config("SECURE_HSTS_PRELOAD", default=True, cast=bool)
 
+MEDIA_SYNC_INTERVAL_SECONDS = config("MEDIA_SYNC_INTERVAL_SECONDS", default=300, cast=int)
+
 CACHES = {
     "default": {
         "BACKEND": "django.core.cache.backends.redis.RedisCache",
         "LOCATION": REDIS_URL,
-        "TIMEOUT": 120,
+        "TIMEOUT": 300,
     }
 }
+
+TEMPLATES[0]["APP_DIRS"] = False
+TEMPLATES[0]["OPTIONS"]["loaders"] = [
+    (
+        "django.template.loaders.cached.Loader",
+        [
+            "django.template.loaders.filesystem.Loader",
+            "django.template.loaders.app_directories.Loader",
+        ],
+    )
+]
 
 if TESTING:
     CACHES = {

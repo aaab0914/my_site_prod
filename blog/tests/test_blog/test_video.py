@@ -46,6 +46,23 @@ class VideoRouteTests(TestCase):
         self.assertEqual(response.url, reverse("blog:all_posts_list"))
         self.assertEqual(response["Cache-Control"], "no-store, no-cache, must-revalidate, max-age=0, private")
 
+    def test_video_list_guest_actions_point_to_login(self):
+        video = self.create_video(title="Love")
+        cache.clear()
+        _prime_video_list_cache()
+
+        response = self.client.get(reverse("blog:video_list"))
+
+        self.assertContains(response, f'{reverse("users:login")}?next={reverse("blog:video_detail", kwargs={"pk": video.pk})}')
+        self.assertNotContains(response, 'Upload More')
+
+    def test_video_file_proxy_is_public(self):
+        video = self.create_video(title="Love")
+
+        response = self.client.get(reverse("blog:video_file_proxy", kwargs={"pk": video.pk}))
+
+        self.assertEqual(response.status_code, 200)
+
     def test_video_detail_redirects_regular_user_home(self):
         video = self.create_video()
         self.client.login(username="videouser", password="testpass123")
@@ -94,3 +111,45 @@ class VideoRouteTests(TestCase):
         response = self.client.post(reverse("blog:video_delete", kwargs={"pk": video.pk}), follow=True)
         self.assertEqual(response.status_code, 200)
         self.assertFalse(VideoPost.objects.filter(pk=video.pk).exists())
+
+    def test_video_delete_invalidates_list_cache(self):
+        video = self.create_video()
+        _prime_video_list_cache()
+        self.assertTrue(any(item["id"] == video.id for item in cache.get("video_list:items") or []))
+
+        self.client.login(username="videoadmin", password="testpass123")
+        response = self.client.post(reverse("blog:video_delete", kwargs={"pk": video.pk}), follow=True)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(VideoPost.objects.filter(pk=video.pk).exists())
+        self.assertEqual(cache.get("video_list:items"), [])
+
+    def test_video_edit_refreshes_list_cache_title(self):
+        video = self.create_video()
+        _prime_video_list_cache()
+        self.client.login(username="videoadmin", password="testpass123")
+
+        response = self.client.post(
+            reverse("blog:video_edit", kwargs={"pk": video.pk}),
+            {
+                "title": "Cache Updated Title",
+                "description": "Original description",
+            },
+            follow=True,
+        )
+
+        self.assertEqual(response.status_code, 200)
+        cached_items = cache.get("video_list:items") or []
+        self.assertTrue(any(item["id"] == video.id and item["title"] == "Cache Updated Title" for item in cached_items))
+
+    def test_video_incremental_prime_rebuilds_full_cache_when_cache_is_empty(self):
+        older_video = self.create_video(title="Love", file_name="love.mp4")
+        newer_video = self.create_video(title="New Clip", file_name="new.mp4")
+        cache.delete("video_list:items")
+        cache.delete("video_list:ids")
+
+        cached_items = _prime_video_list_cache([newer_video])
+
+        cached_ids = [item["id"] for item in cached_items]
+        self.assertIn(older_video.id, cached_ids)
+        self.assertIn(newer_video.id, cached_ids)

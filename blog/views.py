@@ -56,6 +56,82 @@ from .models import Post, Comment, AudioPost, VideoPost
 _RANGE_RE = re.compile(r"bytes=(\d*)-(\d*)")
 
 
+_PUBLIC_LIST_CACHE_TTL = 180
+
+
+def _ordered_posts_from_ids(post_ids):
+    posts = list(Post.published.filter(id__in=post_ids).select_related("author").prefetch_related("tags"))
+    posts.sort(key=lambda post: post_ids.index(post.id))
+    return posts
+
+
+def _cached_post_list_page(page_number, tag_slug=None):
+    normalized_page = str(page_number or 1)
+    cache_key = f"post_list:page:{normalized_page}:tag:{tag_slug or 'all'}"
+    cached = cache.get(cache_key)
+    if cached is not None:
+        return cached
+
+    queryset = Post.published.select_related("author").prefetch_related("tags")
+    if tag_slug:
+        queryset = queryset.filter(tags__slug=tag_slug)
+
+    paginator = Paginator(queryset, 10)
+    try:
+        page_obj = paginator.page(normalized_page)
+    except PageNotAnInteger:
+        page_obj = paginator.page(1)
+    except EmptyPage:
+        page_obj = paginator.page(paginator.num_pages)
+
+    payload = {
+        "post_ids": list(page_obj.object_list.values_list("id", flat=True)),
+        "number": page_obj.number,
+        "paginator_count": paginator.count,
+        "num_pages": paginator.num_pages,
+    }
+    cache.set(cache_key, payload, _PUBLIC_LIST_CACHE_TTL)
+    return payload
+
+
+def _cached_search_result_ids(query):
+    normalized_query = (query or "").strip()
+    if not normalized_query:
+        return []
+
+    cache_key = f"post_search:query:{normalized_query.lower()}"
+    cached_ids = cache.get(cache_key)
+    if cached_ids is not None:
+        return cached_ids
+
+    search_vector = SearchVector("title", weight="A") + SearchVector("body", weight="B")
+    search_query = SearchQuery(normalized_query)
+    full_text_results = (
+        Post.published.annotate(rank=SearchRank(search_vector, search_query))
+        .filter(rank__gte=0.1)
+        .order_by("-rank", "-publish")
+    )
+
+    trigram_results = (
+        Post.published.annotate(
+            title_similarity=TrigramSimilarity("title", normalized_query),
+            body_similarity=TrigramSimilarity("body", normalized_query),
+            total_similarity=(TrigramSimilarity("title", normalized_query) * 2 + TrigramSimilarity("body", normalized_query)),
+        )
+        .filter(Q(title_similarity__gt=0.1) | Q(body_similarity__gt=0.1))
+        .order_by("-total_similarity", "-publish")
+    )
+
+    combined_results = (full_text_results | trigram_results).distinct()
+    result_ids = list(
+        combined_results.annotate(
+            final_rank=SearchRank(search_vector, search_query) + (TrigramSimilarity("title", normalized_query) * 2)
+        ).order_by("-final_rank", "-publish").values_list("id", flat=True)
+    )
+    cache.set(cache_key, result_ids, _PUBLIC_LIST_CACHE_TTL)
+    return result_ids
+
+
 def _range_stream(file_obj, start, end, chunk_size=8192):
     file_obj.seek(start)
     remaining = end - start + 1
@@ -298,22 +374,15 @@ def post_share(request, post_id):
     return render(request, "blog/post/share.html", {"post": post, "form": form})
 
 def post_list(request, tag_slug=None):
-    post_queryset = Post.published.select_related("author").prefetch_related("tags")
-    tag = None
-    if tag_slug:
-        tag = get_object_or_404(Tag, slug=tag_slug)
-        post_queryset = post_queryset.filter(tags__in=[tag])
+    tag = get_object_or_404(Tag, slug=tag_slug) if tag_slug else None
+    page_payload = _cached_post_list_page(request.GET.get("page", 1), tag_slug=tag.slug if tag else None)
+    posts = _ordered_posts_from_ids(page_payload["post_ids"])
 
-    paginator = Paginator(post_queryset, 10)
-    page_number = request.GET.get("page", 1)
-    try:
-        posts = paginator.page(page_number)
-    except PageNotAnInteger:
-        posts = paginator.page(1)
-    except EmptyPage:
-        posts = paginator.page(paginator.num_pages)
+    paginator = Paginator(range(page_payload["paginator_count"] or 1), 10)
+    page_obj = paginator.page(page_payload["number"])
+    page_obj.object_list = posts
 
-    return render(request, "blog/post/all_posts_list.html", {"posts": posts, "tag": tag})
+    return render(request, "blog/post/all_posts_list.html", {"posts": page_obj, "tag": tag})
 
 def post_detail(request, year, month, day, post_slug):
     post = Post.published.filter(
@@ -368,30 +437,9 @@ def post_search(request):
         form = SearchForm(request.GET)
         if form.is_valid():
             query = form.cleaned_data["query"]
-
-            search_vector = SearchVector("title", weight="A") + SearchVector("body", weight="B")
-            search_query = SearchQuery(query)
-            full_text_results = (
-                Post.published.annotate(rank=SearchRank(search_vector, search_query))
-                .filter(rank__gte=0.1)
-                .order_by("-rank", "-publish")
-            )
-
-            trigram_results = (
-                Post.published.annotate(
-                    title_similarity=TrigramSimilarity("title", query),
-                    body_similarity=TrigramSimilarity("body", query),
-                    total_similarity=(TrigramSimilarity("title", query) * 2 + TrigramSimilarity("body", query)),
-                )
-                .filter(Q(title_similarity__gt=0.1) | Q(body_similarity__gt=0.1))
-                .order_by("-total_similarity", "-publish")
-            )
-
-            combined_results = (full_text_results | trigram_results).distinct()
-            results = combined_results.annotate(
-                final_rank=SearchRank(search_vector, search_query) + (TrigramSimilarity("title", query) * 2)
-            ).order_by("-final_rank", "-publish")
-    return render(request, "blog/post/search_post.html", {"form": form, "query": query, "results": results})
+            result_ids = _cached_search_result_ids(query)
+            results = _ordered_posts_from_ids(result_ids)
+    return render(request, "blog/post/search_post.html", {"form": form, "query": query, "results": results, "total_results": len(results)})
 
 @login_required
 def post_create(request):
@@ -478,14 +526,10 @@ def video_upload(request):
     else:
         form = VideoUploadForm()
 
-    recent_videos = VideoPost.objects.select_related("uploaded_by").order_by("-created")[:12]
-    return render(request, "blog/video/upload_video.html", {"form": form, "recent_videos": recent_videos})
+    return render(request, "blog/video/upload_video.html", {"form": form})
 
 
 def video_file_proxy(request, pk):
-    denied = _redirect_non_superuser_home(request)
-    if denied:
-        return denied
     video = get_object_or_404(VideoPost, pk=pk)
     return _serve_uploaded_file(video.video_file, request=request)
 
@@ -653,6 +697,8 @@ def video_edit(request, pk):
             if not form.cleaned_data.get("video_file"):
                 form.instance.video_file = videopost.video_file
             form.save()
+            invalidate_cache_keys("video_list:ids", "video_list:items")
+            _prime_video_list_cache([videopost])
             messages.success(request, "Video updated successfully.")
             return redirect("blog:video_detail", pk=videopost.pk)
     else:
@@ -668,6 +714,7 @@ def video_delete(request, pk):
     videopost = get_object_or_404(VideoPost, pk=pk)
     if request.method == "POST":
         videopost.delete()
+        invalidate_cache_keys("video_list:ids", "video_list:items")
         messages.success(request, "Video deleted successfully.")
         return redirect("blog:video_list")
     return render(request, "blog/video/video_delete.html", {"videopost": videopost})

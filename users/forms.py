@@ -8,8 +8,8 @@ from django.contrib.auth.models import User
 
 class UserRegisterForm(UserCreationForm):
     email = forms.EmailField(
-        required=True,
-        widget=forms.EmailInput(attrs={"class": "form-control", "placeholder": "Email"}),
+        required=False,
+        widget=forms.EmailInput(attrs={"class": "form-control", "placeholder": "Email (Optional)"}),
     )
 
     class Meta:

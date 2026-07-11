@@ -22,10 +22,11 @@ from my_site.media_sync import maybe_sync_site_media
 def album_list(request):
     album_ids = cache.get("album_list:valid_album_ids")
     if album_ids is None:
+        album_queryset = Album.objects.select_related("uploaded_by").prefetch_related("images").order_by("-created")
         album_ids = [
             album.id
-            for album in Album.objects.select_related("uploaded_by").prefetch_related("images").order_by("-created")
-            if album.images.filter(image__isnull=False).exists()
+            for album in album_queryset
+            if any(media_file_exists(image.image) for image in album.images.all())
         ]
         cache.set("album_list:valid_album_ids", album_ids, 300)
     album_map = {

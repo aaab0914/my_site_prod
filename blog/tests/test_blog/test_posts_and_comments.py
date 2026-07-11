@@ -1,6 +1,7 @@
 from io import BytesIO
 
 from django.contrib.auth.models import User
+from django.core.cache import cache
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import Client, TestCase
 from django.urls import reverse
@@ -8,6 +9,7 @@ from django.utils import timezone
 from PIL import Image
 
 from blog.models import AudioPost, Comment, Post
+from blog.views import _cached_post_list_page, _cached_search_result_ids
 
 
 class BlogRouteIntegrationTests(TestCase):
@@ -56,6 +58,20 @@ class BlogRouteIntegrationTests(TestCase):
         response = self.client.get(reverse("blog:post_list_by_tag", kwargs={"tag_slug": "integration"}))
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "blog/post/all_posts_list.html")
+
+    def test_post_list_page_cache_returns_cached_ids(self):
+        cache.clear()
+        payload = _cached_post_list_page(1)
+        self.assertTrue(payload["post_ids"])
+        cache_key = "post_list:page:1:tag:all"
+        self.assertEqual(cache.get(cache_key), payload)
+
+    def test_post_search_result_ids_are_cached(self):
+        cache.clear()
+        result_ids = _cached_search_result_ids("Route")
+        self.assertTrue(result_ids)
+        cache_key = "post_search:query:route"
+        self.assertEqual(cache.get(cache_key), result_ids)
 
     def test_blog_detail_route(self):
         response = self.client.get(self.primary_post.get_absolute_url())

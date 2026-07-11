@@ -186,6 +186,8 @@ DATABASES = {
         # HOST: If running in Docker, use 'db' (service name); else use 'localhost'
         "HOST": os.environ.get("DB_HOST", "db" if os.environ.get("RUNNING_IN_DOCKER") else "localhost"),
         "PORT": os.environ.get("DB_PORT", "5432"),  # PostgreSQL default port
+        "CONN_MAX_AGE": config("DB_CONN_MAX_AGE", default=60, cast=int),
+        "CONN_HEALTH_CHECKS": True,
     }
 }
 

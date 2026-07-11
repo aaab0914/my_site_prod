@@ -40,7 +40,7 @@
 <section class="video-library-shell page-shell">
     <div class="video-library-hero page-hero">
         <h1 class="page-hero-title">Video Library</h1>
-        <p class="page-hero-copy">Browse uploaded videos in one place. This page is visible to superusers only, and direct access by other users returns to the blog home.</p>
+        <p class="page-hero-copy">Browse uploaded videos in one place. Guests can watch the list here, and account-only actions will ask them to sign in first.</p>
     </div>
 
     {% if videos %}
@@ -54,8 +54,12 @@
                             <div class="video-description">{{ video.description }}</div>
                         {% endif %}
                         <div class="video-actions">
-                            <a href="{% url 'blog:video_detail' video.id %}" class="video-button-primary">View Details</a>
-                            <a href="{% url 'blog:video_upload' %}" class="video-button-secondary">Upload More</a>
+                            {% if request.user.is_authenticated %}
+                                <a href="{% url 'blog:video_detail' video.id %}" class="video-button-primary">View Details</a>
+                                <a href="{% url 'blog:video_upload' %}" class="video-button-secondary">Upload More</a>
+                            {% else %}
+                                <a href="{% url 'users:login' %}?next={% url 'blog:video_detail' video.id %}" class="video-button-primary">View Details</a>
+                            {% endif %}
                         </div>
                     </div>
                     <div class="video-frame">

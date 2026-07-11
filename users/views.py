@@ -93,22 +93,16 @@ def _valid_gallery_images_for_user(user, limit=12):
 
 def _valid_albums_for_user(user, limit=12):
     valid_album_ids = []
-    album_ids = Album.objects.filter(uploaded_by=user).order_by('-created').values_list('id', flat=True)
-    for album_id in album_ids:
-        has_valid_image = False
-        for album_image in AlbumImage.objects.filter(album_id=album_id).only('image'):
-            if media_file_exists(album_image.image):
-                has_valid_image = True
-                break
-        if has_valid_image:
-            valid_album_ids.append(album_id)
+    albums = Album.objects.filter(uploaded_by=user).prefetch_related('images').order_by('-created')
+    for album in albums:
+        if any(media_file_exists(album_image.image) for album_image in album.images.all()):
+            valid_album_ids.append(album.id)
         if len(valid_album_ids) >= limit:
             break
     if not valid_album_ids:
         return []
-    albums = list(Album.objects.filter(id__in=valid_album_ids).order_by('-created'))
-    albums.sort(key=lambda album: valid_album_ids.index(album.id))
-    return albums
+    album_map = {album.id: album for album in albums if album.id in valid_album_ids}
+    return [album_map[album_id] for album_id in valid_album_ids if album_id in album_map]
 
 
 def _valid_audio_posts_for_user(user, limit=12):

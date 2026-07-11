@@ -77,7 +77,7 @@ class MediaSyncTests(TestCase):
         self.assertTrue(
             any(item["from"] == "comments/2026/07/07/orphan.jpg" for item in result["trashed_files"])
         )
-        self.assertTrue(any(Path(settings.BASE_DIR, item["to"]).exists() for item in result["trashed_files"]))
+        self.assertTrue(any(Path(settings.BASE_DIR).parent.joinpath(item["to"]).exists() for item in result["trashed_files"]))
 
     def test_sync_keeps_referenced_files(self):
         audio_path = Path(self.media_root) / "audio" / "2026" / "07" / "07" / "track.mp3"
@@ -133,7 +133,7 @@ class AuditMiddlewareTests(TestCase):
             "Request",
             (),
             {
-                "method": "GET",
+                "method": "POST",
                 "path": "/audit-probe/",
                 "META": {"REMOTE_ADDR": "127.0.0.1"},
                 "user": UnsavedAuthenticatedUser(),
@@ -149,3 +149,28 @@ class AuditMiddlewareTests(TestCase):
         self.assertIs(returned, response)
         mocked_create.assert_called_once()
         self.assertIsNone(mocked_create.call_args.kwargs["user"])
+
+    def test_audit_middleware_skips_successful_safe_page_views(self):
+        from unittest.mock import patch
+
+        from my_site.audit_middleware import AuditLoggingMiddleware
+
+        request = type(
+            "Request",
+            (),
+            {
+                "method": "GET",
+                "path": "/audit-probe/",
+                "META": {"REMOTE_ADDR": "127.0.0.1"},
+                "user": type("AnonUser", (), {"is_authenticated": False, "pk": None})(),
+            },
+        )()
+        response = type("Response", (), {"status_code": 200})()
+
+        middleware = AuditLoggingMiddleware(lambda req: response)
+
+        with patch("my_site.audit_middleware.AuditLog.objects.create") as mocked_create:
+            returned = middleware(request)
+
+        self.assertIs(returned, response)
+        mocked_create.assert_not_called()
