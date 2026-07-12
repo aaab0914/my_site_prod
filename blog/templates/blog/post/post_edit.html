@@ -111,10 +111,10 @@
         </div>
 
         <div class="post-edit-plain-field">
-            <label for="{{ form.tags.id_for_label }}">Tags</label>
-            {{ form.tags }}
-            <div class="post-edit-plain-help">Use commas between tags, for example: #heart, #love, #relationship</div>
-            {% if form.tags.errors %}<div class="post-edit-plain-error">{{ form.tags.errors }}</div>{% endif %}
+            <label for="{{ form.tag_names.id_for_label }}">Tags</label>
+            {{ form.tag_names }}
+            <div class="post-edit-plain-help">Use commas between tags. Without commas, the whole input is saved as one tag.</div>
+            {% if form.tag_names.errors %}<div class="post-edit-plain-error">{{ form.tag_names.errors }}</div>{% endif %}
         </div>
 
         <div class="post-edit-plain-actions">

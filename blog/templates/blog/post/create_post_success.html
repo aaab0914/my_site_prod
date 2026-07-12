@@ -1,6 +1,6 @@
 {% extends "blog/base.html" %}
 
-{% block title %}Post Created{% endblock %}
+{% block title %}Post Published{% endblock %}
 
 {% block content %}
 <style>
@@ -30,21 +30,21 @@
 
 <section class="post-success-shell page-shell">
     <div class="post-success-hero page-hero">
-        <h1 class="page-hero-title">Post Created</h1>
-        <p class="page-hero-copy">Your post is now available on the site.</p>
+        <h1 class="page-hero-title">Post Published</h1>
+        <p class="page-hero-copy">Your post has been published successfully and is now live on the site.</p>
     </div>
 
     <section class="post-success-panel">
         <p>
             {% if post %}
-                The post "{{ post.title }}" was created successfully.
+                Your post "{{ post.title }}" was published successfully.
             {% else %}
-                The new post was created successfully.
+                Your new post was published successfully.
             {% endif %}
         </p>
         <div class="post-success-actions">
-            <a href="{% url 'blog:all_posts_list' %}" class="post-success-button">Back to Posts</a>
-            <a href="{% url 'blog:post_create' %}" class="post-success-link">Create Another</a>
+            <a href="{% url 'blog:all_posts_list' %}" class="post-success-button">Back to Blog Home</a>
+            {% if post %}<a href="{{ post.get_absolute_url }}" class="post-success-link">View New Post</a>{% endif %}
         </div>
     </section>
 </section>

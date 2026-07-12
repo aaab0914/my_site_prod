@@ -1,0 +1,28 @@
+#nav-sidebar {
+    width: 300px;
+}
+
+#nav-sidebar .current-model,
+#nav-sidebar th,
+#nav-sidebar td,
+#nav-sidebar a {
+    white-space: normal;
+    word-break: break-word;
+}
+
+#nav-filter {
+    width: calc(100% - 20px);
+    box-sizing: border-box;
+}
+
+.main.shifted > #nav-sidebar + .content,
+body.nav-sidebar-enabled .main > #nav-sidebar + .content {
+    margin-left: 300px;
+}
+
+@media (max-width: 767px) {
+    .main.shifted > #nav-sidebar + .content,
+    body.nav-sidebar-enabled .main > #nav-sidebar + .content {
+        margin-left: 0;
+    }
+}

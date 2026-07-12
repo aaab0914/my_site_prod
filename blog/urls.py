@@ -76,6 +76,11 @@ post_urlpatterns = [
         name="post_create",
     ),
     path(
+        "create/success/<int:pk>/",
+        views.post_create_success,
+        name="post_create_success",
+    ),
+    path(
         "<int:pk>/edit/",
         views.post_edit,
         name="post_edit",

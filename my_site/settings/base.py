@@ -213,11 +213,13 @@ CELERY_BEAT_SCHEDULE = {
         "task": "blog.tasks.ping_blog_task",
         "schedule": crontab(minute="*/5"),
     },
-    "sync-site-media-every-n-minutes": {
+}
+
+if config("MEDIA_SYNC_ENABLED", default=(not TESTING), cast=bool):
+    CELERY_BEAT_SCHEDULE["sync-site-media-every-n-minutes"] = {
         "task": "my_site.tasks.sync_site_media_task",
         "schedule": crontab(minute=f"*/{MEDIA_SYNC_BEAT_MINUTES}"),
-    },
-}
+    }
 
 ELASTICSEARCH_DSL = {
     "default": {

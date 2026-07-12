@@ -44,19 +44,6 @@
                     {% endfor %}
                 </p>
 
-                <!-- Post publication date and author -->
-                <p class="date">
-                    Published {{ post.publish }} by
-                    <!--
-                      Link to user profile page by username
-                      Requires a URL named 'users:profile_by_username' in urls.py
-                      Example: /users/profile/admin/
-                    -->
-                    <a href="{% url 'users:profile_by_username' post.author.username %}" class="author-button">
-                        {{ post.author }}
-                    </a>
-                </p>
-
                 <!--
                   Post body truncated to 30 words for the list view
                   |markdown: Converts Markdown to HTML (requires a custom template filter)
@@ -77,6 +64,14 @@
                              style="display: block; width: 100%; max-width: 420px; height: auto; max-height: 240px; object-fit: cover; border-radius: 8px;">
                     </div>
                 {% endif %}
+
+                <!-- 发布时间移到了这里，在内容和封面图的下方 -->
+                <p class="date" style="margin-top: 12px;">
+                    Published {{ post.publish }} by
+                    <a href="{% url 'users:profile_by_username' post.author.username %}" class="author-button">
+                        {{ post.author }}
+                    </a>
+                </p>
             </div>
         {% endfor %}
     </div>

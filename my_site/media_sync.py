@@ -6,12 +6,11 @@ from django.apps import apps
 from django.conf import settings
 from django.db.models import FileField
 
-from .media_cleanup import move_media_file_to_trash
 from images.sync import sync_gallery_media
 
 _SYNC_LOCK = threading.Lock()
 _LAST_SYNC_AT = 0.0
-_PROTECTED_PREFIXES = ()
+_PROTECTED_PREFIXES = ("audio/", "posts/", "albums/")
 
 
 def _iter_file_fields():
@@ -32,34 +31,24 @@ def _handle_missing_file(instance, field):
     if not relative_name:
         return None
 
-    if _is_protected_media(relative_name):
-        return {
-            "type": "protected_missing_file_skipped",
-            "model": instance._meta.label,
-            "id": instance.pk,
-            "field": field.name,
-            "path": relative_name,
-        }
-
-    if field.null:
-        setattr(instance, field.name, None)
-    else:
-        setattr(instance, field.name, "")
-
-    if field.blank or field.null:
-        instance.save(update_fields=[field.name])
-        return {"type": "cleared_field", "model": instance._meta.label, "id": instance.pk, "field": field.name}
-
-    instance.delete()
-    return {"type": "deleted_record", "model": instance._meta.label, "id": instance.pk, "field": field.name}
+    return {
+        "type": "missing_file_detected",
+        "model": instance._meta.label,
+        "id": instance.pk,
+        "field": field.name,
+        "path": relative_name,
+        "protected": _is_protected_media(relative_name),
+    }
 
 
 def sync_site_media():
     if not getattr(settings, "MEDIA_SYNC_ENABLED", True):
         return {
             "missing_actions": [],
-            "trashed_files": [],
+            "orphaned_files": [],
+            "gallery_sync": {"missing_records": 0, "created_records": 0, "missing_record_ids": []},
         }
+
     media_root = Path(settings.MEDIA_ROOT)
     referenced_names = set()
     missing_actions = []
@@ -78,7 +67,7 @@ def sync_site_media():
                 if action:
                     missing_actions.append(action)
 
-    trashed_files = []
+    orphaned_files = []
     if media_root.exists():
         for file_path in media_root.rglob("*"):
             if not file_path.is_file():
@@ -86,33 +75,16 @@ def sync_site_media():
             if ".trash" in file_path.parts:
                 continue
             relative_name = file_path.relative_to(media_root).as_posix()
-            if _is_protected_media(relative_name):
-                continue
             if relative_name not in referenced_names:
-                trash_name = move_media_file_to_trash(relative_name)
-                if trash_name:
-                    trashed_files.append({"from": relative_name, "to": trash_name})
-
-        for directory in sorted(
-            (
-                path
-                for path in media_root.rglob("*")
-                if path.is_dir() and ".trash" not in path.parts
-            ),
-            key=lambda path: len(path.parts),
-            reverse=True,
-        ):
-            try:
-                if directory.relative_to(media_root).as_posix().startswith("audio/"):
-                    continue
-                directory.rmdir()
-            except OSError:
-                pass
+                orphaned_files.append({
+                    "path": relative_name,
+                    "protected": _is_protected_media(relative_name),
+                })
 
     gallery_sync = sync_gallery_media()
     return {
         "missing_actions": missing_actions,
-        "trashed_files": trashed_files,
+        "orphaned_files": orphaned_files,
         "gallery_sync": gallery_sync,
     }
 

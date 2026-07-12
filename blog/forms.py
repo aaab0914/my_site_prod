@@ -70,31 +70,39 @@ class PostCreateForm(forms.ModelForm):
     Form for creating new blog posts with optional cover image compression.
     """
 
-    tags = forms.CharField(required=False, widget=forms.TextInput(attrs={"class": "form-control", "placeholder": "#heart, #love, #relationship"}))
+    tag_names = forms.CharField(required=False, widget=forms.TextInput(attrs={"class": "form-control", "placeholder": "#heart, #love, #relationship"}))
 
     class Meta:
         model = Post
-        fields = ["title", "body", "cover_image", "tags"]
+        fields = ["title", "body", "cover_image"]
         widgets = {
             "title": forms.TextInput(attrs={"class": "form-control"}),
             "body": forms.Textarea(attrs={"class": "form-control", "rows": 10}),
             "cover_image": forms.FileInput(attrs={"class": "form-control"}),
         }
 
-    def clean_tags(self):
-        raw_value = (self.cleaned_data.get("tags") or "").strip()
+    def clean_tag_names(self):
+        raw_value = (self.cleaned_data.get("tag_names") or "").strip()
         if not raw_value:
             return ""
 
+        normalized_input = raw_value.replace("\n", ",").replace("，", ",").replace("；", ",").replace(";", ",")
+        if "," in normalized_input:
+            parts = [part.strip() for part in normalized_input.split(",") if part.strip()]
+        else:
+            parts = ["".join(normalized_input.split())]
+
         cleaned_tags = []
         seen = set()
-        for match in self.TAG_NAME_RE.findall(raw_value):
-            tag = match.strip()
-            if not tag:
+        for part in parts:
+            compact = "".join(part.split())
+            if not compact:
                 continue
-            if not tag.startswith("#"):
-                tag = f"#{tag}"
-            normalized = tag.lower()
+            if not self.TAG_NAME_RE.fullmatch(compact):
+                raise ValidationError("Each tag must contain only letters, numbers, underscores, or hyphens.")
+            if not compact.startswith("#"):
+                compact = f"#{compact}"
+            normalized = compact.lower()
             if normalized in seen:
                 continue
             seen.add(normalized)
@@ -102,19 +110,19 @@ class PostCreateForm(forms.ModelForm):
 
         return ", ".join(cleaned_tags)
 
+    def _normalized_tag_list(self):
+        tags_value = self.cleaned_data.get("tag_names", "")
+        return [tag.strip() for tag in tags_value.split(",") if tag.strip()]
+
     def save(self, commit=True):
         post = super().save(commit=commit)
         if commit:
-            tags_value = self.cleaned_data.get("tags", "")
-            post.tags.set([tag for tag in tags_value.split(", ") if tag])
+            post.tags.set(self._normalized_tag_list())
         else:
-            self._pending_tags = [tag for tag in self.cleaned_data.get("tags", "").split(", ") if tag]
+            self._pending_tags = self._normalized_tag_list()
         return post
 
-    def save_m2m(self):
-        super_method = getattr(super(), "save_m2m", None)
-        if callable(super_method):
-            super_method()
+    def _save_m2m(self):
         if getattr(self, "instance", None) and getattr(self.instance, "pk", None):
             pending_tags = getattr(self, "_pending_tags", None)
             if pending_tags is not None:
@@ -179,7 +187,7 @@ class PostEditForm(PostCreateForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if self.instance and getattr(self.instance, "pk", None):
-            self.initial["tags"] = ", ".join(tag.name for tag in self.instance.tags.all())
+            self.initial["tag_names"] = ", ".join(tag.name for tag in self.instance.tags.all())
 
 
 

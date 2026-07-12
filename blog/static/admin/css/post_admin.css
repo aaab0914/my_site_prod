@@ -1,0 +1,24 @@
+.app-blog.model-post .change-form .aligned label {
+    width: 150px;
+}
+
+.app-blog.model-post .change-form .aligned .form-row > div {
+    margin-left: 170px;
+    max-width: 1240px;
+}
+
+.app-blog.model-post .change-form .field-title input,
+.app-blog.model-post .change-form .field-slug input,
+.app-blog.model-post .change-form .field-body textarea {
+    width: min(100%, 1180px) !important;
+    max-width: 1180px;
+}
+
+.app-blog.model-post .change-form .field-body textarea {
+    min-height: 28em;
+    resize: vertical;
+}
+
+.app-blog.model-post .change-form .form-row {
+    overflow: visible;
+}

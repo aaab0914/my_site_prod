@@ -9,6 +9,7 @@ from pathlib import Path
 
 from django.conf import settings
 from django.contrib import admin, messages
+from django import forms
 from django.template.response import TemplateResponse
 from django.urls import path, reverse
 from django.utils.html import format_html
@@ -143,8 +144,23 @@ admin.site.get_urls = _custom_admin_get_urls
 admin.site.index_template = "admin/custom_index.html"
 
 
+class PostAdminForm(forms.ModelForm):
+    class Meta:
+        model = Post
+        fields = "__all__"
+        widgets = {
+            "title": forms.TextInput(attrs={"style": "width: 100%; max-width: 1180px;"}),
+            "slug": forms.TextInput(attrs={"style": "width: 100%; max-width: 1180px;"}),
+            "body": forms.Textarea(attrs={"rows": 20, "cols": 140, "style": "width: 100%; max-width: 1180px; min-height: 28em;"}),
+        }
+
+    class Media:
+        css = {"all": ("admin/css/post_admin.css", "admin/css/site_admin.css")}
+
+
 @admin.register(Post)
 class PostAdmin(admin.ModelAdmin):
+    form = PostAdminForm
     list_display = ["title", "slug", "author", "publish", "status"]
     list_filter = ["status", "created", "publish", "author"]
     search_fields = ["title", "body"]
@@ -154,15 +170,32 @@ class PostAdmin(admin.ModelAdmin):
     ordering = ["status", "publish"]
     show_facets = admin.ShowFacets.ALWAYS
 
+
+class CommentAdminForm(forms.ModelForm):
+    class Meta:
+        model = Comment
+        fields = ["post", "author", "email", "body", "active"]
+        labels = {"body": "Comment"}
+        widgets = {
+            "body": forms.Textarea(attrs={"rows": 3, "cols": 120}),
+        }
+
     class Media:
-        css = {"all": ("admin/css/markdownx_admin.css",)}
+        css = {"all": ("admin/css/comment_admin.css",)}
 
 
 @admin.register(Comment)
 class CommentAdmin(admin.ModelAdmin):
-    list_display = ["display_name", "author", "email", "post", "created", "active"]
+    form = CommentAdminForm
+    list_display = ["comment_preview", "post", "author", "email", "created", "active"]
     list_filter = ["active", "created", "updated"]
     search_fields = ["author__username", "email", "body"]
+    autocomplete_fields = ["post", "author"]
+
+    @admin.display(description="Comment")
+    def comment_preview(self, obj):
+        text = (obj.body or "").strip().replace("\n", " ")
+        return f"{text[:30].rstrip()}..." if len(text) > 30 else text
 
 
 @admin.register(AudioPost)

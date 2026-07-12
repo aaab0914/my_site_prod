@@ -182,7 +182,10 @@ class Comment(models.Model):
         indexes = [models.Index(fields=["created"])]
 
     def __str__(self):
-        return f"Comment by {self.display_name} on {self.post}"
+        preview = (self.body or "").strip().replace("\n", " ")
+        if len(preview) > 30:
+            preview = f"{preview[:30].rstrip()}..."
+        return f"Comment by {self.display_name} on {self.post}: {preview}" if preview else f"Comment by {self.display_name} on {self.post}"
 
     @property
     def display_name(self):

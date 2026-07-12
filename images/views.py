@@ -15,7 +15,6 @@ from blog.models import Post
 from .forms import AlbumEditForm, AlbumImageEditForm, AlbumUploadForm, GalleryImageEditForm, GallerySingleUploadForm
 from .models import Album, AlbumImage, ImagePost
 from my_site.media_helpers import filter_existing_media_instances, invalidate_cache_keys, media_file_exists, prime_id_cache
-from my_site.media_sync import maybe_sync_site_media
 
 
 
@@ -175,7 +174,6 @@ def _prime_gallery_list_cache(new_items=None):
 
 
 def gallery_list(request):
-    maybe_sync_site_media()
     image_ids = cache.get("gallery_list:valid_image_ids")
     if image_ids is None:
         image_ids = _prime_gallery_list_cache()
@@ -194,7 +192,6 @@ def gallery_list(request):
 
 
 def gallery_detail(request, image_id):
-    maybe_sync_site_media()
     image = get_object_or_404(ImagePost.objects.select_related("uploaded_by"), pk=image_id)
     if not media_file_exists(image.image):
         messages.error(request, "Image file is missing.")
@@ -240,7 +237,7 @@ def gallery_upload(request):
                 created_images.append(image_post)
                 created_count += 1
 
-            _prime_gallery_list_cache(created_images)
+            _prime_gallery_list_cache()
             messages.success(request, "Image uploaded successfully. It is now available in Gallery.")
             return redirect("blog:images:gallery_list")
         except ValidationError as exc:

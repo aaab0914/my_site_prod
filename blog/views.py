@@ -49,7 +49,6 @@ from .forms import (
 from images.forms import GallerySingleUploadForm
 from images.models import ImagePost
 from my_site.media_helpers import invalidate_cache_keys, prime_serialized_list_cache
-from my_site.media_sync import maybe_sync_site_media
 from .models import Post, Comment, AudioPost, VideoPost
 
 
@@ -462,8 +461,25 @@ def post_create(request):
                     "uploaded_by": request.user,
                 },
             )
-        return redirect(post.get_absolute_url())
+            invalidate_cache_keys("gallery_list:valid_image_ids")
+        invalidate_cache_keys("post_list:page:1:tag:all")
+        for tag in post.tags.all():
+            if tag.slug:
+                invalidate_cache_keys(f"post_list:page:1:tag:{tag.slug}")
+        request.session["post_create_success_pk"] = post.pk
+        return redirect("blog:post_create_success", pk=post.pk)
     return render(request, "blog/post/create_post.html", {"form": form})
+
+
+@login_required
+def post_create_success(request, pk):
+    post = get_object_or_404(Post, pk=pk)
+    if post.author_id != request.user.id and not request.user.is_superuser:
+        raise PermissionDenied("You are not allowed to view this success page.")
+    success_pk = request.session.pop("post_create_success_pk", None)
+    if success_pk != post.pk:
+        return redirect("blog:all_posts_list")
+    return render(request, "blog/post/create_post_success.html", {"post": post})
 
 
 @login_required
@@ -729,7 +745,6 @@ def video_list(request):
     return render(request, "blog/video/video_list.html", {"videos": page_obj.object_list, "page_obj": page_obj})
 
 def audio_list(request):
-    maybe_sync_site_media()
     audio_cache = cache.get("audio_list:items")
     if audio_cache is None or (not audio_cache and AudioPost.objects.exists()):
         audio_cache = _prime_audio_list_cache() or []
@@ -761,7 +776,6 @@ class AudioPostEditView(LoginRequiredMixin, UpdateView):
     context_object_name = "audiopost"
 
     def dispatch(self, request, *args, **kwargs):
-        maybe_sync_site_media()
         if not request.user.is_authenticated:
             return self.handle_no_permission()
 
@@ -791,7 +805,6 @@ class AudioPostDeleteView(LoginRequiredMixin, DeleteView):
     context_object_name = "audiopost"
 
     def dispatch(self, request, *args, **kwargs):
-        maybe_sync_site_media()
         if not request.user.is_authenticated:
             return self.handle_no_permission()
 

@@ -1,0 +1,43 @@
+.app-blog.model-comment .change-form .form-row.field-post .related-widget-wrapper,
+.app-blog.model-comment .change-form .form-row.field-author .related-widget-wrapper,
+.app-blog.model-comment .change-form .form-row.field-email input,
+.app-blog.model-comment .change-form .form-row.field-body textarea {
+    width: min(100%, 1180px) !important;
+    max-width: 1180px;
+}
+
+.app-blog.model-comment .change-form .form-row.field-body textarea {
+    min-height: 8.2em;
+    resize: vertical;
+}
+
+.app-blog.model-comment .change-form .related-widget-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: nowrap;
+}
+
+.app-blog.model-comment .change-form .related-widget-wrapper .related-widget-wrapper-link {
+    flex: 0 0 auto;
+}
+
+.app-blog.model-comment .change-form .aligned label {
+    width: 150px;
+}
+
+.app-blog.model-comment .change-form .aligned .form-row > div {
+    margin-left: 170px;
+    max-width: 1240px;
+}
+
+.app-blog.model-comment .change-form .vLargeTextField,
+.app-blog.model-comment .change-form .vTextField,
+.app-blog.model-comment .change-form textarea,
+.app-blog.model-comment .change-form .select2-container {
+    width: 100% !important;
+}
+
+.app-blog.model-comment .change-form .form-row {
+    overflow: visible;
+}

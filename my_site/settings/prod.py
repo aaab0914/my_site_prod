@@ -24,6 +24,7 @@ SECURE_HSTS_INCLUDE_SUBDOMAINS = config("SECURE_HSTS_INCLUDE_SUBDOMAINS", defaul
 SECURE_HSTS_PRELOAD = config("SECURE_HSTS_PRELOAD", default=True, cast=bool)
 
 MEDIA_SYNC_INTERVAL_SECONDS = config("MEDIA_SYNC_INTERVAL_SECONDS", default=300, cast=int)
+MEDIA_SYNC_ENABLED = config("MEDIA_SYNC_ENABLED", default=False, cast=bool)
 
 CACHES = {
     "default": {
@@ -81,3 +82,5 @@ if TESTING:
             "LOCATION": "test-suite",
         }
     }
+
+MIDDLEWARE = [mw for mw in MIDDLEWARE if mw != "my_site.media_sync_middleware.MediaSyncMiddleware"]
