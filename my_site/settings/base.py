@@ -90,6 +90,7 @@ INSTALLED_APPS = [
     "users.apps.UsersConfig",  # User registration, login, profiles, and account management
     "taggit",  # Simple tagging library for Django (used for post tags)
     "markdownx",  # Markdown editing and rendering for blog posts
+    "my_site",  # Project package so Celery autodiscover_tasks finds my_site.tasks
     "django_elasticsearch_dsl",
 ]
 

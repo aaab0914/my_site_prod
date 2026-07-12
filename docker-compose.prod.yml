@@ -53,6 +53,7 @@ services:
     volumes:
       - ./staticfiles:/code/staticfiles
       - ./media:/code/media
+      - ./logs:/code/logs
       - backups_volume:/code/backups
     depends_on:
       db:
@@ -181,6 +182,8 @@ services:
     depends_on:
       prometheus:
         condition: service_started
+      loki:
+        condition: service_started
 
   celery-exporter:
     profiles: ["optional"]
@@ -193,6 +196,30 @@ services:
       - "127.0.0.1:9540:9540"
     depends_on:
       redis:
+        condition: service_started
+
+
+  loki:
+    profiles: ["optional"]
+    image: grafana/loki:3.1.1
+    restart: always
+    command: ["-config.file=/etc/loki/config.yml"]
+    volumes:
+      - ./loki/config.yml:/etc/loki/config.yml:ro
+      - loki_data:/loki
+    ports:
+      - "127.0.0.1:13100:3100"
+
+  promtail:
+    profiles: ["optional"]
+    image: grafana/promtail:3.1.1
+    restart: always
+    command: ["-config.file=/etc/promtail/config.yml"]
+    volumes:
+      - ./promtail/config.yml:/etc/promtail/config.yml:ro
+      - ./logs:/var/www/my_site_prod_repo_new/logs:ro
+    depends_on:
+      loki:
         condition: service_started
 
   nginx:

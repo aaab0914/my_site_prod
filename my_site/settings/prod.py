@@ -1,3 +1,4 @@
+from copy import deepcopy
 from django.template.loaders.cached import Loader as CachedLoader
 from .base import *  # noqa: F401,F403
 
@@ -42,6 +43,36 @@ TEMPLATES[0]["OPTIONS"]["loaders"] = [
         ],
     )
 ]
+
+
+LOGGING = deepcopy(LOGGING)
+
+LOGGING["filters"] = LOGGING.get("filters", {})
+LOGGING["filters"]["skip_noisy_404"] = {
+    "()": "my_site.logging_utils.SkipNoisy404Filter",
+}
+
+LOGGING["handlers"]["file"] = {
+    "level": "INFO",
+    "class": "my_site.logging_utils.DailyMonthlyFileHandler",
+    "log_dir": str(LOG_DIR),
+    "filename_prefix": "django",
+    "formatter": "verbose",
+    "filters": ["skip_noisy_404"],
+}
+LOGGING["handlers"]["error_file"] = {
+    "level": "WARNING",
+    "class": "my_site.logging_utils.DailyMonthlyFileHandler",
+    "log_dir": str(LOG_DIR),
+    "filename_prefix": "error",
+    "formatter": "verbose",
+    "filters": ["skip_noisy_404"],
+}
+LOGGING["loggers"]["django"]["handlers"] = ["console", "file", "error_file"]
+LOGGING["loggers"]["django.request"]["handlers"] = ["console", "file", "error_file"]
+LOGGING["loggers"]["blog"]["handlers"] = ["console", "file"]
+LOGGING["loggers"]["users"]["handlers"] = ["console", "file"]
+LOGGING["loggers"]["celery"]["handlers"] = ["console", "file", "error_file"]
 
 if TESTING:
     CACHES = {
