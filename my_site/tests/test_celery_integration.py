@@ -24,7 +24,10 @@ class CeleryIntegrationTests(TestCase):
         self.assertIn('CELERY_TASK_TRACK_STARTED = True', self.base_settings)
         self.assertIn('crontab(minute="*/5")', self.base_settings)
         self.assertIn('MEDIA_SYNC_BEAT_MINUTES = config("MEDIA_SYNC_BEAT_MINUTES", default=5, cast=int)', self.base_settings)
-        self.assertIn('"task": "my_site.tasks.sync_site_media_task"', self.base_settings)
+        self.assertNotIn('"task": "my_site.tasks.sync_site_media_task"', self.base_settings)
+        self.assertIn('"task": "my_site.tasks.purge_old_audit_logs_task"', self.base_settings)
+        self.assertIn('"task": "my_site.tasks.purge_old_runtime_logs_task"', self.base_settings)
+        self.assertIn('LOG_RETENTION_DAYS = config("LOG_RETENTION_DAYS", default=30, cast=int)', self.base_settings)
 
     @override_settings(CELERY_TASK_ALWAYS_EAGER=True, CELERY_TASK_EAGER_PROPAGATES=True)
     def test_celery_task_executes_successfully_in_eager_mode(self):
@@ -36,8 +39,8 @@ class CeleryIntegrationTests(TestCase):
     def test_media_sync_task_executes_successfully_in_eager_mode(self):
         result = sync_site_media_task.delay()
         self.assertTrue(result.successful())
-        self.assertIn("missing_actions", result.get())
-        self.assertIn("trashed_files", result.get())
+        self.assertFalse(result.get()["enabled"])
+        self.assertIn("only when users delete objects", result.get()["reason"])
 
     def test_celery_worker_replies_to_inspect_ping_when_running(self):
         docker = shutil.which("docker")

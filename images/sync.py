@@ -1,51 +1,15 @@
-from pathlib import Path
-
-from django.conf import settings
-
-from blog.models import Post
-from .models import ImagePost
-
-
 def sync_gallery_media():
-    if not getattr(settings, "MEDIA_SYNC_ENABLED", True):
-        return {
-            "missing_records": 0,
-            "created_records": 0,
-            "missing_record_ids": [],
-        }
+    from my_site.media_sync import sync_site_media
 
-    media_root = Path(settings.MEDIA_ROOT)
-    missing_ids = []
-    created_records = 0
-
-    for image in ImagePost.objects.exclude(image="").only("id", "image"):
-        image_name = (image.image.name or "").replace("\\", "/").strip("/")
-        if not image_name:
-            missing_ids.append(image.id)
-            continue
-        if not (media_root / image_name).is_file():
-            missing_ids.append(image.id)
-
-    for post in Post.objects.exclude(cover_image="").exclude(cover_image__isnull=True).select_related("author"):
-        image_name = (post.cover_image.name or "").replace("\\", "/").strip("/")
-        if not image_name:
-            continue
-        if not (media_root / image_name).is_file():
-            continue
-
-        _, created = ImagePost.objects.get_or_create(
-            image=image_name,
-            defaults={
-                "title": post.title[:200],
-                "description": "",
-                "uploaded_by": post.author,
-            },
-        )
-        if created:
-            created_records += 1
-
+    result = sync_site_media()
+    gallery_result = result.get("gallery_sync", {})
     return {
-        "missing_records": len(missing_ids),
-        "created_records": created_records,
-        "missing_record_ids": missing_ids,
+        "missing_records": gallery_result.get("missing_records", 0),
+        "created_records": gallery_result.get("created_records", 0),
+        "missing_record_ids": gallery_result.get("missing_record_ids", []),
+        "deleted_records": result.get("deleted_records", 0),
+        "cleared_fields": result.get("cleared_fields", 0),
+        "trashed_files": result.get("trashed_files", []),
+        "missing_actions": result.get("missing_actions", []),
+        "orphaned_files": result.get("orphaned_files", []),
     }

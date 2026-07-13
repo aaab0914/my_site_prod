@@ -1,13 +1,9 @@
-{% extends "blog/base.html" %}
+{% extends "blog/hero_base.html" %}
 
 {% block title %}Upload Video{% endblock %}
 
-{% block content %}
+{% block hero_base_css %}
 <style>
-.video-upload-shell { width: min(100%, 1120px); display:grid; gap:24px; margin:0 auto 36px; }
-.video-upload-hero { padding:30px; border-radius:28px; background: linear-gradient(135deg, #172033, #6b21a8 62%, #c2410c 135%); color:#fff; box-shadow:0 24px 54px rgba(15,23,42,.2); }
-.video-upload-hero h1 { margin:0 0 10px; border:0; padding:0; color:#fff; font-size:42px; font-weight:800; letter-spacing:-.03em; }
-.video-upload-hero p { margin:0; max-width:760px; line-height:1.7; color:rgba(255,255,255,.92); font-size:16px; }
 .video-upload-grid { display:grid; grid-template-columns:minmax(0, 1.1fr) minmax(320px, .9fr); gap:22px; }
 .video-card { padding:24px; border:1px solid #d9e2ea; border-radius:20px; background:#fff; box-shadow:0 14px 34px rgba(15,23,42,.08); }
 .video-card h2 { margin:0 0 14px; }
@@ -19,14 +15,14 @@
 .video-item a { color:#15283a; font-weight:700; text-decoration:none; }
 .video-item-meta { margin-top:8px; color:#66768a; font-size:14px; }
 .video-errors { margin-bottom:16px; padding:14px 16px; border-radius:14px; background:#fff1f1; color:#a61b1b; }
-@media screen and (max-width: 900px) { .video-upload-shell { width:100%; } .video-upload-grid { grid-template-columns:1fr; } }
+@media screen and (max-width: 900px) { .video-upload-grid { grid-template-columns:1fr; } }
 </style>
-<section class="video-upload-shell page-shell">
-    <header class="video-upload-hero page-hero">
-        <h1 class="page-hero-title">Upload Video</h1>
-        <p class="page-hero-copy">This page is available to superusers only. Other users are redirected to the blog home automatically.</p>
-    </header>
-    <div class="video-upload-grid">
+{% endblock %}
+{% block hero_class %}hero-theme-gallery{% endblock %}
+{% block hero_page_title %}Upload Video{% endblock %}
+{% block hero_page_description %}This page is available to superusers only. Other users are redirected to the blog home automatically.{% endblock %}
+{% block hero_grid_class %}video-upload-grid{% endblock %}
+{% block content_body %}
         <form method="post" enctype="multipart/form-data" class="video-card">
             {% csrf_token %}
             <h2>New Video</h2>
@@ -34,6 +30,4 @@
             {{ form.as_p }}
             <button class="video-submit" type="submit">Upload Video</button>
         </form>
-    </div>
-</section>
 {% endblock %}

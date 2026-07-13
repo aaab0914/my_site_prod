@@ -1,3 +1,41 @@
+#container,
+body,
+#content,
+#content-main,
+.module,
+.submit-row,
+.inline-group,
+.form-row {
+    background: #fff !important;
+    color: #21384b !important;
+}
+
+html[data-theme="dark"] body,
+html[data-theme="dark"] #container,
+html[data-theme="dark"] #content,
+html[data-theme="dark"] #content-main,
+html[data-theme="dark"] .module,
+html[data-theme="dark"] .submit-row,
+html[data-theme="dark"] .inline-group,
+html[data-theme="dark"] .form-row {
+    background: #fff !important;
+    color: #21384b !important;
+}
+
+#header,
+#nav-sidebar,
+#nav-sidebar .module,
+#nav-sidebar .module caption,
+#nav-sidebar .module th,
+#nav-sidebar .module td {
+    color: inherit;
+}
+
+#toggle-nav-sidebar,
+.theme-toggle {
+    display: none !important;
+}
+
 #nav-sidebar {
     width: 300px;
 }
@@ -7,7 +45,47 @@
 #nav-sidebar td,
 #nav-sidebar a {
     white-space: normal;
-    word-break: break-word;
+    word-break: normal;
+    overflow-wrap: anywhere;
+}
+
+#nav-sidebar table {
+    table-layout: auto;
+}
+
+#nav-sidebar tbody th,
+#nav-sidebar tbody td {
+    padding-top: 9px;
+    padding-bottom: 9px;
+    vertical-align: top;
+}
+
+#nav-sidebar tbody th {
+    width: auto;
+}
+
+#nav-sidebar tbody td {
+    width: 56px;
+    text-align: center;
+    white-space: nowrap;
+}
+
+#nav-sidebar a {
+    display: inline-block;
+    max-width: 100%;
+    line-height: 1.25;
+}
+
+#nav-sidebar td a,
+#nav-sidebar td .addlink,
+#nav-sidebar td .changelink,
+#nav-sidebar td .viewlink {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
+    word-break: normal;
+    overflow-wrap: normal;
 }
 
 #nav-filter {
@@ -20,9 +98,58 @@ body.nav-sidebar-enabled .main > #nav-sidebar + .content {
     margin-left: 300px;
 }
 
+body.change-form .main > .content,
+body.change-form .main .content,
+body.change-form #content {
+    max-width: none;
+    width: calc(100vw - 360px);
+    min-width: 0;
+    min-height: calc(100vh - 120px);
+}
+
+body.change-form textarea,
+body.change-form .vLargeTextField {
+    width: 100%;
+    max-width: none;
+}
+
+body.change-form .aligned .form-row > div {
+    max-width: none;
+    width: 100%;
+}
+
+body.change-form .submit-row {
+    max-width: none;
+    width: 100%;
+}
+
+body.change-form #content-main,
+body.change-form form,
+body.change-form .module.aligned,
+body.change-form .module {
+    width: 100%;
+    max-width: none;
+}
+
+body.change-form .main {
+    padding-bottom: 24px;
+}
+
 @media (max-width: 767px) {
     .main.shifted > #nav-sidebar + .content,
     body.nav-sidebar-enabled .main > #nav-sidebar + .content {
         margin-left: 0;
+    }
+
+    #nav-sidebar {
+        width: 100%;
+    }
+
+    body.change-form .main > .content,
+    body.change-form .main .content,
+    body.change-form #content {
+        max-width: none;
+        width: auto;
+        min-height: auto;
     }
 }

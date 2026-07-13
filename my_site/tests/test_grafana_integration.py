@@ -70,6 +70,18 @@ class GrafanaIntegrationTests(SimpleTestCase):
         self.assertEqual(result.returncode, 0, msg=result.stderr)
 
     def test_grafana_http_endpoint_is_reachable_when_running(self):
+        docker = shutil.which("docker")
+        if docker is None:
+            self.skipTest("docker is not installed in this environment")
+        ps_result = subprocess.run(
+            [docker, "compose", "ps", "--services", "--status", "running"],
+            cwd=BASE_DIR,
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        if ps_result.returncode != 0 or "grafana" not in ps_result.stdout:
+            self.skipTest("grafana service is not running")
         request = Request("http://grafana:3000/login")
         opener = build_opener()
         try:
@@ -80,6 +92,18 @@ class GrafanaIntegrationTests(SimpleTestCase):
         self.assertIn(status, {200, 302, 403})
 
     def test_grafana_health_and_dashboard_search_apis_are_reachable(self):
+        docker = shutil.which("docker")
+        if docker is None:
+            self.skipTest("docker is not installed in this environment")
+        ps_result = subprocess.run(
+            [docker, "compose", "ps", "--services", "--status", "running"],
+            cwd=BASE_DIR,
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        if ps_result.returncode != 0 or "grafana" not in ps_result.stdout:
+            self.skipTest("grafana service is not running")
         with urlopen("http://grafana:3000/api/health", timeout=10) as response:
             payload = json.loads(response.read().decode("utf-8"))
         self.assertEqual(payload["database"], "ok")

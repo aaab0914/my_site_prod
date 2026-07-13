@@ -1,0 +1,206 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static admin_urls admin_modify %}
+
+{% block extrastyle %}
+{{ block.super }}
+<style>
+    .post-admin-shell {
+        max-width: none;
+        width: calc(100vw - 360px);
+        min-height: calc(100vh - 140px);
+        margin: 0;
+        padding: 18px 24px 28px;
+        box-sizing: border-box;
+    }
+    .post-admin-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 18px;
+    }
+    .post-admin-header h1 {
+        margin: 0 0 8px;
+        font-size: 28px;
+        color: #1f3142;
+    }
+    .post-admin-subtitle {
+        margin: 0;
+        color: #526476;
+        font-size: 14px;
+    }
+    .post-admin-card {
+        background: #fff;
+        border: 1px solid #dbe4ec;
+        border-radius: 20px;
+        box-shadow: 0 12px 28px rgba(15, 23, 42, 0.06);
+        padding: 24px;
+    }
+    .post-admin-grid {
+        display: grid;
+        gap: 18px;
+    }
+    .post-admin-row {
+        display: grid;
+        grid-template-columns: 120px minmax(0, 1fr);
+        gap: 20px;
+        align-items: start;
+    }
+    .post-admin-row label,
+    .post-admin-row .legend {
+        font-weight: 700;
+        color: #294052;
+        padding-top: 12px;
+    }
+    .post-admin-row input[type="text"],
+    .post-admin-row input[type="number"],
+    .post-admin-row input[type="datetime-local"],
+    .post-admin-row select,
+    .post-admin-row textarea {
+        width: 100%;
+        box-sizing: border-box;
+        border: 1px solid #c7d5df;
+        border-radius: 14px;
+        padding: 12px 14px;
+        font-size: 14px;
+        background: #fff;
+        color: #21384b;
+    }
+    .post-admin-row textarea {
+        min-height: 55vh;
+        resize: vertical;
+        line-height: 1.6;
+    }
+    .post-admin-help {
+        margin-top: 8px;
+        color: #6c7f90;
+        font-size: 12px;
+    }
+    .post-admin-errors {
+        margin-bottom: 18px;
+        padding: 14px 16px;
+        border-radius: 14px;
+        background: #fee2e2;
+        color: #991b1b;
+    }
+    .post-admin-inline {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+    .post-admin-inline .datetimeshortcuts {
+        display: inline-flex;
+        gap: 10px;
+        align-items: center;
+    }
+    .post-admin-actions {
+        margin-top: 24px;
+    }
+    .post-admin-actions .submit-row {
+        margin: 0;
+        padding: 0;
+        border: 0;
+        background: transparent;
+    }
+    @media (max-width: 900px) {
+        .post-admin-shell {
+            width: auto;
+            padding: 16px;
+        }
+        .post-admin-row {
+            grid-template-columns: 1fr;
+            gap: 10px;
+        }
+        .post-admin-row label,
+        .post-admin-row .legend {
+            padding-top: 0;
+        }
+        .post-admin-row textarea {
+            min-height: 40vh;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div id="content-main" class="post-admin-shell">
+    <form {% if has_file_field %}enctype="multipart/form-data"{% endif %} method="post" id="{{ opts.model_name }}_form" novalidate>
+        {% csrf_token %}
+        {% if errors %}
+            <div class="post-admin-errors">{{ adminform.form.non_field_errors }}{{ errors }}</div>
+        {% endif %}
+
+        {% for hidden in adminform.form.hidden_fields %}{{ hidden }}{% endfor %}
+
+        <div class="post-admin-header">
+            <div>
+                <h1>{% if original %}{{ original }}{% else %}{% trans "Create post" %}{% endif %}</h1>
+                <p class="post-admin-subtitle">{% trans "Edit the post content with a simplified full-width layout." %}</p>
+            </div>
+            {% if change and not is_popup %}
+                <div class="object-tools">
+                    {% block object-tools-items %}
+                    {% change_form_object_tools %}
+                    {% endblock %}
+                </div>
+            {% endif %}
+        </div>
+
+        <section class="post-admin-card">
+            <div class="post-admin-grid">
+                <div class="post-admin-row">
+                    <label for="{{ adminform.form.title.id_for_label }}">{{ adminform.form.title.label }}</label>
+                    <div>{{ adminform.form.title }}{{ adminform.form.title.errors }}</div>
+                </div>
+
+                <div class="post-admin-row">
+                    <label for="{{ adminform.form.slug.id_for_label }}">{{ adminform.form.slug.label }}</label>
+                    <div>{{ adminform.form.slug }}{{ adminform.form.slug.errors }}</div>
+                </div>
+
+                <div class="post-admin-row">
+                    <label for="{{ adminform.form.author.id_for_label }}">{{ adminform.form.author.label }}</label>
+                    <div>{{ adminform.form.author }}{{ adminform.form.author.errors }}</div>
+                </div>
+
+                <div class="post-admin-row">
+                    <label for="{{ adminform.form.body.id_for_label }}">{{ adminform.form.body.label }}</label>
+                    <div>
+                        {{ adminform.form.body }}
+                        {{ adminform.form.body.errors }}
+                    </div>
+                </div>
+
+                <div class="post-admin-row">
+                    <div class="legend">{{ adminform.form.publish.label }}</div>
+                    <div class="post-admin-inline">
+                        {{ adminform.form.publish }}
+                        {{ adminform.form.publish.errors }}
+                    </div>
+                </div>
+
+                <div class="post-admin-row">
+                    <label for="{{ adminform.form.status.id_for_label }}">{{ adminform.form.status.label }}</label>
+                    <div>{{ adminform.form.status }}{{ adminform.form.status.errors }}</div>
+                </div>
+
+                <div class="post-admin-row">
+                    <label for="{{ adminform.form.tags.id_for_label }}">{{ adminform.form.tags.label }}</label>
+                    <div>
+                        {{ adminform.form.tags }}
+                        {{ adminform.form.tags.errors }}
+                        {% if adminform.form.tags.help_text %}
+                            <div class="post-admin-help">{{ adminform.form.tags.help_text|safe }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="post-admin-actions">
+                {% submit_row %}
+            </div>
+        </section>
+    </form>
+</div>
+{% endblock %}

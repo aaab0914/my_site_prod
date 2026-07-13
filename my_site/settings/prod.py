@@ -36,13 +36,8 @@ CACHES = {
 
 TEMPLATES[0]["APP_DIRS"] = False
 TEMPLATES[0]["OPTIONS"]["loaders"] = [
-    (
-        "django.template.loaders.cached.Loader",
-        [
-            "django.template.loaders.filesystem.Loader",
-            "django.template.loaders.app_directories.Loader",
-        ],
-    )
+    "my_site.template_loaders.RedisFilesystemLoader",
+    "my_site.template_loaders.RedisAppDirectoriesLoader",
 ]
 
 

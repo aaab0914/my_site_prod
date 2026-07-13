@@ -61,6 +61,7 @@ members.csv
 *.key
 
 docker-compose.override.yml
+docker-compose.yml
 
 Shell_Commands/
 Others/

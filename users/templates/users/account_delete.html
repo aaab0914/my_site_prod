@@ -1,13 +1,9 @@
-{% extends "blog/base.html" %}
+{% extends "blog/hero_base.html" %}
 
 {% block title %}Delete Account{% endblock %}
 
-{% block content %}
+{% block hero_base_css %}
 <style>
-    .danger-shell { max-width: 900px; margin: 0 auto 36px; }
-    .danger-hero { margin-bottom: 24px; padding: 30px; border-radius: 28px; background: radial-gradient(circle at top right, rgba(255,255,255,.18), transparent 28%), linear-gradient(135deg, #3b1414, #9f1239 58%, #f59e0b 170%); color: #fff; box-shadow: 0 24px 54px rgba(15,23,42,.22); }
-    .danger-hero h1 { margin: 0 0 10px; border: 0; font-size: 42px; font-weight: 800; letter-spacing: -.03em; }
-    .danger-hero p { margin: 0; max-width: 760px; color: rgba(255,255,255,.92); line-height: 1.7; font-size: 16px; }
     .danger-panel { padding: 24px; border-radius: 22px; border: 1px solid #fecaca; background: #fff; box-shadow: 0 16px 36px rgba(15,23,42,.08); }
     .danger-panel h2 { margin: 0 0 14px; color: #7f1d1d; }
     .danger-text { color: #4b5563; line-height: 1.7; margin-bottom: 18px; }
@@ -18,15 +14,13 @@
     .danger-button,.safe-link { display: inline-flex; align-items: center; justify-content: center; min-width: 178px; width: auto !important; float: none !important; border: 0; border-radius: 999px; padding: 12px 20px; font-size: 14px; font-weight: 700; text-decoration: none; line-height: 1.2; white-space: nowrap; cursor: pointer; }
     .danger-button { background: linear-gradient(135deg, #b91c1c, #7f1d1d); color: #fff; }
     .safe-link { background: #e9eef3; color: #21384b; }
-    @media screen and (max-width: 768px) { .danger-hero { padding: 24px 20px; } .danger-hero h1 { font-size: 32px; } .danger-panel { padding: 18px; } }
+    @media screen and (max-width: 768px) { .danger-panel { padding: 18px; } }
 </style>
-
-<section class="danger-shell page-shell">
-    <div class="danger-hero page-hero">
-        <h1 class="page-hero-title">Delete Account</h1>
-        <p class="page-hero-copy">This action is permanent. Your account, personal data, posts, and comments will be removed and cannot be recovered later.</p>
-    </div>
-
+{% endblock %}
+{% block hero_class %}hero-theme-gallery{% endblock %}
+{% block hero_page_title %}Delete Account{% endblock %}
+{% block hero_page_description %}This action is permanent. Your account, personal data, posts, and comments will be removed and cannot be recovered later.{% endblock %}
+{% block hero_body %}
     <section class="danger-panel">
         <h2>Final Confirmation</h2>
         <div class="danger-text">
@@ -47,5 +41,4 @@
             </div>
         </form>
     </section>
-</section>
 {% endblock %}

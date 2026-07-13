@@ -20,15 +20,16 @@ _SKIP_PREFIXES = (
 
 
 class AuditLoggingMiddleware:
-    """Log only valuable requests to avoid extra database writes on routine page views."""
+    """Log admin traffic, write operations, auth events, and error responses."""
 
     def __init__(self, get_response):
         self.get_response = get_response
         admin_path = getattr(settings, "ADMIN_URL_PATH", "admin/").strip("/")
-        self.always_log_prefixes = (
-            f"/{admin_path}/",
+        self.admin_prefix = f"/{admin_path}/"
+        self.auth_paths = (
             "/users/login/",
             "/users/logout/",
+            "/users/register/",
         )
 
     def __call__(self, request):
@@ -63,13 +64,19 @@ class AuditLoggingMiddleware:
             return False
 
         method = (request.method or "GET").upper()
-        if method not in {"GET", "HEAD", "OPTIONS"}:
+        if path.startswith(self.admin_prefix):
+            return True
+
+        if method in {"POST", "PUT", "PATCH", "DELETE"}:
+            return True
+
+        if path.startswith(self.auth_paths):
             return True
 
         if response.status_code >= 400:
             return True
 
-        return path.startswith(self.always_log_prefixes)
+        return False
 
     def get_client_ip(self, request):
         x_forwarded_for = request.META.get("HTTP_X_FORWARDED_FOR")

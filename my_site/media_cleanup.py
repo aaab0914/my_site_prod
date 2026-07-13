@@ -41,4 +41,11 @@ def move_media_file_to_trash(relative_name):
         shutil.move(str(source_path), str(target_path))
     except FileNotFoundError:
         return None
+    current_dir = source_path.parent
+    while current_dir != media_root and current_dir.exists():
+        try:
+            current_dir.rmdir()
+        except OSError:
+            break
+        current_dir = current_dir.parent
     return target_path.relative_to(project_root.parent).as_posix()

@@ -1,17 +1,9 @@
-{% extends "blog/base.html" %}
+{% extends "blog/hero_base.html" %}
 
 {% block title %}Video Library{% endblock %}
 
-{% block content %}
+{% block hero_base_css %}
 <style>
-    .video-library-shell { max-width: 1120px; margin: 0 auto 36px; }
-    .video-library-hero {
-        margin-bottom: 24px; padding: 30px; border-radius: 28px;
-        background: radial-gradient(circle at top right, rgba(255,255,255,.24), transparent 28%), linear-gradient(135deg, #18263f, #7c3aed 58%, #ea580c 155%);
-        color: #fff; box-shadow: 0 24px 54px rgba(15,23,42,.2);
-    }
-    .video-library-hero h1 { margin: 0 0 10px; border: 0; font-size: 42px; font-weight: 800; }
-    .video-library-hero p { margin: 0; max-width: 760px; color: rgba(255,255,255,.92); line-height: 1.7; font-size: 16px; }
     .video-list { display: grid; gap: 16px; }
     .video-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(300px, 1.2fr); gap: 18px; align-items: start; padding: 18px 20px; border-radius: 20px; border: 1px solid #d7e1ea; background: #fff; box-shadow: 0 12px 30px rgba(15,23,42,.07); }
     .video-row-main h2 { margin: 0 0 6px; color: #16283a; font-size: 24px; }
@@ -31,18 +23,14 @@
         .video-row { grid-template-columns: 1fr; }
     }
     @media screen and (max-width: 768px) {
-        .video-library-hero { padding: 24px 20px; }
-        .video-library-hero h1 { font-size: 32px; }
         .video-row { padding: 16px; }
     }
 </style>
-
-<section class="video-library-shell page-shell">
-    <div class="video-library-hero page-hero">
-        <h1 class="page-hero-title">Video Library</h1>
-        <p class="page-hero-copy">Browse uploaded videos in one place. Guests can watch the list here, and account-only actions will ask them to sign in first.</p>
-    </div>
-
+{% endblock %}
+{% block hero_class %}hero-theme-teal{% endblock %}
+{% block hero_page_title %}Video Library{% endblock %}
+{% block hero_page_description %}Browse uploaded videos in one place. Guests can watch the list here, and account-only actions will ask them to sign in first.{% endblock %}
+{% block hero_body %}
     {% if videos %}
         <div class="video-list">
             {% for video in videos %}
@@ -92,5 +80,4 @@
     {% else %}
         <div class="video-empty">No videos have been uploaded yet.</div>
     {% endif %}
-</section>
 {% endblock %}

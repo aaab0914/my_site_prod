@@ -16,7 +16,7 @@ def _write_media_file(path, content=b"test"):
     path.write_bytes(content)
 
 
-@override_settings(MEDIA_SYNC_INTERVAL_SECONDS=0, MEDIA_SYNC_ENABLED=True)
+@override_settings(MEDIA_SYNC_INTERVAL_SECONDS=0, MEDIA_SYNC_ENABLED=False)
 class MediaSyncTests(TestCase):
     def setUp(self):
         self.media_root = tempfile.mkdtemp(prefix="media-sync-tests-")
@@ -28,7 +28,7 @@ class MediaSyncTests(TestCase):
         self.override.disable()
         shutil.rmtree(self.media_root, ignore_errors=True)
 
-    def test_sync_deletes_required_record_when_media_file_is_missing(self):
+    def test_sync_reports_disabled_state_for_missing_required_record(self):
         image_post = ImagePost.objects.create(
             title="gallery",
             image="posts/2026/07/07/gallery.jpg",
@@ -37,15 +37,11 @@ class MediaSyncTests(TestCase):
 
         result = sync_site_media()
 
-        self.assertFalse(ImagePost.objects.filter(id=image_post.id).exists())
-        self.assertTrue(
-            any(
-                action["type"] == "deleted_record" and action["model"] == "images.ImagePost"
-                for action in result["missing_actions"]
-            )
-        )
+        self.assertTrue(ImagePost.objects.filter(id=image_post.id).exists())
+        self.assertFalse(result["enabled"])
+        self.assertEqual(result["missing_actions"], [])
 
-    def test_sync_clears_optional_field_when_media_file_is_missing(self):
+    def test_sync_does_not_clear_optional_field_when_disabled(self):
         post = Post.objects.create(
             title="post-title",
             slug="post-title",
@@ -57,27 +53,18 @@ class MediaSyncTests(TestCase):
         result = sync_site_media()
         post.refresh_from_db()
 
-        self.assertFalse(post.cover_image)
-        self.assertTrue(
-            any(
-                action["type"] == "cleared_field"
-                and action["model"] == "blog.Post"
-                and action["field"] == "cover_image"
-                for action in result["missing_actions"]
-            )
-        )
+        self.assertTrue(post.cover_image)
+        self.assertFalse(result["enabled"])
+        self.assertEqual(result["missing_actions"], [])
 
-    def test_sync_moves_orphan_files_to_trash(self):
+    def test_sync_does_not_move_orphan_files_when_disabled(self):
         orphan_file = Path(self.media_root) / "comments" / "2026" / "07" / "07" / "orphan.jpg"
         _write_media_file(orphan_file)
 
         result = sync_site_media()
 
-        self.assertFalse(orphan_file.exists())
-        self.assertTrue(
-            any(item["from"] == "comments/2026/07/07/orphan.jpg" for item in result["trashed_files"])
-        )
-        self.assertTrue(any(Path(settings.BASE_DIR).parent.joinpath(item["to"]).exists() for item in result["trashed_files"]))
+        self.assertTrue(orphan_file.exists())
+        self.assertEqual(result["trashed_files"], [])
 
     def test_sync_keeps_referenced_files(self):
         audio_path = Path(self.media_root) / "audio" / "2026" / "07" / "07" / "track.mp3"
@@ -93,9 +80,10 @@ class MediaSyncTests(TestCase):
 
         self.assertTrue(audio.audio_file.name.endswith("track.mp3"))
         self.assertTrue(audio_path.exists())
+        self.assertFalse(result["enabled"])
         self.assertEqual(result["trashed_files"], [])
 
-    def test_sync_clears_comment_image_without_deleting_comment(self):
+    def test_sync_leaves_comment_image_untouched_when_disabled(self):
         post = Post.objects.create(
             title="comment-post",
             slug="comment-post",
@@ -113,7 +101,7 @@ class MediaSyncTests(TestCase):
         sync_site_media()
         comment.refresh_from_db()
 
-        self.assertFalse(comment.image)
+        self.assertTrue(comment.image)
         self.assertTrue(Comment.objects.filter(id=comment.id).exists())
 
 

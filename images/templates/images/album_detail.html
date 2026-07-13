@@ -1,11 +1,10 @@
-{% extends "blog/base.html" %}
+{% extends "blog/hero_base.html" %}
 
 {% block title %}{{ album.title }}{% endblock %}
 
-{% block content %}
+{% block hero_base_css %}
 <style>
 .album-detail-shell { display: grid; gap: 24px; width: min(100%, 1120px); margin: 0 auto 36px; }
-.album-detail-hero { min-height: 200px; padding: 30px; border-radius: 28px; background: linear-gradient(135deg, #172033, #0f766e 62%, #d7b56d 135%); color: #fff; box-shadow: 0 24px 54px rgba(15, 23, 42, 0.2); }
 .album-detail-top { display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap; }
 .album-detail-back { color:#fff; text-decoration:none; font-weight:700; opacity:.95; }
 .album-detail-actions { display:flex; gap:12px; flex-wrap:wrap; }
@@ -21,8 +20,10 @@
 .album-item-body { padding:16px; color:#4f6274; line-height:1.6; }
 @media screen and (max-width: 900px) { .album-detail-shell { width: 100%; margin: 0 auto 24px; } .album-detail-hero h1 { font-size:32px; } .album-grid { grid-template-columns:1fr; } }
 </style>
-<section class="album-detail-shell page-shell">
-    <header class="album-detail-hero page-hero">
+{% endblock %}
+{% block hero_shell_class %}album-detail-shell{% endblock %}
+{% block hero_class %}hero-theme-gallery album-detail-hero{% endblock %}
+{% block hero_pretitle %}
         <div class="album-detail-top">
             <a class="album-detail-back" href="{% url 'blog:images:album_list' %}">Back to Album</a>
             {% if can_manage %}
@@ -32,11 +33,13 @@
                 </div>
             {% endif %}
         </div>
-        <h1 class="page-hero-title">{{ album.title }}</h1>
+{% endblock %}
+{% block hero_page_title %}{{ album.title }}{% endblock %}
+{% block hero_description %}
         <div class="album-detail-meta">{{ images|length }} image{{ images|length|pluralize }} by {{ album.uploaded_by.username }} on {{ album.created|date:"Y-m-d H:i" }}</div>
         {% if album.description %}<div class="album-detail-description">{{ album.description }}</div>{% endif %}
-    </header>
-
+{% endblock %}
+{% block hero_body %}
     <section class="album-grid">
         {% for image in images %}
             <article class="album-item">
@@ -45,5 +48,4 @@
             </article>
         {% endfor %}
     </section>
-</section>
 {% endblock %}

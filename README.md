@@ -103,17 +103,48 @@ Optional profile services:
 - Docker
 - Docker Compose plugin
 
-### Setup
+### Local Development
 
 1. Enter the project directory
 ```bash
-cd /var/www/my_site_prod_repo_new
+cd /path/to/my_site_prod-master
 ```
 
-2. Create the environment file
+2. Prepare the local environment file
 ```bash
-cp .env.example .env
+cp .env.dev .env.dev.local
 ```
+
+3. Start the local stack
+```bash
+docker compose up -d --build
+```
+
+4. Run migrations
+```bash
+docker compose exec web python manage.py migrate
+```
+
+5. Create a superuser
+```bash
+docker compose exec web python manage.py createsuperuser
+```
+
+### Production Deployment
+
+1. Enter the project directory on the target server
+```bash
+cd /path/to/my_site_prod-master
+```
+
+2. Prepare the production environment file
+Edit `.env.prod` and replace placeholder secrets before startup:
+- `SECRET_KEY`
+- `DB_PASSWORD`
+- `ALLOWED_HOSTS`
+- `CSRF_TRUSTED_ORIGINS`
+- `PROMETHEUS_EXTERNAL_URL`
+- `GRAFANA_ROOT_URL`
 
 3. Start the main production services
 ```bash
@@ -142,9 +173,19 @@ Rebuild application services:
 docker compose -f docker-compose.prod.yml up -d --build web celery celery-beat
 ```
 
+Rebuild local application services:
+```bash
+docker compose up -d --build web celery celery-beat
+```
+
 Run tests:
 ```bash
 docker compose -f docker-compose.prod.yml exec web python manage.py test
+```
+
+Run tests in the local stack:
+```bash
+docker compose exec web python manage.py test
 ```
 
 Run the focused media/profile regression set:
@@ -155,7 +196,7 @@ docker compose -f docker-compose.prod.yml exec web python manage.py test users.t
 ## Project Structure
 
 ```text
-/var/www/my_site_prod_repo_new/
+my_site_prod-master/
 |- blog/                    # Posts, comments, audio, video, feeds, API
 |- users/                   # Authentication, profile, avatar, account settings
 |- images/                  # Gallery and album features
@@ -165,9 +206,13 @@ docker compose -f docker-compose.prod.yml exec web python manage.py test users.t
 |- logs/                    # Runtime logs
 |- grafana/                 # Grafana provisioning
 |- backups/                 # Backup files
+|- .env.dev                 # Local environment template
+|- .env.prod                # Production environment template
+|- docker-compose.yml       # Local development stack
 |- docker-compose.prod.yml
 |- Dockerfile
 |- nginx.conf
+|- nginx.prod.conf
 |- prometheus.yml
 |- requirements.txt
 |- README.md

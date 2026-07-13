@@ -8,28 +8,19 @@ from .models import Album, AlbumImage, ImagePost
 class AlbumImageInline(admin.TabularInline):
     model = AlbumImage
     extra = 0
-    fields = ["preview", "title", "uploaded_by", "created"]
-    readonly_fields = ["preview", "created"]
+    fields = ["title", "uploaded_by", "created"]
+    readonly_fields = ["created"]
     autocomplete_fields = ["uploaded_by"]
     show_change_link = True
-
-    @admin.display(description="Preview")
-    def preview(self, obj):
-        if not obj.pk or not obj.image:
-            return "-"
-        return format_html(
-            '<img src="{}" alt="image" style="width: 56px; height: 56px; object-fit: cover; border-radius: 6px;" />',
-            obj.get_image_proxy_url(),
-        )
 
 
 @admin.register(ImagePost)
 class ImageAdmin(admin.ModelAdmin):
     form = ImagePostForm
-    list_display = ["thumbnail_preview", "title", "uploaded_by", "created", "updated"]
+    list_display = ["title", "uploaded_by", "created", "updated"]
     list_filter = ["created", "updated", "uploaded_by"]
     search_fields = ["title", "description", "uploaded_by__username"]
-    readonly_fields = ["thumbnail_preview", "created", "updated"]
+    readonly_fields = ["created", "updated"]
     raw_id_fields = ["uploaded_by"]
     autocomplete_fields = ["uploaded_by"]
     ordering = ["-created"]
@@ -49,10 +40,10 @@ class ImageAdmin(admin.ModelAdmin):
 
 @admin.register(Album)
 class AlbumAdmin(admin.ModelAdmin):
-    list_display = ["cover_preview", "title", "uploaded_by", "image_count", "created", "updated"]
+    list_display = ["title", "uploaded_by", "image_count", "created", "updated"]
     list_filter = ["created", "updated", "uploaded_by"]
     search_fields = ["title", "description", "uploaded_by__username"]
-    readonly_fields = ["cover_preview", "created", "updated"]
+    readonly_fields = ["created", "updated"]
     raw_id_fields = ["uploaded_by"]
     autocomplete_fields = ["uploaded_by"]
     ordering = ["-created"]
@@ -63,18 +54,18 @@ class AlbumAdmin(admin.ModelAdmin):
 
     @admin.display(description="Cover")
     def cover_preview(self, obj):
-        cover = obj.cover_image()
-        if not cover or not cover.image:
+        first_image = obj.images.order_by("created", "id").first()
+        if not first_image or not first_image.image:
             return "-"
         return format_html(
-            '<img src="{}" alt="cover" style="width: 56px; height: 56px; object-fit: cover; border-radius: 6px;" />',
-            cover.get_image_proxy_url(),
+            '<img src="{}" alt="album cover" style="width: 56px; height: 56px; object-fit: cover; border-radius: 6px;" />',
+            first_image.get_image_proxy_url(),
         )
 
 
 @admin.register(AlbumImage)
 class AlbumImageAdmin(admin.ModelAdmin):
-    list_display = ["thumbnail_preview", "title", "album", "uploaded_by", "created", "updated"]
+    list_display = ["title", "album", "uploaded_by", "created", "updated"]
     list_filter = ["created", "updated", "uploaded_by", "album"]
     search_fields = ["title", "description", "album__title", "uploaded_by__username"]
     readonly_fields = ["thumbnail_preview", "created", "updated"]

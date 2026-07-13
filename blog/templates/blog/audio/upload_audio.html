@@ -1,48 +1,13 @@
-{% extends "blog/base.html" %}
+{% extends "blog/hero_base.html" %}
 
 {% block title %}Upload Audio{% endblock %}
 
-{% block content %}
+{% block hero_base_css %}
 <style>
-    .audio-upload-shell {
-        max-width: 1040px;
-        margin: 0 auto 36px;
-    }
-
-    .audio-upload-hero {
-        position: relative;
-        overflow: hidden;
-        margin-bottom: 24px;
-        padding: 30px;
-        border-radius: 28px;
-        background:
-            radial-gradient(circle at top right, rgba(255, 255, 255, 0.26), transparent 28%),
-            linear-gradient(135deg, #1f2a44, #0f766e 58%, #f2c46d 150%);
-        color: #fff;
-        box-shadow: 0 24px 54px rgba(15, 23, 42, 0.22);
-    }
-
-    .audio-upload-hero h1 {
-        margin: 0 0 10px;
-        border: 0;
-        font-size: 42px;
-        font-weight: 800;
-        letter-spacing: -0.03em;
-    }
-
-    .audio-upload-hero p {
-        max-width: 760px;
-        margin: 0;
-        color: rgba(255, 255, 255, 0.92);
-        line-height: 1.7;
-        font-size: 16px;
-    }
-
     .audio-upload-stats {
         display: flex;
         gap: 12px;
         flex-wrap: wrap;
-        margin-top: 18px;
     }
 
     .audio-upload-pill {
@@ -242,19 +207,6 @@
     }
 
     @media screen and (max-width: 768px) {
-        .audio-upload-shell {
-            width: calc(100% - 24px);
-            margin: 0 12px 36px 0;
-        }
-
-        .audio-upload-hero {
-            padding: 24px 20px;
-        }
-
-        .audio-upload-hero h1 {
-            font-size: 32px;
-        }
-
         .audio-upload-grid {
             grid-template-columns: 1fr;
         }
@@ -264,19 +216,12 @@
         }
     }
 </style>
-
-<section class="audio-upload-shell page-shell">
-    <div class="audio-upload-hero page-hero">
-        <h1 class="page-hero-title">Upload Audio</h1>
-        <p class="page-hero-copy">Publish a track with a clean title, a supported audio file, and a short description. The page is tuned for fast submissions without unnecessary visual noise.</p>
-        <div class="audio-upload-stats">
-            <span class="audio-upload-pill">Formats: MP3, WAV, OGG</span>
-            <span class="audio-upload-pill">Max file size: 25 MB</span>
-            <span class="audio-upload-pill">Login required</span>
-        </div>
-    </div>
-
-    <div class="audio-upload-grid">
+{% endblock %}
+{% block hero_class %}hero-theme-teal{% endblock %}
+{% block hero_page_title %}Upload Audio{% endblock %}
+{% block hero_page_description %}Publish a track with a clean title, a supported audio file, and a short description. The page is tuned for fast submissions without unnecessary visual noise.{% endblock %}
+{% block hero_grid_class %}has-aside audio-upload-grid{% endblock %}
+{% block content_body %}
         <form method="post" enctype="multipart/form-data" class="audio-upload-panel" id="audio-upload-form">
             {% csrf_token %}
             <h2>Track Details</h2>
@@ -330,8 +275,16 @@
                 <button type="reset" class="audio-upload-reset" id="audio-upload-reset">Reset</button>
             </div>
         </form>
-
+{% endblock %}
+{% block aside %}
         <aside class="audio-upload-side">
+            <section class="audio-upload-panel audio-upload-note">
+                <div class="audio-upload-stats">
+                    <span class="audio-upload-pill">Formats: MP3, WAV, OGG</span>
+                    <span class="audio-upload-pill">Max file size: 25 MB</span>
+                    <span class="audio-upload-pill">Login required</span>
+                </div>
+            </section>
             <section class="audio-upload-panel audio-upload-note">
                 <h3>Upload Checklist</h3>
                 <ul>
@@ -347,9 +300,8 @@
                 <p>The form keeps the primary action clear, shows validation state near each field, and avoids the plain default Django form output.</p>
             </section>
         </aside>
-    </div>
-</section>
-
+{% endblock %}
+{% block extra_scripts %}
 <script>
 (() => {
     const fileInput = document.getElementById("{{ form.audio_file.id_for_label }}");

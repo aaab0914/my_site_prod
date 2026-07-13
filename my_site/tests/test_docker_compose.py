@@ -19,14 +19,15 @@ class DockerComposeFileTests(SimpleTestCase):
         self.readme_text = self.readme_path.read_text(encoding="utf-8")
 
     def test_compose_symlink_targets_prod_layout(self):
-        self.assertIn("DJANGO_SETTINGS_MODULE: my_site.settings.prod", self.compose_text)
+        self.assertIn("DJANGO_SETTINGS_MODULE: my_site.settings.dev", self.compose_text)
         self.assertIn("DJANGO_SETTINGS_MODULE: my_site.settings.prod", self.prod_compose_text)
 
     def test_compose_defines_expected_services(self):
         self.assertIn("services:", self.compose_text)
         self.assertIn("db:", self.compose_text)
         self.assertIn("web:", self.compose_text)
-        self.assertIn("nginx:", self.compose_text)
+        self.assertNotIn("nginx:", self.compose_text)
+        self.assertIn("nginx:", self.prod_compose_text)
 
     def test_db_service_uses_postgres_16(self):
         self.assertIn("image: postgres:16", self.compose_text)
@@ -34,6 +35,11 @@ class DockerComposeFileTests(SimpleTestCase):
     def test_db_service_has_healthcheck(self):
         self.assertIn("healthcheck:", self.compose_text)
         self.assertIn("pg_isready -U ${DB_USER} -d ${DB_NAME}", self.compose_text)
+
+    def test_redis_and_celery_services_have_healthchecks(self):
+        self.assertIn('test: ["CMD", "redis-cli", "ping"]', self.compose_text)
+        self.assertIn("inspect', 'ping'", self.compose_text)
+        self.assertIn("cmdline = Path('/proc/1/cmdline')", self.compose_text)
 
     def test_web_service_builds_from_current_directory(self):
         self.assertIn("build: .", self.compose_text)
@@ -48,7 +54,7 @@ class DockerComposeFileTests(SimpleTestCase):
     def test_web_service_mounts_static_media_and_backups(self):
         self.assertIn("- ./staticfiles:/code/staticfiles", self.compose_text)
         self.assertIn("- ./media:/code/media", self.compose_text)
-        self.assertIn("- backups_volume:/code/backups", self.compose_text)
+        self.assertIn("- ./backups:/code/backups", self.compose_text)
 
     def test_web_service_has_healthcheck(self):
         self.assertIn("urllib.request.Request('http://127.0.0.1:8000/users/login/'", self.compose_text)
@@ -56,14 +62,13 @@ class DockerComposeFileTests(SimpleTestCase):
         self.assertIn("'X-Forwarded-Proto': 'https'", self.compose_text)
 
     def test_nginx_service_mounts_expected_files(self):
-        self.assertIn("./nginx.conf:/etc/nginx/conf.d/default.conf:ro", self.compose_text)
-        self.assertIn("./staticfiles:/static:ro", self.compose_text)
-        self.assertIn("./media:/media:ro", self.compose_text)
+        self.assertIn("./nginx.prod.conf:/etc/nginx/conf.d/default.conf:ro", self.prod_compose_text)
+        self.assertIn("./staticfiles:/static:ro", self.prod_compose_text)
+        self.assertIn("./media:/media:ro", self.prod_compose_text)
 
     def test_compose_declares_named_volumes(self):
         self.assertIn("volumes:", self.compose_text)
         self.assertIn("postgres_data:", self.compose_text)
-        self.assertIn("backups_volume:", self.compose_text)
         self.assertIn("elasticsearch_data:", self.compose_text)
 
     def test_production_compose_does_not_bind_mount_project_code(self):
@@ -71,7 +76,7 @@ class DockerComposeFileTests(SimpleTestCase):
         self.assertNotIn("/code:ro", self.prod_compose_text)
 
     def test_readme_documents_prod_compose_usage(self):
-        self.assertIn("docker compose -f docker-compose.prod.yml up --build -d", self.readme_text)
+        self.assertIn("docker compose -f docker-compose.prod.yml up -d --build", self.readme_text)
         self.assertIn("docker compose -f docker-compose.prod.yml exec web python manage.py migrate", self.readme_text)
         self.assertIn("docker compose -f docker-compose.prod.yml exec web python manage.py test", self.readme_text)
 

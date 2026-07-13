@@ -1,39 +1,9 @@
-{% extends "blog/base.html" %}
+{% extends "blog/hero_base.html" %}
 
 {% block title %}Upload Images{% endblock %}
 
-{% block content %}
+{% block hero_base_css %}
 <style>
-    .upload-shell {
-        max-width: 1120px;
-        margin: 0 auto 32px;
-    }
-
-    .upload-hero {
-        margin-bottom: 24px;
-        padding: 30px;
-        border-radius: 28px;
-        background: linear-gradient(135deg, #103c52, #1d6a70 58%, #d9efe3 140%);
-        color: #fff;
-        box-shadow: 0 24px 54px rgba(16, 60, 82, 0.22);
-    }
-
-    .upload-hero h1 {
-        margin: 0 0 10px;
-        padding: 0;
-        border: 0;
-        font-size: 42px;
-        font-weight:  800;
-    }
-
-    .upload-hero p {
-        margin: 0;
-        max-width: 760px;
-        color: rgba(255, 255, 255, 0.9);
-        font-size: 16px;
-        line-height: 1.6;
-    }
-
     .upload-grid {
         display: grid;
         grid-template-columns: minmax(0, 1.6fr) minmax(280px, 1fr);
@@ -218,14 +188,6 @@
     }
 
     @media screen and (max-width: 768px) {
-        .upload-hero {
-            padding: 22px 20px;
-        }
-
-        .upload-hero h1 {
-            font-size: 30px;
-        }
-
         .upload-grid {
             grid-template-columns: 1fr;
         }
@@ -235,14 +197,12 @@
         }
     }
 </style>
-
-<section class="upload-shell page-shell">
-    <div class="upload-hero page-hero">
-        <h1 class="page-hero-title">Upload Images</h1>
-        <p class="page-hero-copy">Logged-in users can submit Upload exactly 1 image per submission. Choose local files, or click the paste area and press Ctrl+V to drop clipboard images straight into the queue.</p>
-    </div>
-
-    <div class="upload-grid">
+{% endblock %}
+{% block hero_class %}hero-theme-gallery{% endblock %}
+{% block hero_page_title %}Upload Images{% endblock %}
+{% block hero_page_description %}Logged-in users can submit exactly 1 image per submission. Choose local files, or click the paste area and press Ctrl+V to drop clipboard images straight into the queue.{% endblock %}
+{% block hero_grid_class %}has-aside upload-grid{% endblock %}
+{% block content_body %}
         <form method="post" enctype="multipart/form-data" id="gallery-upload-form" class="upload-panel">
             {% csrf_token %}
             <h2>Add One Image to Gallery</h2>
@@ -279,7 +239,8 @@
                 <button type="button" class="upload-clear" id="clear-selection">Clear Selection</button>
             </div>
         </form>
-
+{% endblock %}
+{% block aside %}
         <aside class="upload-notes">
             <section class="upload-panel upload-note">
                 <h3>Current Selection</h3>
@@ -299,9 +260,8 @@
                 </ul>
             </section>
         </aside>
-    </div>
-</section>
-
+{% endblock %}
+{% block extra_scripts %}
 <script>
 (() => {
     const form = document.getElementById("gallery-upload-form");

@@ -15,7 +15,9 @@ def fail(message: str) -> None:
 
 
 def main() -> int:
-    env_path = PROJECT_ROOT / ".env"
+    prod_env_path = PROJECT_ROOT / ".env.prod"
+    legacy_env_path = PROJECT_ROOT / ".env"
+    env_path = prod_env_path if prod_env_path.exists() else legacy_env_path
     env_source = env_path if env_path.exists() else "process environment"
 
     required_keys = [

@@ -1,19 +1,15 @@
-{% extends "blog/base.html" %}
+{% extends "blog/hero_base.html" %}
 
 {% block title %}Gallery{% endblock %}
 
-{% block content %}
+{% block hero_base_css %}
 <style>
     .gallery-shell {
         display: grid;
         gap: 24px;
     }
 
-    .gallery-header {
-        background: linear-gradient(135deg, #172033, #0f766e 62%, #d7b56d 135%);
-        color: #fff;
-        box-sizing: border-box;
-    }
+    .gallery-header { box-sizing: border-box; }
 
     .gallery-title {
         line-height: 1.1;
@@ -28,16 +24,22 @@
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        margin-top: 18px;
         padding: 12px 18px;
         border-radius: 999px;
-        background: rgba(255,255,255,.16);
-        border: 1px solid rgba(255,255,255,.24);
-        color: #fff;
+        background: #e9eef3;
+        border: 1px solid #d7e1ea;
+        color: #21384b;
         text-decoration: none;
         font-weight: 700;
         white-space: nowrap;
         width: fit-content;
+    }
+
+    .gallery-toolbar {
+        display: flex;
+        justify-content: flex-start;
+        gap: 12px;
+        flex-wrap: wrap;
     }
 
     .gallery-grid {
@@ -171,20 +173,19 @@
         }
     }
 </style>
-
-<section class="page-shell gallery-shell">
-<section class="gallery-header page-hero">
-    <h1 class="gallery-title page-hero-title">Gallery</h1>
-    <p class="gallery-subtitle page-hero-copy">Browse uploaded images. Logged-in users can upload local files or paste images from the clipboard.</p>
-    {% if user.is_authenticated %}
+{% endblock %}
+{% block hero_shell_class %}gallery-shell{% endblock %}
+{% block hero_class %}hero-theme-gallery gallery-header{% endblock %}
+{% block hero_page_title %}<span class="gallery-title">Gallery</span>{% endblock %}
+{% block hero_description %}<p class="gallery-subtitle page-hero-copy">Browse uploaded images. Logged-in users can upload local files or paste images from the clipboard.</p>{% endblock %}
+{% block hero_body %}
+{% if user.is_authenticated %}
+    <div class="gallery-toolbar">
         <a class="gallery-action" href="{% url 'blog:images:gallery_upload' %}">Upload or Paste Images</a>
-    {% endif %}
-</section>
-
-</section>
+    </div>
+{% endif %}
 
 {% if images %}
-    <section class="page-shell">
     <section class="gallery-grid">
         {% for image in images %}
             <article class="gallery-card">
@@ -210,10 +211,9 @@
                 </div>
             </article>
         {% endfor %}
-        </section>
-</section>
+    </section>
     {% if page_obj and page_obj.paginator.num_pages > 1 %}
-        <nav class="page-shell gallery-pagination">
+        <nav class="gallery-pagination">
             {% if page_obj.has_previous %}
                 <a href="?page={{ page_obj.previous_page_number }}">Prev</a>
             {% endif %}

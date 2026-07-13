@@ -4,19 +4,57 @@
 
 .app-blog.model-post .change-form .aligned .form-row > div {
     margin-left: 170px;
-    max-width: 1240px;
+    max-width: none;
+    width: calc(100% - 170px);
 }
 
 .app-blog.model-post .change-form .field-title input,
 .app-blog.model-post .change-form .field-slug input,
-.app-blog.model-post .change-form .field-body textarea {
-    width: min(100%, 1180px) !important;
-    max-width: 1180px;
+.app-blog.model-post .change-form .field-body textarea,
+.app-blog.model-post .change-form .field-body .markdownx-editor {
+    width: 100% !important;
+    max-width: none;
+    box-sizing: border-box;
 }
 
 .app-blog.model-post .change-form .field-body textarea {
-    min-height: 28em;
+    height: 24em;
+    min-height: 24em;
+    max-height: none;
     resize: vertical;
+    overflow-y: auto;
+    position: relative;
+    z-index: 2;
+    background: #ffffff !important;
+    color: #21384b !important;
+    border: 1px solid #c8d5df !important;
+}
+
+.app-blog.model-post .change-form .field-body .markdownx {
+    display: block;
+    width: 100%;
+    max-width: none;
+    position: relative;
+}
+
+.app-blog.model-post .change-form .field-body .markdownx-preview {
+    display: none !important;
+    height: 0 !important;
+    min-height: 0 !important;
+    max-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    overflow: hidden !important;
+    visibility: hidden !important;
+}
+
+.app-blog.model-post .change-form .form-row.field-body > div,
+.app-blog.model-post .change-form .field-body .flex-container,
+.app-blog.model-post .change-form .field-body .readonly,
+.app-blog.model-post .change-form .field-body .markdownx {
+    max-width: none;
+    width: 100%;
 }
 
 .app-blog.model-post .change-form .form-row {

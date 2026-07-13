@@ -1,5 +1,8 @@
 from pathlib import Path
 import json
+import shutil
+import subprocess
+from urllib.error import URLError
 from urllib.request import urlopen
 
 from django.contrib.auth.models import User
@@ -45,6 +48,19 @@ class PrometheusIntegrationTests(SimpleTestCase):
         self.assertIn("# TYPE", content)
 
     def test_prometheus_runtime_api_reports_django_and_celery_targets_up(self):
+        docker = shutil.which("docker")
+        if docker is None:
+            self.skipTest("docker is not installed in this environment")
+        ps_result = subprocess.run(
+            [docker, "compose", "ps", "--services", "--status", "running"],
+            cwd=BASE_DIR,
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        if ps_result.returncode != 0 or "prometheus" not in ps_result.stdout:
+            self.skipTest("prometheus service is not running")
+
         with urlopen("http://prometheus:9090/api/v1/targets", timeout=10) as response:
             payload = json.loads(response.read().decode("utf-8"))
 

@@ -14,8 +14,8 @@ scrape_configs:
       - targets: [localhost]
         labels:
           job: my-site-logs
-          host: rgavanp
-          __path__: /var/www/my_site_prod_repo_new/logs/**/*.log
+          host: ${HOSTNAME}
+          __path__: /var/log/my_site/**/*.log
     pipeline_stages:
       - regex:
           expression: '^(?P<level>[A-Z]+) (?P<ts>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d+) (?P<module>\S+) (?P<process>\d+) (?P<thread>\d+) (?P<message>.*)$'
@@ -32,5 +32,5 @@ scrape_configs:
       - targets: [localhost]
         labels:
           job: backup-log
-          host: rgavanp
-          __path__: /var/www/my_site_prod_repo_new/logs/backup.log
+          host: ${HOSTNAME}
+          __path__: /var/log/my_site/backup.log

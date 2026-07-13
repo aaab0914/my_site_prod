@@ -1,0 +1,74 @@
+{% extends "blog/base.html" %}
+
+{% block content %}
+<style>
+    .hero-page-shell {
+        display: grid;
+        gap: 22px;
+    }
+
+    .hero-page-header {
+        position: relative;
+        overflow: hidden;
+        background:
+            radial-gradient(circle at top right, rgba(255, 255, 255, 0.22), transparent 28%),
+            linear-gradient(135deg, #18263f, #1d4f7b 58%, #d5ab63 150%);
+        color: #fff;
+    }
+
+    .hero-theme-teal {
+        background:
+            radial-gradient(circle at top right, rgba(255, 255, 255, 0.24), transparent 28%),
+            linear-gradient(135deg, #1f2a44, #0f766e 58%, #f2c46d 150%);
+    }
+
+    .hero-theme-gallery {
+        background:
+            radial-gradient(circle at top right, rgba(255, 255, 255, 0.24), transparent 28%),
+            linear-gradient(135deg, #172033, #0f766e 62%, #d7b56d 135%);
+    }
+
+    .hero-page-actions {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-top: 18px;
+    }
+
+    .hero-page-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        gap: 22px;
+        align-items: start;
+    }
+
+    .hero-page-grid.has-aside {
+        grid-template-columns: minmax(0, 1.5fr) minmax(280px, 0.9fr);
+    }
+
+    @media screen and (max-width: 900px) {
+        .hero-page-grid.has-aside {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% block hero_base_css %}{% endblock %}
+
+<section class="page-shell hero-page-shell {% block hero_shell_class %}{% endblock %}">
+    <header class="page-hero hero-page-header {% block hero_class %}{% endblock %}">
+        {% block hero_pretitle %}{% endblock %}
+        <h1 class="page-hero-title">{% block hero_page_title %}{% endblock %}</h1>
+        {% block hero_description %}
+            <p class="page-hero-copy">{% block hero_page_description %}{% endblock %}</p>
+        {% endblock %}
+        {% block hero_actions %}{% endblock %}
+    </header>
+    {% block hero_body %}
+        <div class="hero-page-grid {% block hero_grid_class %}{% endblock %}">
+            {% block content_body %}{% endblock %}
+            {% block aside %}{% endblock %}
+        </div>
+    {% endblock %}
+</section>
+{% block extra_scripts %}{% endblock %}
+{% endblock %}

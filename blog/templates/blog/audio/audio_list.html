@@ -1,17 +1,9 @@
-{% extends "blog/base.html" %}
+{% extends "blog/hero_base.html" %}
 
 {% block title %}Audio Library{% endblock %}
 
-{% block content %}
+{% block hero_base_css %}
 <style>
-    .audio-library-shell { max-width: 1120px; margin: 0 auto 36px; }
-    .audio-library-hero {
-        margin-bottom: 24px; padding: 30px; border-radius: 28px;
-        background: radial-gradient(circle at top right, rgba(255,255,255,.24), transparent 28%), linear-gradient(135deg, #18263f, #1a726d 58%, #d8b46b 155%);
-        color: #fff; box-shadow: 0 24px 54px rgba(15,23,42,.2);
-    }
-    .audio-library-hero h1 { margin: 0 0 10px; border: 0; font-size: 42px; font-weight: 800; letter-spacing: -.03em; }
-    .audio-library-hero p { margin: 0; max-width: 760px; color: rgba(255,255,255,.92); line-height: 1.7; font-size: 16px; }
     .audio-list { display: grid; gap: 16px; }
     .audio-row {
         display: flex;
@@ -56,19 +48,15 @@
         .audio-player { min-height: 58px; }
     }
     @media screen and (max-width: 768px) {
-        .audio-library-hero { padding: 24px 20px; }
-        .audio-library-hero h1 { font-size: 32px; }
         .audio-row { padding: 16px; }
         .audio-side, .audio-actions { justify-content: flex-start; }
     }
 </style>
-
-<section class="audio-library-shell page-shell">
-    <div class="audio-library-hero page-hero">
-        <h1 class="page-hero-title">Audio Library</h1>
-        <p class="page-hero-copy">Browse uploaded tracks in a clean list, keep loop control on each track, and make sure only one audio player runs at a time.</p>
-    </div>
-
+{% endblock %}
+{% block hero_class %}hero-theme-teal{% endblock %}
+{% block hero_page_title %}Audio Library{% endblock %}
+{% block hero_page_description %}Browse uploaded tracks in a clean list, keep loop control on each track, and make sure only one audio player runs at a time.{% endblock %}
+{% block hero_body %}
     {% if audios %}
         <div class="audio-list">
             {% for audio in audios %}
@@ -131,7 +119,8 @@
     {% else %}
         <div class="audio-empty">No audio tracks have been uploaded yet.</div>
     {% endif %}
-</section>
+{% endblock %}
+{% block extra_scripts %}
 <script>
 (() => {
     const players = Array.from(document.querySelectorAll('audio[id^="audio-player-"]'));

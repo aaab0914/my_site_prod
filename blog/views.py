@@ -48,6 +48,7 @@ from .forms import (
 
 from images.forms import GallerySingleUploadForm
 from images.models import ImagePost
+from my_site.media_cleanup import authorized_media_delete
 from my_site.media_helpers import invalidate_cache_keys, prime_serialized_list_cache
 from .models import Post, Comment, AudioPost, VideoPost
 
@@ -788,7 +789,8 @@ class AudioPostEditView(LoginRequiredMixin, UpdateView):
 
     def form_valid(self, form):
         if self.request.POST.get("remove_cover_image") == "1" and self.object.cover_image:
-            self.object.cover_image.delete(save=False)
+            with authorized_media_delete():
+                self.object.cover_image.delete(save=False)
             self.object.cover_image = None
             form.instance.cover_image = None
         response = super().form_valid(form)

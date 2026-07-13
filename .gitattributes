@@ -1,2 +1,4 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+entrypoint.sh text eol=lf
+backup_db.sh text eol=lf

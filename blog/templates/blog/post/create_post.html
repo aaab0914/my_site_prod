@@ -1,17 +1,12 @@
-{% extends "blog/base.html" %}
+{% extends "blog/hero_base.html" %}
 {% load blog_tags %}
 
 {% block title %}Create Post{% endblock %}
 
-{% block content %}
+{% block hero_base_css %}
 <style>
-    .post-create-shell {
-        max-width: 1120px;
-        margin: 0 auto 36px;
-        overflow: hidden;
-    }
-
-    .post-create-shell *,
+    .hero-page-shell.post-create-shell,
+    .hero-page-shell.post-create-shell *,
     .post-create-shell *::before,
     .post-create-shell *::after {
         box-sizing: border-box;
@@ -33,38 +28,10 @@
         clear: both;
     }
 
-    .post-create-hero {
-        margin-bottom: 24px;
-        padding: 30px;
-        border-radius: 28px;
-        background:
-            radial-gradient(circle at top right, rgba(255, 255, 255, 0.24), transparent 28%),
-            linear-gradient(135deg, #18263f, #1d4f7b 58%, #d5ab63 150%);
-        color: #fff;
-        box-shadow: 0 24px 54px rgba(15, 23, 42, 0.2);
-    }
-
-    .post-create-hero h1 {
-        margin: 0 0 10px;
-        border: 0;
-        font-size: 42px;
-        font-weight: 800;
-        letter-spacing: -0.03em;
-    }
-
-    .post-create-hero p {
-        max-width: 760px;
-        margin: 0;
-        color: rgba(255, 255, 255, 0.92);
-        line-height: 1.7;
-        font-size: 16px;
-    }
-
     .post-create-pills {
         display: flex;
         gap: 12px;
         flex-wrap: wrap;
-        margin-top: 18px;
     }
 
     .post-create-pill {
@@ -261,14 +228,6 @@
     }
 
     @media screen and (max-width: 768px) {
-        .post-create-hero {
-            padding: 24px 20px;
-        }
-
-        .post-create-hero h1 {
-            font-size: 32px;
-        }
-
         .post-create-grid {
             grid-template-columns: 1fr;
         }
@@ -278,19 +237,12 @@
         }
     }
 </style>
-
-<section class="post-create-shell page-shell">
-    <div class="post-create-hero page-hero">
-        <h1 class="page-hero-title">Create Post</h1>
-        <p class="page-hero-copy">Write the title, body, tags, and optional cover image in a cleaner layout. Cover images support click, drag-and-drop, and clipboard paste for faster publishing.</p>
-        <div class="post-create-pills">
-            <span class="post-create-pill">Status: Published immediately</span>
-            <span class="post-create-pill">Cover: JPEG, PNG, WebP</span>
-            <span class="post-create-pill">Cover limit: 3 MB before optimization</span>
-        </div>
-    </div>
-
-    <div class="post-create-grid">
+{% endblock %}
+{% block hero_shell_class %}post-create-shell{% endblock %}
+{% block hero_page_title %}Create Post{% endblock %}
+{% block hero_page_description %}Write the title, body, tags, and optional cover image in a cleaner layout. Cover images support click, drag-and-drop, and clipboard paste for faster publishing.{% endblock %}
+{% block hero_grid_class %}has-aside post-create-grid{% endblock %}
+{% block content_body %}
         <form method="post" enctype="multipart/form-data" class="post-create-panel" id="post-create-form">
             {% csrf_token %}
             <h2>Post Details</h2>
@@ -344,8 +296,16 @@
                 <button type="reset" class="post-create-reset" id="post-create-reset">Reset</button>
             </div>
         </form>
-
+{% endblock %}
+{% block aside %}
         <aside class="post-create-side">
+            <section class="post-create-panel post-create-note">
+                <div class="post-create-pills">
+                    <span class="post-create-pill">Status: Published immediately</span>
+                    <span class="post-create-pill">Cover: JPEG, PNG, WebP</span>
+                    <span class="post-create-pill">Cover limit: 3 MB before optimization</span>
+                </div>
+            </section>
             <section class="post-create-panel post-create-note">
                 <h3>Publishing Notes</h3>
                 <ul>
@@ -360,9 +320,8 @@
                 <div id="post-cover-preview" class="post-create-help">No file selected.</div>
             </section>
         </aside>
-    </div>
-</section>
-
+{% endblock %}
+{% block extra_scripts %}
 <script>
 (() => {
     const fileInput = document.getElementById("{{ form.cover_image.id_for_label }}");

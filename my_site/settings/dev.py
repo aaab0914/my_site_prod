@@ -5,6 +5,20 @@ from .base import *  # noqa: F401,F403
 
 DEBUG = True
 
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.redis.RedisCache",
+        "LOCATION": REDIS_URL,
+        "TIMEOUT": 60 * 60 * 24 * 30,
+    }
+}
+
+TEMPLATES[0]["APP_DIRS"] = False
+TEMPLATES[0]["OPTIONS"]["loaders"] = [
+    "my_site.template_loaders.RedisFilesystemLoader",
+    "my_site.template_loaders.RedisAppDirectoriesLoader",
+]
+
 LOGGING = deepcopy(LOGGING)
 
 LOGGING["handlers"]["file"] = {

@@ -19,7 +19,7 @@ class SettingsSplitTests(SimpleTestCase):
 
     def test_compose_explicitly_sets_prod_settings_module(self):
         compose = (self._base_dir() / "docker-compose.yml").read_text(encoding="utf-8")
-        self.assertIn("DJANGO_SETTINGS_MODULE: my_site.settings.prod", compose)
+        self.assertIn("DJANGO_SETTINGS_MODULE: my_site.settings.dev", compose)
 
     def test_prod_compose_explicitly_sets_prod_settings_module(self):
         compose = (self._base_dir() / "docker-compose.prod.yml").read_text(encoding="utf-8")
@@ -61,12 +61,12 @@ class LoggingPolicyTests(SimpleTestCase):
         )
         self.assertEqual(dev_settings.LOGGING["handlers"]["error_file"]["level"], "WARNING")
 
-    def test_prod_settings_keep_console_only_logging(self):
+    def test_prod_settings_enable_file_logging_and_console(self):
         prod_settings = importlib.import_module("my_site.settings.prod")
 
-        self.assertEqual(prod_settings.LOGGING["loggers"]["django"]["handlers"], ["console"])
-        self.assertNotIn("file", prod_settings.LOGGING["handlers"])
-        self.assertNotIn("error_file", prod_settings.LOGGING["handlers"])
+        self.assertIn("console", prod_settings.LOGGING["loggers"]["django"]["handlers"])
+        self.assertIn("file", prod_settings.LOGGING["handlers"])
+        self.assertIn("error_file", prod_settings.LOGGING["handlers"])
 
     def test_daily_monthly_file_handler_uses_month_folder_and_daily_filename(self):
         from my_site.logging_utils import DailyMonthlyFileHandler
@@ -178,12 +178,10 @@ class SecurityHeadersRuntimeTests(SimpleTestCase):
 class IndexPortalTests(SimpleTestCase):
     def test_index_uses_blog_media_routes_instead_of_legacy_root_shortcuts(self):
         index_html = (self._base_dir() / "my_site" / "templates" / "index.html").read_text(encoding="utf-8")
-        self.assertIn('data-path="/blog/gallery/"', index_html)
-        self.assertIn('data-path="/blog/gallery/upload/"', index_html)
-        self.assertIn('data-path="/blog/album/"', index_html)
-        self.assertIn('data-path="/blog/album/upload/"', index_html)
-        self.assertNotIn('data-path="/gallery/"', index_html)
-        self.assertNotIn('data-path="/gallery/upload/"', index_html)
+        self.assertIn('href="/blog/gallery/"', index_html)
+        self.assertIn('href="/blog/gallery/upload/"', index_html)
+        self.assertIn('href="/blog/audio/list/"', index_html)
+        self.assertNotIn('href="/gallery/"', index_html)
 
 
 

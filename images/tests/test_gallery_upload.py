@@ -361,7 +361,7 @@ class GalleryUploadTests(TestCase):
         self.assertEqual(len(form.cleaned_data["images"]), 1)
 
 
-    def test_sync_creates_gallery_records_for_existing_post_cover_images(self):
+    def test_sync_returns_no_gallery_changes_for_existing_post_cover_images_when_disabled(self):
         post = Post.objects.create(
             title="Existing Cover",
             slug="existing-cover",
@@ -372,15 +372,15 @@ class GalleryUploadTests(TestCase):
         )
         ImagePost.objects.filter(image=post.cover_image.name).delete()
 
-        with override_settings(MEDIA_SYNC_ENABLED=True):
+        with override_settings(MEDIA_SYNC_ENABLED=False):
             result = sync_gallery_media()
 
-        self.assertEqual(result["created_records"], 1)
-        self.assertTrue(
+        self.assertEqual(result["created_records"], 0)
+        self.assertFalse(
             ImagePost.objects.filter(image=post.cover_image.name, uploaded_by=self.user).exists()
         )
 
-    def test_sync_deletes_database_records_for_missing_files(self):
+    def test_sync_keeps_database_records_for_missing_files_when_disabled(self):
         image = ImagePost.objects.create(
             title="missing-file",
             image=make_test_image(name="missing-file.png"),
@@ -389,27 +389,25 @@ class GalleryUploadTests(TestCase):
         file_name = image.image.name
         (Path(self.media_root) / file_name).unlink()
 
-        with override_settings(MEDIA_SYNC_ENABLED=True):
+        with override_settings(MEDIA_SYNC_ENABLED=False):
             result = sync_gallery_media()
 
-        self.assertEqual(result["deleted_records"], 1)
-        self.assertFalse(ImagePost.objects.filter(id=image.id).exists())
+        self.assertEqual(result["deleted_records"], 0)
+        self.assertTrue(ImagePost.objects.filter(id=image.id).exists())
         self.assertFalse(any(item["from"] == file_name for item in result["trashed_files"]))
 
-    def test_sync_deletes_orphan_files_from_media_posts(self):
+    def test_sync_keeps_orphan_files_from_media_posts_when_disabled(self):
         orphan_dir = Path(self.media_root) / "posts" / "2026" / "07" / "07"
         orphan_dir.mkdir(parents=True, exist_ok=True)
         orphan_file = orphan_dir / "orphan.jpg"
         orphan_file.write_bytes(b"orphan")
 
-        with override_settings(MEDIA_SYNC_ENABLED=True):
+        with override_settings(MEDIA_SYNC_ENABLED=False):
             result = sync_gallery_media()
 
-        self.assertTrue(
-            any(item["from"] == "posts/2026/07/07/orphan.jpg" for item in result["trashed_files"])
-        )
-        self.assertFalse(orphan_file.exists())
-        self.assertFalse(orphan_dir.exists())
+        self.assertEqual(result["trashed_files"], [])
+        self.assertTrue(orphan_file.exists())
+        self.assertTrue(orphan_dir.exists())
 
     def test_model_delete_moves_media_file_to_trash(self):
         image = ImagePost.objects.create(
@@ -425,7 +423,7 @@ class GalleryUploadTests(TestCase):
 
         self.assertFalse(file_path.exists())
 
-    def test_gallery_list_sync_removes_missing_records_and_orphan_files(self):
+    def test_gallery_list_sync_does_not_mutate_files_when_disabled(self):
         stale_image = ImagePost.objects.create(
             title="stale",
             image=make_test_image(name="stale.png"),
@@ -438,10 +436,10 @@ class GalleryUploadTests(TestCase):
         orphan_file = orphan_dir / "stray.jpg"
         orphan_file.write_bytes(b"stray")
 
-        with override_settings(MEDIA_SYNC_ENABLED=True):
+        with override_settings(MEDIA_SYNC_ENABLED=False):
             maybe_sync_site_media()
             response = self.client.get(reverse("blog:images:gallery_list"))
 
         self.assertEqual(response.status_code, 200)
-        self.assertFalse(ImagePost.objects.filter(id=stale_image.id).exists())
-        self.assertFalse(orphan_file.exists())
+        self.assertTrue(ImagePost.objects.filter(id=stale_image.id).exists())
+        self.assertTrue(orphan_file.exists())

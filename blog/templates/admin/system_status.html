@@ -66,7 +66,12 @@
         <tr>
           <th scope="row">{{ item.name }}</th>
           <td>{{ item.modified }}</td>
-          <td>{{ item.size }}</td>
+          <td>
+            {{ item.size }}
+            {% if not item.is_valid %}
+              <strong style="color:#b91c1c;">(invalid)</strong>
+            {% endif %}
+          </td>
         </tr>
         {% empty %}
         <tr><td colspan="3">No backup files found.</td></tr>

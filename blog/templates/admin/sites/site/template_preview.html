@@ -1,0 +1,16 @@
+{% extends "admin/base_site.html" %}
+
+{% block content %}
+<div style="max-width: 1280px; margin: 0 auto; display: grid; gap: 18px;">
+    <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+        <div>
+            <div style="font-size: 24px; font-weight: 700;">Template Preview</div>
+            <div style="color: #64748b;">{{ template_path }}</div>
+        </div>
+        <a href="{% url 'admin:sites_site_changelist' %}" style="display: inline-block; padding: 10px 14px; border-radius: 999px; background: #e8f1fb; color: #1d4ed8; text-decoration: none; font-weight: 700;">Back to Sites</a>
+    </div>
+    <div style="background: #fff; border: 1px solid #d9e2ec; border-radius: 14px; overflow: hidden;">
+        <pre style="margin: 0; padding: 18px; overflow: auto; white-space: pre-wrap; word-break: break-word; font-size: 13px; line-height: 1.6;">{{ template_source }}</pre>
+    </div>
+</div>
+{% endblock %}

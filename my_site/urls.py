@@ -30,6 +30,7 @@ from .metrics import metrics_view
 # Tells Django which posts to include in the sitemap
 
 from django.conf.urls.static import static
+from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 # static: Helper function to serve media files in development
 # Used when DEBUG=True to serve uploaded files
 
@@ -97,6 +98,8 @@ urlpatterns = [
 # This is only active when DEBUG=True in settings.py
 # In production, media files should be served by nginx or a CDN
 if settings.DEBUG:
+    urlpatterns += staticfiles_urlpatterns()
+    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 # ========================================

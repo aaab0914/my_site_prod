@@ -132,7 +132,6 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     # X-Frame-Options middleware: Prevents clickjacking attacks
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    "my_site.media_sync_middleware.MediaSyncMiddleware",
     # Custom middleware: Enforces login requirement for protected URLs
     "my_site.middleware.LoginRequiredMiddleware",
     # Custom middleware: Logs user actions and API calls for audit trail
@@ -208,18 +207,24 @@ CELERY_WORKER_SEND_TASK_EVENTS = config("CELERY_WORKER_SEND_TASK_EVENTS", defaul
 CELERY_TASK_SEND_SENT_EVENT = config("CELERY_TASK_SEND_SENT_EVENT", default=True, cast=bool)
 CELERY_RESULT_EXTENDED = config("CELERY_RESULT_EXTENDED", default=True, cast=bool)
 MEDIA_SYNC_BEAT_MINUTES = config("MEDIA_SYNC_BEAT_MINUTES", default=5, cast=int)
+LOG_RETENTION_DAYS = config("LOG_RETENTION_DAYS", default=30, cast=int)
+AUDIT_LOG_RETENTION_DAYS = config("AUDIT_LOG_RETENTION_DAYS", default=90, cast=int)
 CELERY_BEAT_SCHEDULE = {
     "ping-blog-task-every-5-minutes": {
         "task": "blog.tasks.ping_blog_task",
         "schedule": crontab(minute="*/5"),
     },
+    "purge-old-audit-logs-daily": {
+        "task": "my_site.tasks.purge_old_audit_logs_task",
+        "schedule": crontab(minute=15, hour=3),
+        "kwargs": {"days": AUDIT_LOG_RETENTION_DAYS},
+    },
+    "purge-old-runtime-logs-daily": {
+        "task": "my_site.tasks.purge_old_runtime_logs_task",
+        "schedule": crontab(minute=25, hour=3),
+        "kwargs": {"days": LOG_RETENTION_DAYS},
+    },
 }
-
-if config("MEDIA_SYNC_ENABLED", default=(not TESTING), cast=bool):
-    CELERY_BEAT_SCHEDULE["sync-site-media-every-n-minutes"] = {
-        "task": "my_site.tasks.sync_site_media_task",
-        "schedule": crontab(minute=f"*/{MEDIA_SYNC_BEAT_MINUTES}"),
-    }
 
 ELASTICSEARCH_DSL = {
     "default": {
@@ -264,7 +269,7 @@ USE_TZ = True
 # ============================================================================
 
 # STATIC_URL: URL prefix for serving static files (CSS, JS, images)
-STATIC_URL = "static/"
+STATIC_URL = "/static/"
 # STATICFILES_DIRS: Additional directories for static file collection
 STATICFILES_DIRS = [BASE_DIR / "static"]  # Project-level static directory
 # STATIC_ROOT: Destination directory for 'collectstatic' command (served by web server)

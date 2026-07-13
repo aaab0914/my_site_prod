@@ -1,0 +1,72 @@
+{% extends "admin/change_list.html" %}
+
+{% block content %}
+{{ block.super }}
+<div style="margin-top: 24px;">
+    <div style="margin-bottom: 10px; font-size: 18px; font-weight: 700;">Site Route Links</div>
+    <div style="background: #fff; border: 1px solid #d9e2ec; border-radius: 10px; overflow: hidden;">
+        <table style="width: 100%; border-collapse: collapse;">
+            <thead style="background: #f8fafc;">
+                <tr>
+                    <th style="padding: 12px; text-align: left; width: 90px;">ID</th>
+                    <th style="padding: 12px; text-align: left; width: 220px;">Page</th>
+                    <th style="padding: 12px; text-align: left;">URL</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in route_links %}
+                <tr style="border-top: 1px solid #e5e7eb;">
+                    <td style="padding: 12px;">{{ item.id }}</td>
+                    <td style="padding: 12px;">{{ item.label }}</td>
+                    <td style="padding: 12px;"><a href="{{ item.url }}">{{ item.url }}</a></td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="3" style="padding: 12px;">No route links available.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+<div style="margin-top: 24px;">
+    <div style="margin-bottom: 10px; font-size: 18px; font-weight: 700;">Template HTML Files</div>
+    <div style="background: #fff; border: 1px solid #d9e2ec; border-radius: 10px; overflow: hidden;">
+        <table style="width: 100%; border-collapse: collapse;">
+            <thead style="background: #f8fafc;">
+                <tr>
+                    <th style="padding: 12px; text-align: left; width: 90px;">ID</th>
+                    <th style="padding: 12px; text-align: left; width: 280px;">File</th>
+                    <th style="padding: 12px; text-align: left;">Template Path</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in template_links %}
+                <tr style="border-top: 1px solid #e5e7eb;">
+                    <td style="padding: 12px;">{{ item.id }}</td>
+                    <td style="padding: 12px;">{{ item.name }}</td>
+                    <td style="padding: 12px;">
+                        {% if item.frontend_path %}
+                        <a
+                            href="{{ item.frontend_path }}"
+                            style="display: inline-block; padding: 6px 10px; border-radius: 999px; background: #e8f1fb; color: #1d4ed8; text-decoration: none; font-weight: 600;"
+                        >
+                            {{ item.relative_path }}
+                        </a>
+                        {% else %}
+                        <span style="display: inline-block; padding: 6px 10px; border-radius: 999px; background: #f3f4f6; color: #6b7280; font-weight: 600;">
+                            {{ item.relative_path }}
+                        </span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="3" style="padding: 12px;">No template HTML files found.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
