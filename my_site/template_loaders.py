@@ -11,6 +11,7 @@ TARGET_TEMPLATE_DIRS = (
     str(Path("blog") / "templates"),
     str(Path("images") / "templates"),
     str(Path("my_site") / "templates"),
+    str(Path("users") / "templates"),
 )
 
 

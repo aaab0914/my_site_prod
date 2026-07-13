@@ -191,7 +191,7 @@ services:
     image: grafana/grafana:11.1.4
     restart: always
     environment:
-      GF_SERVER_ROOT_URL: ${GRAFANA_ROOT_URL:-http://localhost:13000/}
+      GF_SERVER_ROOT_URL: ${GRAFANA_ROOT_URL:-https://rgavanp.kdns.fr/grafana/}
       GF_SERVER_SERVE_FROM_SUB_PATH: "true"
     ports:
       - "127.0.0.1:13000:3000"

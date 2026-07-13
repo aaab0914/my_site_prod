@@ -24,6 +24,7 @@ from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 from django.db.models import Count, Q
 
 from django.shortcuts import get_object_or_404, redirect, render
+from django.template.response import TemplateResponse
 
 from django.urls import reverse_lazy
 
@@ -49,7 +50,8 @@ from .forms import (
 from images.forms import GallerySingleUploadForm
 from images.models import ImagePost
 from my_site.media_cleanup import authorized_media_delete
-from my_site.media_helpers import invalidate_cache_keys, prime_serialized_list_cache
+from my_site.site_views import render_public_cached_template
+from my_site.media_helpers import invalidate_cache_keys, invalidate_public_view_caches, prime_serialized_list_cache
 from .models import Post, Comment, AudioPost, VideoPost
 
 
@@ -57,11 +59,34 @@ _RANGE_RE = re.compile(r"bytes=(\d*)-(\d*)")
 
 
 _PUBLIC_LIST_CACHE_TTL = 180
+_PUBLIC_HTML_CACHE_TTL = 60 * 60 * 24 * 30
+
+
+def _public_page_cache_key(prefix, *parts):
+    normalized = ":".join(str(part or "") for part in parts)
+    return f"{prefix}:{normalized}"
+
+
+def _render_public_cached_template(request, cache_key, template_name, context, timeout=_PUBLIC_HTML_CACHE_TTL):
+    return render_public_cached_template(request, cache_key, template_name, context, timeout=timeout)
+
+
+def _invalidate_blog_public_views():
+    invalidate_public_view_caches(
+        "view:site_index",
+        "view:post_list:1:all",
+        "view:post_search:empty",
+        "view:audio_list:1",
+        "view:video_list:1",
+        "view:gallery_list:page:1",
+        "view:album_list:page:1",
+    )
 
 
 def _ordered_posts_from_ids(post_ids):
     posts = list(Post.published.filter(id__in=post_ids).select_related("author").prefetch_related("tags"))
-    posts.sort(key=lambda post: post_ids.index(post.id))
+    order_map = {post_id: index for index, post_id in enumerate(post_ids)}
+    posts.sort(key=lambda post: order_map.get(post.id, len(order_map)))
     return posts
 
 
@@ -314,6 +339,7 @@ def _handle_post_edit_media_upload(request, post):
         return "Only JPEG, PNG, WebP, MP3, WAV, and OGG files are supported."
 
     invalidate_cache_keys("audio_list:ids", "audio_list:items", "gallery_list:valid_image_ids")
+    _invalidate_blog_public_views()
     total = image_count + audio_count
     messages.success(request, f"Uploaded {total} media file{'s' if total != 1 else ''} successfully.")
     return None
@@ -382,7 +408,9 @@ def post_list(request, tag_slug=None):
     page_obj = paginator.page(page_payload["number"])
     page_obj.object_list = posts
 
-    return render(request, "blog/post/all_posts_list.html", {"posts": page_obj, "tag": tag})
+    context = {"posts": page_obj, "tag": tag}
+    cache_key = _public_page_cache_key("view:post_list", request.GET.get("page", 1), tag.slug if tag else "all")
+    return _render_public_cached_template(request, cache_key, "blog/post/all_posts_list.html", context)
 
 def post_detail(request, year, month, day, post_slug):
     post = Post.published.filter(
@@ -439,7 +467,10 @@ def post_search(request):
             query = form.cleaned_data["query"]
             result_ids = _cached_search_result_ids(query)
             results = _ordered_posts_from_ids(result_ids)
-    return render(request, "blog/post/search_post.html", {"form": form, "query": query, "results": results, "total_results": len(results)})
+    context = {"form": form, "query": query, "results": results, "total_results": len(results)}
+    cache_suffix = (query or "").strip().lower() or "empty"
+    cache_key = _public_page_cache_key("view:post_search", cache_suffix)
+    return _render_public_cached_template(request, cache_key, "blog/post/search_post.html", context)
 
 @login_required
 def post_create(request):
@@ -463,7 +494,9 @@ def post_create(request):
                 },
             )
             invalidate_cache_keys("gallery_list:valid_image_ids")
+        _invalidate_blog_public_views()
         invalidate_cache_keys("post_list:page:1:tag:all")
+        _invalidate_blog_public_views()
         for tag in post.tags.all():
             if tag.slug:
                 invalidate_cache_keys(f"post_list:page:1:tag:{tag.slug}")
@@ -538,6 +571,7 @@ def video_upload(request):
             video_post.uploaded_by = request.user
             video_post.save()
             _prime_video_list_cache([video_post])
+            _invalidate_blog_public_views()
             messages.success(request, "Video uploaded successfully.")
             return redirect("blog:video_list")
     else:
@@ -743,7 +777,9 @@ def video_list(request):
         video_items = _prime_video_list_cache() or []
     paginator = Paginator(video_items, 10)
     page_obj = paginator.get_page(request.GET.get("page"))
-    return render(request, "blog/video/video_list.html", {"videos": page_obj.object_list, "page_obj": page_obj})
+    context = {"videos": page_obj.object_list, "page_obj": page_obj}
+    cache_key = _public_page_cache_key("view:video_list", request.GET.get("page", 1))
+    return _render_public_cached_template(request, cache_key, "blog/video/video_list.html", context)
 
 def audio_list(request):
     audio_cache = cache.get("audio_list:items")
@@ -751,7 +787,9 @@ def audio_list(request):
         audio_cache = _prime_audio_list_cache() or []
     paginator = Paginator(audio_cache, 10)
     page_obj = paginator.get_page(request.GET.get("page"))
-    return render(request, "blog/audio/audio_list.html", {"audios": page_obj.object_list, "page_obj": page_obj})
+    context = {"audios": page_obj.object_list, "page_obj": page_obj}
+    cache_key = _public_page_cache_key("view:audio_list", request.GET.get("page", 1))
+    return _render_public_cached_template(request, cache_key, "blog/audio/audio_list.html", context)
 
 class PostDeleteView(LoginRequiredMixin, DeleteView):
     model = Post
@@ -795,6 +833,7 @@ class AudioPostEditView(LoginRequiredMixin, UpdateView):
             form.instance.cover_image = None
         response = super().form_valid(form)
         invalidate_cache_keys("audio_list:ids", "audio_list:items")
+        _invalidate_blog_public_views()
         return response
 
     def get_success_url(self):
@@ -821,4 +860,5 @@ class AudioPostDeleteView(LoginRequiredMixin, DeleteView):
         self.request.session["audio_post_delete_success_once"] = True
         response = super().form_valid(form)
         invalidate_cache_keys("audio_list:ids", "audio_list:items")
+        _invalidate_blog_public_views()
         return response

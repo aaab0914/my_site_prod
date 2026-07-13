@@ -2,7 +2,7 @@
 set -e
 
 chown -R app:app /code 2>/dev/null || true
-chmod -R 755 /code/media /code/logs 2>/dev/null || true
+chmod -R 755 /code/logs 2>/dev/null || true
 
 if [ "${DJANGO_SETTINGS_MODULE}" = "my_site.settings.prod" ]; then
   python /code/validate_prod_env.py

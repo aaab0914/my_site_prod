@@ -82,3 +82,11 @@ def prime_serialized_list_cache(ids_key, items_key, queryset, serializer, new_it
 def invalidate_cache_keys(*cache_keys):
     for cache_key in cache_keys:
         cache.delete(cache_key)
+
+
+def invalidate_public_view_caches(*cache_keys):
+    if not cache_keys:
+        return
+    for cache_key in cache_keys:
+        if cache_key:
+            cache.delete(cache_key)

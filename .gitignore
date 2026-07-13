@@ -85,3 +85,5 @@ celerybeat-schedule.local-backup
 # Local temporary maintenance helpers
 .trash/
 server_enable_root_index.py
+*.bak_no_media_*
+*.bak_opt_*

@@ -26,6 +26,7 @@ from markdownx.views import ImageUploadView
 
 from blog.sitemaps import PostSitemap
 from .metrics import metrics_view
+from .site_views import site_index
 # PostSitemap: Sitemap class for Post model (defined in blog/sitemaps.py)
 # Tells Django which posts to include in the sitemap
 
@@ -57,7 +58,7 @@ sitemaps = {
 # ========================================
 
 urlpatterns = [
-    path("", TemplateView.as_view(template_name="index.html"), name="site_index"),
+    path("", site_index, name="site_index"),
     # ===== ADMIN INTERFACE =====
     # Django Admin dashboard for managing models
     # Accessible at: http://localhost:8001/secure-console-7f9a2c-secure-console-7f9a2c-admin/

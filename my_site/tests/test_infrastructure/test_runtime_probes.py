@@ -14,7 +14,7 @@ class FilesystemPermissionSafetyTests(SimpleTestCase):
         self.dockerfile = (BASE_DIR / "Dockerfile").read_text(encoding="utf-8")
         self.entrypoint = (BASE_DIR / "entrypoint.sh").read_text(encoding="utf-8")
 
-    def test_web_service_does_not_bind_mount_project_code(self):
+    def test_web_service_bind_mounts_project_code(self):
         self.assertIn("- .:/code", self.compose)
 
     def test_bind_mount_risk_is_mitigated_by_external_entrypoint_location(self):
@@ -23,7 +23,7 @@ class FilesystemPermissionSafetyTests(SimpleTestCase):
 
     def test_entrypoint_repairs_runtime_permissions_for_writable_directories(self):
         self.assertIn("chown -R app:app /code", self.entrypoint)
-        self.assertIn("chmod -R 755 /code/media /code/logs", self.entrypoint)
+        self.assertIn("chmod -R 755 /code/logs", self.entrypoint)
 
     def test_entrypoint_runs_production_env_validation(self):
         self.assertIn("python /code/validate_prod_env.py", self.entrypoint)

@@ -32,6 +32,15 @@ class BlogConfig(AppConfig):
             import my_site.media_signals
         except ImportError as exc:
             logger.warning("Failed to import media signals: %s", exc)
+        try:
+            import my_site.delete_guards
+        except ImportError as exc:
+            logger.warning("Failed to import delete guards: %s", exc)
+        try:
+            from my_site.site_bootstrap import ensure_default_site
+            ensure_default_site()
+        except ImportError as exc:
+            logger.warning("Failed to import site bootstrap: %s", exc)
 
 # =====================
 # SIGNAL MODULE EXAMPLE (signals.py)

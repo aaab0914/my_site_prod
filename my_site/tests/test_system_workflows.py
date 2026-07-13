@@ -1,6 +1,6 @@
+import os
 import shutil
 import tempfile
-import os
 from pathlib import Path
 
 from django.conf import settings
@@ -10,8 +10,9 @@ from django.test import SimpleTestCase, TestCase, override_settings
 
 from images.models import ImagePost
 from my_site.logging_utils import DailyMonthlyFileHandler
-from my_site.media_cleanup import authorized_media_delete, move_media_file_to_trash
+from my_site.media_cleanup import move_media_file_to_trash
 from my_site.media_sync import sync_site_media
+from my_site.request_context import reset_current_request, set_current_request
 from my_site.tasks import purge_old_runtime_logs_task, sync_site_media_task
 
 
@@ -45,8 +46,8 @@ class LoggingSystemTests(SimpleTestCase):
 
     def test_runtime_self_check_script_references_both_compose_files(self):
         script = (BASE_DIR / "scripts" / "runtime_self_check.py").read_text(encoding="utf-8")
-        self.assertIn('docker-compose.yml', script)
-        self.assertIn('docker-compose.prod.yml', script)
+        self.assertIn("docker-compose.yml", script)
+        self.assertIn("docker-compose.prod.yml", script)
 
     def test_long_run_check_script_reports_json(self):
         script = (BASE_DIR / "scripts" / "long_run_check.py").read_text(encoding="utf-8")
@@ -79,9 +80,12 @@ class MediaSyncSystemTests(TestCase):
         self.override.disable()
         shutil.rmtree(self.media_root, ignore_errors=True)
 
-        trash_root = Path(settings.BASE_DIR).parent / ".trash" / Path(settings.BASE_DIR).name
+        trash_root = Path(settings.BASE_DIR) / ".trash"
         if trash_root.exists():
             shutil.rmtree(trash_root, ignore_errors=True)
+
+    def _browser_request(self, path="/media-delete/"):
+        return type("Request", (), {"method": "POST", "path": path})()
 
     def test_automatic_media_sync_entrypoints_are_disabled(self):
         result = sync_site_media()
@@ -91,7 +95,7 @@ class MediaSyncSystemTests(TestCase):
         self.assertIn("only when users delete objects", result["reason"])
         self.assertFalse(task_result["enabled"])
 
-    def test_media_file_only_moves_to_trash_when_delete_is_authorized(self):
+    def test_media_file_only_moves_to_trash_for_browser_delete_requests(self):
         relative_name = "posts/2026/07/13/probe.jpg"
         file_path = Path(self.media_root) / relative_name
         file_path.parent.mkdir(parents=True, exist_ok=True)
@@ -100,23 +104,29 @@ class MediaSyncSystemTests(TestCase):
         self.assertIsNone(move_media_file_to_trash(relative_name))
         self.assertTrue(file_path.exists())
 
-        with authorized_media_delete():
+        token = set_current_request(self._browser_request())
+        try:
             trashed_to = move_media_file_to_trash(relative_name)
+        finally:
+            reset_current_request(token)
 
         self.assertIsNotNone(trashed_to)
         self.assertFalse(file_path.exists())
-        self.assertTrue((Path(settings.BASE_DIR).parent / trashed_to).exists())
+        self.assertTrue((Path(settings.BASE_DIR) / trashed_to).exists())
 
-    def test_model_delete_moves_media_file_to_trash_via_signal(self):
+    def test_model_delete_moves_media_file_to_trash_via_signal_for_browser_requests(self):
         image = ImagePost.objects.create(title="signal-delete", uploaded_by=self.user)
         image.image.save("signal-delete.png", ContentFile(b"image-bytes"), save=True)
 
         original_path = Path(self.media_root) / image.image.name
         self.assertTrue(original_path.exists())
 
-        image.delete()
+        token = set_current_request(self._browser_request("/images/delete/"))
+        try:
+            image.delete()
+        finally:
+            reset_current_request(token)
 
         self.assertFalse(original_path.exists())
-        trash_root = Path(settings.BASE_DIR).parent / ".trash" / Path(settings.BASE_DIR).name
-        moved_files = list(trash_root.rglob("signal-delete.png"))
+        moved_files = list((Path(settings.BASE_DIR) / ".trash").rglob("signal-delete.png"))
         self.assertTrue(moved_files)

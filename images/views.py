@@ -6,15 +6,32 @@ from django.contrib.auth.decorators import login_required
 from django.core.cache import cache
 from django.core.paginator import Paginator
 from django.core.exceptions import ValidationError
-from django.http import FileResponse, Http404, HttpResponseNotModified
+from django.http import FileResponse, Http404, HttpResponse, HttpResponseNotModified
 from django.shortcuts import get_object_or_404, redirect, render
+from django.template.response import TemplateResponse
 from django.utils.http import http_date, parse_http_date_safe, quote_etag
 
 from blog.models import Post
 
 from .forms import AlbumEditForm, AlbumImageEditForm, AlbumUploadForm, GalleryImageEditForm, GallerySingleUploadForm
 from .models import Album, AlbumImage, ImagePost
-from my_site.media_helpers import filter_existing_media_instances, invalidate_cache_keys, media_file_exists, prime_id_cache
+from my_site.media_helpers import filter_existing_media_instances, invalidate_cache_keys, invalidate_public_view_caches, media_file_exists, prime_id_cache
+from my_site.site_views import render_public_cached_template
+
+
+PUBLIC_GALLERY_HTML_CACHE_TTL = 60 * 60 * 24 * 30
+
+
+def _render_public_cached_template(request, cache_key, template_name, context, timeout=PUBLIC_GALLERY_HTML_CACHE_TTL):
+    return render_public_cached_template(request, cache_key, template_name, context, timeout=timeout)
+
+
+def _invalidate_image_public_views():
+    invalidate_public_view_caches(
+        "view:site_index",
+        "view:gallery_list:page:1",
+        "view:album_list:page:1",
+    )
 
 
 
@@ -35,11 +52,9 @@ def album_list(request):
     albums = [album_map[album_id] for album_id in album_ids if album_id in album_map]
     paginator = Paginator(albums, 18)
     page_obj = paginator.get_page(request.GET.get("page"))
-    return render(
-        request,
-        "images/album_list.html",
-        {"albums": page_obj.object_list, "page_obj": page_obj, "total_albums": len(albums)},
-    )
+    context = {"albums": page_obj.object_list, "page_obj": page_obj, "total_albums": len(albums)}
+    cache_key = f"view:album_list:page:{request.GET.get('page', 1)}"
+    return _render_public_cached_template(request, cache_key, "images/album_list.html", context)
 
 
 @login_required
@@ -67,6 +82,7 @@ def album_upload(request):
                 album_image.save()
 
             invalidate_cache_keys("album_list:valid_album_ids")
+            _invalidate_image_public_views()
             messages.success(request, f"Album created successfully. {len(uploads)} image(s) were added to this album.")
             return redirect("blog:images:album_list")
         except ValidationError as exc:
@@ -106,6 +122,7 @@ def album_edit(request, image_id):
         if form.is_valid():
             form.save()
             invalidate_cache_keys("album_list:valid_album_ids")
+            _invalidate_image_public_views()
             messages.success(request, "Album details updated.")
             return redirect("blog:images:album_detail", image_id=album.id)
     else:
@@ -124,6 +141,7 @@ def album_delete(request, image_id):
     if request.method == "POST":
         album.delete()
         invalidate_cache_keys("album_list:valid_album_ids")
+        _invalidate_image_public_views()
         messages.success(request, "Album deleted.")
         return redirect("blog:images:album_list")
 
@@ -184,11 +202,9 @@ def gallery_list(request):
     images = [image_map[image_id] for image_id in image_ids if image_id in image_map]
     paginator = Paginator(images, 20)
     page_obj = paginator.get_page(request.GET.get("page"))
-    return render(
-        request,
-        "images/gallery_list.html",
-        {"images": page_obj.object_list, "page_obj": page_obj},
-    )
+    context = {"images": page_obj.object_list, "page_obj": page_obj}
+    cache_key = f"view:gallery_list:page:{request.GET.get('page', 1)}"
+    return _render_public_cached_template(request, cache_key, "images/gallery_list.html", context)
 
 
 def gallery_detail(request, image_id):
@@ -238,6 +254,7 @@ def gallery_upload(request):
                 created_count += 1
 
             _prime_gallery_list_cache()
+            _invalidate_image_public_views()
             messages.success(request, "Image uploaded successfully. It is now available in Gallery.")
             return redirect("blog:images:gallery_list")
         except ValidationError as exc:
@@ -257,6 +274,7 @@ def gallery_delete(request, image_id):
 
     if request.method == "POST":
         image.delete()
+        _invalidate_image_public_views()
         messages.success(request, "Image deleted.")
         return redirect("blog:images:gallery_list")
 
@@ -274,6 +292,7 @@ def gallery_edit(request, image_id):
         form = GalleryImageEditForm(request.POST, instance=image)
         if form.is_valid():
             form.save()
+            _invalidate_image_public_views()
             messages.success(request, "Image details updated.")
             return redirect("blog:images:gallery_detail", image_id=image.id)
     else:

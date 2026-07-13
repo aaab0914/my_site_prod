@@ -17,6 +17,8 @@
 # IMPORTS
 # =====================
 
+import hashlib
+
 from django import template
 # template: Django's template module for creating custom template tags and filters
 # Provides Library class for registering custom tags
@@ -45,6 +47,8 @@ import markdown
 # =====================
 
 register = template.Library()
+
+MARKDOWN_CACHE_TIMEOUT = 1800
 
 
 # Creates a template library instance to register custom tags/filters
@@ -207,9 +211,13 @@ def markdown_format(text):
     :param text: Markdown text string to convert
     :return: HTML string marked as safe for rendering
     """
-    # Step 1: markdown.markdown() converts Markdown to HTML string
-    # Step 2: mark_safe() tells Django not to auto-escape the HTML
-    return mark_safe(markdown.markdown(text))
+    raw_text = text or ""
+    cache_key = "blog_tags:markdown:%s" % hashlib.sha256(raw_text.encode("utf-8")).hexdigest()
+    rendered = cache.get(cache_key)
+    if rendered is None:
+        rendered = markdown.markdown(raw_text)
+        cache.set(cache_key, rendered, MARKDOWN_CACHE_TIMEOUT)
+    return mark_safe(rendered)
 
 @register.simple_tag
 def user_posts_count(user):

@@ -12,9 +12,11 @@ from django.http import FileResponse, Http404, HttpResponse
 from django.shortcuts import redirect, render
 
 from .forms import UserLoginForm, UserRegisterForm
+from my_site.site_views import render_public_cached_template
 
 LOGIN_RATE_LIMIT_WINDOW = 900
 LOGIN_RATE_LIMIT_MAX_FAILURES = 5
+AUTH_HTML_CACHE_TTL = 60 * 60 * 24 * 30
 
 
 def _login_rate_limit_key(request):
@@ -35,7 +37,7 @@ def register(request):
             return redirect("blog:all_posts_list")
     else:
         form = UserRegisterForm()
-    return render(request, "users/register.html", {"form": form})
+    return render_public_cached_template(request, "view:users_register", "users/register.html", {"form": form}, timeout=AUTH_HTML_CACHE_TTL)
 
 
 def login_view(request):
@@ -58,14 +60,14 @@ def login_view(request):
         cache.set(rate_limit_key, failure_count + 1, timeout=LOGIN_RATE_LIMIT_WINDOW)
     else:
         form = UserLoginForm()
-    return render(request, "users/login.html", {"form": form})
+    return render_public_cached_template(request, "view:users_login", "users/login.html", {"form": form}, timeout=AUTH_HTML_CACHE_TTL)
 
 
 def logout_view(request):
     if request.method == "POST":
         logout(request)
         return render(request, "users/logout.html", {"logged_out": True})
-    return render(request, "users/logout.html", {"logged_out": False})
+    return render_public_cached_template(request, "view:users_logout", "users/logout.html", {"logged_out": False}, timeout=AUTH_HTML_CACHE_TTL)
 
 # --- users/views/account.py ---
 from django.contrib import messages
