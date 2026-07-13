@@ -37,7 +37,7 @@ def register(request):
             return redirect("blog:all_posts_list")
     else:
         form = UserRegisterForm()
-    return render_public_cached_template(request, "view:users_register", "users/register.html", {"form": form}, timeout=AUTH_HTML_CACHE_TTL)
+    return render(request, "users/register.html", {"form": form})
 
 
 def login_view(request):
@@ -60,14 +60,14 @@ def login_view(request):
         cache.set(rate_limit_key, failure_count + 1, timeout=LOGIN_RATE_LIMIT_WINDOW)
     else:
         form = UserLoginForm()
-    return render_public_cached_template(request, "view:users_login", "users/login.html", {"form": form}, timeout=AUTH_HTML_CACHE_TTL)
+    return render(request, "users/login.html", {"form": form})
 
 
 def logout_view(request):
     if request.method == "POST":
         logout(request)
         return render(request, "users/logout.html", {"logged_out": True})
-    return render_public_cached_template(request, "view:users_logout", "users/logout.html", {"logged_out": False}, timeout=AUTH_HTML_CACHE_TTL)
+    return render(request, "users/logout.html", {"logged_out": False})
 
 # --- users/views/account.py ---
 from django.contrib import messages
