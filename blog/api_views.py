@@ -129,7 +129,7 @@ class CommentListAPIView(generics.ListCreateAPIView):
     serializer_class = CommentSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
     filter_backends = [DjangoFilterBackend]
-    filterset_fields = ["post", "name", "active"]
+    filterset_fields = ["post", "author__username", "active"]
 
     def perform_create(self, serializer):
         """

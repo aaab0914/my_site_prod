@@ -50,6 +50,10 @@ LOGGING["filters"] = LOGGING.get("filters", {})
 LOGGING["filters"]["skip_noisy_404"] = {
     "()": "my_site.logging_utils.SkipNoisy404Filter",
 }
+LOGGING["filters"]["below_warning"] = {
+    "()": "my_site.logging_utils.MaxLevelFilter",
+    "level": "WARNING",
+}
 
 LOGGING["handlers"]["file"] = {
     "level": "INFO",
@@ -57,7 +61,7 @@ LOGGING["handlers"]["file"] = {
     "log_dir": str(LOG_DIR),
     "filename_prefix": "django",
     "formatter": "verbose",
-    "filters": ["skip_noisy_404"],
+    "filters": ["skip_noisy_404", "below_warning"],
 }
 LOGGING["handlers"]["error_file"] = {
     "level": "WARNING",
@@ -68,9 +72,9 @@ LOGGING["handlers"]["error_file"] = {
     "filters": ["skip_noisy_404"],
 }
 LOGGING["loggers"]["django"]["handlers"] = ["console", "file", "error_file"]
-LOGGING["loggers"]["django.request"]["handlers"] = ["console", "file", "error_file"]
-LOGGING["loggers"]["blog"]["handlers"] = ["console", "file"]
-LOGGING["loggers"]["users"]["handlers"] = ["console", "file"]
+LOGGING["loggers"]["django.request"]["handlers"] = ["console", "error_file"]
+LOGGING["loggers"]["blog"]["handlers"] = ["console", "file", "error_file"]
+LOGGING["loggers"]["users"]["handlers"] = ["console", "file", "error_file"]
 LOGGING["loggers"]["celery"]["handlers"] = ["console", "file", "error_file"]
 
 if TESTING:

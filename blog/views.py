@@ -713,6 +713,7 @@ def audio_upload(request):
                 created_audio_posts.append(audio_post)
 
             _prime_audio_list_cache(created_audio_posts)
+            _invalidate_blog_public_views()
             if len(uploaded_files) == 1:
                 messages.success(request, "Audio uploaded successfully.")
             else:

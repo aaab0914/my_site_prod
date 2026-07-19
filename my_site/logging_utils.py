@@ -100,3 +100,12 @@ class DailyMonthlyFileHandler(FileHandler):
     def emit(self, record):
         self._refresh_stream_if_needed()
         super().emit(record)
+
+
+class MaxLevelFilter:
+    def __init__(self, level):
+        import logging
+        self.levelno = getattr(logging, str(level).upper()) if isinstance(level, str) else int(level)
+
+    def filter(self, record):
+        return record.levelno < self.levelno

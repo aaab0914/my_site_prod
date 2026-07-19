@@ -15,17 +15,37 @@ python manage.py collectstatic --noinput || echo "collectstatic failed; continui
 # Host cron handles database backups; skip in-container backup loop
 echo "Host cron handles database backups; skipping in-container backup loop" >&2
 
-MONTH_DIR="$(date +%Y-%m)"
-DAY="$(date +%Y-%m-%d)"
-mkdir -p "/code/logs/${MONTH_DIR}"
+mkdir -p "/code/logs/$(date +%Y-%m)"
+
+start_daily_log_router() {
+  pipe_path="$1"
+  prefix="$2"
+
+  rm -f "$pipe_path"
+  mkfifo "$pipe_path"
+
+  (
+    while IFS= read -r line || [ -n "$line" ]; do
+      month_dir="/code/logs/$(date +%Y-%m)"
+      day="$(date +%Y-%m-%d)"
+      mkdir -p "$month_dir"
+      printf '%s\n' "$line" >> "$month_dir/${prefix}-${day}.log"
+    done < "$pipe_path"
+  ) &
+}
 
 if [ "$#" -gt 0 ]; then
   exec "$@"
 fi
 
+ACCESS_PIPE="/tmp/gunicorn-access.pipe"
+ERROR_PIPE="/tmp/gunicorn-error.pipe"
+start_daily_log_router "$ACCESS_PIPE" "gunicorn-access"
+start_daily_log_router "$ERROR_PIPE" "gunicorn-error"
+
 exec gunicorn \
   --workers 2 \
   --bind 0.0.0.0:8000 \
-  --access-logfile "/code/logs/${MONTH_DIR}/gunicorn-access-${DAY}.log" \
-  --error-logfile "/code/logs/${MONTH_DIR}/gunicorn-error-${DAY}.log" \
+  --access-logfile "$ACCESS_PIPE" \
+  --error-logfile "$ERROR_PIPE" \
   my_site.wsgi:application
