@@ -50,7 +50,8 @@ from .forms import (
 from images.forms import GallerySingleUploadForm
 from images.models import ImagePost
 from my_site.media_cleanup import authorized_media_delete
-from my_site.site_views import render_public_cached_template
+from my_site.sorting import build_sort_context
+from my_site.site_views import queue_operation_success, render_public_cached_template
 from my_site.media_helpers import invalidate_cache_keys, invalidate_public_view_caches, prime_serialized_list_cache
 from .models import Post, Comment, AudioPost, VideoPost
 
@@ -58,7 +59,7 @@ from .models import Post, Comment, AudioPost, VideoPost
 _RANGE_RE = re.compile(r"bytes=(\d*)-(\d*)")
 
 
-_PUBLIC_LIST_CACHE_TTL = 180
+_PUBLIC_LIST_CACHE_TTL = 60 * 60 * 24 * 30  # 30 days
 _PUBLIC_HTML_CACHE_TTL = 60 * 60 * 24 * 30
 
 
@@ -88,6 +89,41 @@ def _ordered_posts_from_ids(post_ids):
     order_map = {post_id: index for index, post_id in enumerate(post_ids)}
     posts.sort(key=lambda post: order_map.get(post.id, len(order_map)))
     return posts
+
+
+def _cached_post_ids(tag_slug=None):
+    cache_key = f"post_list:ids:tag:{tag_slug or 'all'}"
+    cached_ids = cache.get(cache_key)
+    if cached_ids is not None:
+        return cached_ids
+
+    queryset = Post.published.select_related("author").prefetch_related("tags")
+    if tag_slug:
+        queryset = queryset.filter(tags__slug=tag_slug)
+
+    cached_ids = list(queryset.values_list("id", flat=True))
+    cache.set(cache_key, cached_ids, _PUBLIC_LIST_CACHE_TTL)
+    return cached_ids
+
+
+def _sort_posts(posts, selected_sort):
+    if selected_sort == "oldest":
+        return sorted(posts, key=lambda post: (post.publish, post.id))
+    if selected_sort == "title_az":
+        return sorted(posts, key=lambda post: ((post.title or "").lower(), -post.id))
+    if selected_sort == "title_za":
+        return sorted(posts, key=lambda post: ((post.title or "").lower(), -post.id), reverse=True)
+    return sorted(posts, key=lambda post: (post.publish, post.id), reverse=True)
+
+
+def _sort_serialized_items(items, selected_sort, *, title_key, created_key):
+    if selected_sort == "oldest":
+        return sorted(items, key=lambda item: (item.get(created_key) or "", item.get("id") or 0))
+    if selected_sort == "title_az":
+        return sorted(items, key=lambda item: ((item.get(title_key) or "").lower(), -(item.get("id") or 0)))
+    if selected_sort == "title_za":
+        return sorted(items, key=lambda item: ((item.get(title_key) or "").lower(), -(item.get("id") or 0)), reverse=True)
+    return sorted(items, key=lambda item: (item.get(created_key) or "", item.get("id") or 0), reverse=True)
 
 
 def _cached_post_list_page(page_number, tag_slug=None):
@@ -293,9 +329,9 @@ def _handle_post_edit_media_upload(request, post):
 
     all_uploads = uploaded_files + pasted_uploads
     if not all_uploads:
-        return "Please choose at least one image or audio file."
+        return "Select at least one image or audio file."
     if len(all_uploads) > 10:
-        return "You can upload at most 10 files at one time."
+        return "A maximum of 10 files can be uploaded at one time."
 
     image_count = 0
     audio_count = 0
@@ -401,15 +437,22 @@ def post_share(request, post_id):
 
 def post_list(request, tag_slug=None):
     tag = get_object_or_404(Tag, slug=tag_slug) if tag_slug else None
-    page_payload = _cached_post_list_page(request.GET.get("page", 1), tag_slug=tag.slug if tag else None)
-    posts = _ordered_posts_from_ids(page_payload["post_ids"])
+    sort_context = build_sort_context(
+        request,
+        {
+            "newest": "Newest",
+            "oldest": "Oldest",
+            "title_az": "Title A-Z",
+            "title_za": "Title Z-A",
+        },
+        default_sort="newest",
+    )
+    post_ids = _cached_post_ids(tag.slug if tag else None)
+    posts = _sort_posts(_ordered_posts_from_ids(post_ids), sort_context["selected_sort"])
+    page_obj = Paginator(posts, 10).get_page(request.GET.get("page"))
 
-    paginator = Paginator(range(page_payload["paginator_count"] or 1), 10)
-    page_obj = paginator.page(page_payload["number"])
-    page_obj.object_list = posts
-
-    context = {"posts": page_obj, "tag": tag}
-    cache_key = _public_page_cache_key("view:post_list", request.GET.get("page", 1), tag.slug if tag else "all")
+    context = {"posts": page_obj, "tag": tag, **sort_context}
+    cache_key = _public_page_cache_key("view:post_list", request.GET.get("page", 1), tag.slug if tag else "all", sort_context["selected_sort"])
     return _render_public_cached_template(request, cache_key, "blog/post/all_posts_list.html", context)
 
 def post_detail(request, year, month, day, post_slug):
@@ -467,9 +510,22 @@ def post_search(request):
             query = form.cleaned_data["query"]
             result_ids = _cached_search_result_ids(query)
             results = _ordered_posts_from_ids(result_ids)
-    context = {"form": form, "query": query, "results": results, "total_results": len(results)}
+    sort_context = build_sort_context(
+        request,
+        {
+            "relevance": "Relevance",
+            "newest": "Newest",
+            "oldest": "Oldest",
+            "title_az": "Title A-Z",
+            "title_za": "Title Z-A",
+        },
+        default_sort="relevance",
+    )
+    if query and sort_context["selected_sort"] != "relevance":
+        results = _sort_posts(results, sort_context["selected_sort"])
+    context = {"form": form, "query": query, "results": results, "total_results": len(results), **sort_context}
     cache_suffix = (query or "").strip().lower() or "empty"
-    cache_key = _public_page_cache_key("view:post_search", cache_suffix)
+    cache_key = _public_page_cache_key("view:post_search", cache_suffix, sort_context["selected_sort"])
     return _render_public_cached_template(request, cache_key, "blog/post/search_post.html", context)
 
 @login_required
@@ -500,8 +556,13 @@ def post_create(request):
         for tag in post.tags.all():
             if tag.slug:
                 invalidate_cache_keys(f"post_list:page:1:tag:{tag.slug}")
-        request.session["post_create_success_pk"] = post.pk
-        return redirect("blog:post_create_success", pk=post.pk)
+        return queue_operation_success(
+            request,
+            title="Post Published",
+            message=f'Post "{post.title}" was published successfully.',
+            primary_label="View New Post",
+            primary_url=post.get_absolute_url(),
+        )
     return render(request, "blog/post/create_post.html", {"form": form})
 
 
@@ -509,18 +570,21 @@ def post_create(request):
 def post_create_success(request, pk):
     post = get_object_or_404(Post, pk=pk)
     if post.author_id != request.user.id and not request.user.is_superuser:
-        raise PermissionDenied("You are not allowed to view this success page.")
-    success_pk = request.session.pop("post_create_success_pk", None)
-    if success_pk != post.pk:
-        return redirect("blog:all_posts_list")
-    return render(request, "blog/post/create_post_success.html", {"post": post})
+        raise PermissionDenied("Permission denied for viewing this success page.")
+    return queue_operation_success(
+        request,
+        title="Post Published",
+        message=f'Post "{post.title}" was published successfully.',
+        primary_label="View New Post",
+        primary_url=post.get_absolute_url(),
+    )
 
 
 @login_required
 def post_edit(request, pk):
     post = get_object_or_404(Post, pk=pk)
     if post.author_id != request.user.id and not request.user.is_superuser:
-        raise PermissionDenied("You are not allowed to edit this post.")
+        raise PermissionDenied("Permission denied for editing this post.")
 
     form = PostEditForm(instance=post)
 
@@ -529,7 +593,13 @@ def post_edit(request, pk):
         if form.is_valid():
             post = form.save()
             request.session["post_update_success_once"] = True
-            return redirect(post.get_absolute_url())
+            return queue_operation_success(
+                request,
+                title="Post Updated",
+                message=f'Post "{post.title}" was updated successfully.',
+                primary_label="View Post",
+                primary_url=post.get_absolute_url(),
+            )
 
     return render(
         request,
@@ -573,7 +643,13 @@ def video_upload(request):
             _prime_video_list_cache([video_post])
             _invalidate_blog_public_views()
             messages.success(request, "Video uploaded successfully.")
-            return redirect("blog:video_list")
+            return queue_operation_success(
+                request,
+                title="Video Uploaded",
+                message="Your video was uploaded successfully.",
+                primary_label="Open Video List",
+                primary_url=reverse_lazy("blog:video_list"),
+            )
     else:
         form = VideoUploadForm()
 
@@ -585,14 +661,11 @@ def video_file_proxy(request, pk):
     return _serve_uploaded_file(video.video_file, request=request)
 
 def post_delete_success(request):
-    if not request.session.pop("post_delete_success_once", False):
-        return redirect("blog:all_posts_list")
-    return render(request, "blog/post/post_delete_success.html")
+    return redirect("operation_success")
+
 
 def audio_post_delete_success(request):
-    if not request.session.pop("audio_post_delete_success_once", False):
-        return redirect("blog:audio_list")
-    return render(request, "blog/audio/audio_post_delete_success.html")
+    return redirect("operation_success")
 
 @login_required
 @require_POST
@@ -638,12 +711,20 @@ def edit_comment(request, post_slug, comment_id):
 
     if request.method == "POST" and form.is_valid():
         form.save()
-        return redirect(
-            "blog:post_detail",
-            year=comment.post.publish.year,
-            month=comment.post.publish.month,
-            day=comment.post.publish.day,
-            post_slug=comment.post.slug,
+        return queue_operation_success(
+            request,
+            title="Comment Updated",
+            message="Your comment was updated successfully.",
+            primary_label="Back to Post",
+            primary_url=reverse_lazy(
+                "blog:post_detail",
+                kwargs={
+                    "year": comment.post.publish.year,
+                    "month": comment.post.publish.month,
+                    "day": comment.post.publish.day,
+                    "post_slug": comment.post.slug,
+                },
+            ),
         )
 
     return render(
@@ -661,7 +742,7 @@ def comment_delete(request, post_slug, comment_id):
         return redirect("blog:post_list")
 
     if comment.author_id != request.user.id and not request.user.is_superuser:
-        messages.error(request, "You are not allowed to delete this comment.")
+        messages.error(request, "Permission denied for deleting this comment.")
         return redirect(
             "blog:post_detail",
             year=comment.post.publish.year,
@@ -673,12 +754,15 @@ def comment_delete(request, post_slug, comment_id):
     if request.method == "POST":
         post = comment.post
         comment.delete()
-        return redirect(
-            "blog:post_detail",
-            year=post.publish.year,
-            month=post.publish.month,
-            day=post.publish.day,
-            post_slug=post.slug,
+        return queue_operation_success(
+            request,
+            title="Comment Deleted",
+            message="Your comment was deleted successfully.",
+            primary_label="Back to Post",
+            primary_url=reverse_lazy(
+                "blog:post_detail",
+                kwargs={"year": post.publish.year, "month": post.publish.month, "day": post.publish.day, "post_slug": post.slug},
+            ),
         )
 
     return render(request, "blog/comment/delete_comment.html", {"comment": comment})
@@ -690,9 +774,9 @@ def audio_upload(request):
         uploaded_files = request.FILES.getlist("audio_file")
 
         if not uploaded_files:
-            form.add_error("audio_file", "Please choose at least one audio file.")
+            form.add_error("audio_file", "Select at least one audio file.")
         elif len(uploaded_files) > 10:
-            form.add_error("audio_file", "You can upload at most 10 audio files at once.")
+            form.add_error("audio_file", "A maximum of 10 audio files can be uploaded at once.")
         elif form.is_valid():
             description = form.cleaned_data.get("description", "")
             track_title = form.cleaned_data.get("music_name", "").strip()
@@ -716,9 +800,17 @@ def audio_upload(request):
             _invalidate_blog_public_views()
             if len(uploaded_files) == 1:
                 messages.success(request, "Audio uploaded successfully.")
+                message = "Audio uploaded successfully."
             else:
                 messages.success(request, f"Uploaded {len(uploaded_files)} audio files successfully.")
-            return redirect("blog:audio_list")
+                message = f"Uploaded {len(uploaded_files)} audio files successfully."
+            return queue_operation_success(
+                request,
+                title="Audio Uploaded",
+                message=message,
+                primary_label="Open Audio List",
+                primary_url=reverse_lazy("blog:audio_list"),
+            )
     else:
         form = AudioUploadForm()
 
@@ -752,7 +844,13 @@ def video_edit(request, pk):
             invalidate_cache_keys("video_list:ids", "video_list:items")
             _prime_video_list_cache([videopost])
             messages.success(request, "Video updated successfully.")
-            return redirect("blog:video_detail", pk=videopost.pk)
+            return queue_operation_success(
+                request,
+                title="Video Updated",
+                message="Video details were updated successfully.",
+                primary_label="View Video",
+                primary_url=reverse_lazy("blog:video_detail", kwargs={"pk": videopost.pk}),
+            )
     else:
         form = VideoPostEditForm(instance=videopost)
     return render(request, "blog/video/video_edit.html", {"form": form, "videopost": videopost})
@@ -768,45 +866,80 @@ def video_delete(request, pk):
         videopost.delete()
         invalidate_cache_keys("video_list:ids", "video_list:items")
         messages.success(request, "Video deleted successfully.")
-        return redirect("blog:video_list")
+        return queue_operation_success(
+            request,
+            title="Video Deleted",
+            message="The video was deleted successfully.",
+            primary_label="Open Video List",
+            primary_url=reverse_lazy("blog:video_list"),
+        )
     return render(request, "blog/video/video_delete.html", {"videopost": videopost})
 
 
 def video_list(request):
+    sort_context = build_sort_context(
+        request,
+        {
+            "newest": "Newest",
+            "oldest": "Oldest",
+            "title_az": "Title A-Z",
+            "title_za": "Title Z-A",
+        },
+        default_sort="newest",
+    )
     video_items = cache.get("video_list:items")
     if video_items is None or (not video_items and VideoPost.objects.exists()):
         video_items = _prime_video_list_cache() or []
+    video_items = _sort_serialized_items(video_items, sort_context["selected_sort"], title_key="title", created_key="created")
     paginator = Paginator(video_items, 10)
     page_obj = paginator.get_page(request.GET.get("page"))
-    context = {"videos": page_obj.object_list, "page_obj": page_obj}
-    cache_key = _public_page_cache_key("view:video_list", request.GET.get("page", 1))
+    context = {"videos": page_obj.object_list, "page_obj": page_obj, **sort_context}
+    cache_key = _public_page_cache_key("view:video_list", request.GET.get("page", 1), sort_context["selected_sort"])
     return _render_public_cached_template(request, cache_key, "blog/video/video_list.html", context)
 
 def audio_list(request):
+    sort_context = build_sort_context(
+        request,
+        {
+            "newest": "Newest",
+            "oldest": "Oldest",
+            "title_az": "Title A-Z",
+            "title_za": "Title Z-A",
+        },
+        default_sort="newest",
+    )
     audio_cache = cache.get("audio_list:items")
     if audio_cache is None or (not audio_cache and AudioPost.objects.exists()):
         audio_cache = _prime_audio_list_cache() or []
+    audio_cache = _sort_serialized_items(audio_cache, sort_context["selected_sort"], title_key="music_name", created_key="created")
     paginator = Paginator(audio_cache, 10)
     page_obj = paginator.get_page(request.GET.get("page"))
-    context = {"audios": page_obj.object_list, "page_obj": page_obj}
-    cache_key = _public_page_cache_key("view:audio_list", request.GET.get("page", 1))
+    context = {"audios": page_obj.object_list, "page_obj": page_obj, **sort_context}
+    cache_key = _public_page_cache_key("view:audio_list", request.GET.get("page", 1), sort_context["selected_sort"])
     return _render_public_cached_template(request, cache_key, "blog/audio/audio_list.html", context)
 
 class PostDeleteView(LoginRequiredMixin, DeleteView):
     model = Post
     template_name = "blog/post/post_delete.html"
-    success_url = reverse_lazy("blog:post_delete_success")
+    success_url = reverse_lazy("operation_success")
     context_object_name = "post"
     pk_url_kwarg = "pk"
 
     def dispatch(self, request, *args, **kwargs):
         obj = self.get_object()
         if obj.author != request.user and not request.user.is_superuser:
-            raise PermissionDenied("You are not allowed to delete this post.")
+            raise PermissionDenied("Permission denied for deleting this post.")
         return super().dispatch(request, *args, **kwargs)
 
     def form_valid(self, form):
-        self.request.session["post_delete_success_once"] = True
+        self.request.session["operation_success"] = {
+            "title": "Post Deleted",
+            "message": "The selected post was deleted successfully.",
+            "primary_label": "Back to Posts",
+            "primary_url": str(reverse_lazy("blog:all_posts_list")),
+            "secondary_label": "Create Post",
+            "secondary_url": str(reverse_lazy("blog:post_create")),
+        }
         return super().form_valid(form)
 
 class AudioPostEditView(LoginRequiredMixin, UpdateView):
@@ -822,9 +955,12 @@ class AudioPostEditView(LoginRequiredMixin, UpdateView):
         obj = self.get_object()
 
         if obj.uploaded_by != request.user and not request.user.is_superuser:
-            raise PermissionDenied("You are not allowed to edit this audio post.")
+            raise PermissionDenied("Permission denied for editing this audio post.")
 
         return super().dispatch(request, *args, **kwargs)
+
+    def get_success_url(self):
+        return reverse_lazy("operation_success")
 
     def form_valid(self, form):
         if self.request.POST.get("remove_cover_image") == "1" and self.object.cover_image:
@@ -835,15 +971,20 @@ class AudioPostEditView(LoginRequiredMixin, UpdateView):
         response = super().form_valid(form)
         invalidate_cache_keys("audio_list:ids", "audio_list:items")
         _invalidate_blog_public_views()
+        self.request.session["operation_success"] = {
+            "title": "Audio Updated",
+            "message": "Audio details were updated successfully.",
+            "primary_label": "Open Audio List",
+            "primary_url": str(reverse_lazy("blog:audio_list")),
+            "secondary_label": "Blog Home",
+            "secondary_url": str(reverse_lazy("blog:all_posts_list")),
+        }
         return response
-
-    def get_success_url(self):
-        return reverse_lazy("blog:audio_list")
 
 class AudioPostDeleteView(LoginRequiredMixin, DeleteView):
     model = AudioPost
     template_name = "blog/audio/audio_post_delete.html"
-    success_url = reverse_lazy("blog:audio_post_delete_success")
+    success_url = reverse_lazy("operation_success")
     context_object_name = "audiopost"
 
     def dispatch(self, request, *args, **kwargs):
@@ -853,12 +994,19 @@ class AudioPostDeleteView(LoginRequiredMixin, DeleteView):
         obj = self.get_object()
 
         if obj.uploaded_by != request.user and not request.user.is_superuser:
-            raise PermissionDenied("You are not allowed to delete this audio post.")
+            raise PermissionDenied("Permission denied for deleting this audio post.")
 
         return super().dispatch(request, *args, **kwargs)
 
     def form_valid(self, form):
-        self.request.session["audio_post_delete_success_once"] = True
+        self.request.session["operation_success"] = {
+            "title": "Audio Deleted",
+            "message": "The selected audio track was deleted successfully.",
+            "primary_label": "Back to Library",
+            "primary_url": str(reverse_lazy("blog:audio_list")),
+            "secondary_label": "Upload Audio",
+            "secondary_url": str(reverse_lazy("blog:audio_upload")),
+        }
         response = super().form_valid(form)
         invalidate_cache_keys("audio_list:ids", "audio_list:items")
         _invalidate_blog_public_views()

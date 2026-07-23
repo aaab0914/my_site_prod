@@ -11,6 +11,8 @@
         <h2>Posts tagged with "{{ tag.name }}"</h2>
     {% endif %}
 
+    {% include "includes/sort_controls.html" %}
+
     <!-- Article list section -->
     <div class="post-list">
         <!-- Loop through each post in the paginated posts queryset -->
@@ -44,14 +46,8 @@
                     {% endfor %}
                 </p>
 
-                <!--
-                  Post body truncated to 30 words for the list view
-                  |markdown: Converts Markdown to HTML (requires a custom template filter)
-                  |safe: Marks the HTML as safe to render (use carefully with user content)
-                  |truncatewords_html:30: Limits to 30 words while preserving HTML tags
-                -->
                 <div style="margin-top: 10px;">
-                    {{ post.body|markdown|safe|truncatewords_html:30 }}
+                    {{ post.body|markdown|striptags|truncatechars:100 }}
                 </div>
 
                 {% if post.cover_image %}

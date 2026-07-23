@@ -219,10 +219,12 @@
 
         <div class="search-layout">
             <section class="search-panel">
-                    <div class="search-results-meta">
-                        Results for <strong>"{{ query }}"</strong><br>
-                        Found {{ total_results }} result{{ total_results|pluralize }}.
-                    </div>
+                <div class="search-results-meta">
+                    Results for <strong>"{{ query }}"</strong><br>
+                    Found {{ total_results }} result{{ total_results|pluralize }}.
+                </div>
+
+                {% include "includes/sort_controls.html" %}
 
                 <div class="search-results">
                     {% for post in results %}

@@ -1,0 +1,10 @@
+{% if sort_options %}
+<div class="sort-toolbar">
+    <span class="sort-toolbar-label">Sort</span>
+    <div class="sort-toolbar-options">
+        {% for option in sort_options %}
+            <a href="{{ option.url }}" class="sort-pill{% if option.active %} is-active{% endif %}">{{ option.label }}</a>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}

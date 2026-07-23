@@ -16,7 +16,8 @@ from blog.models import Post
 from .forms import AlbumEditForm, AlbumImageEditForm, AlbumUploadForm, GalleryImageEditForm, GallerySingleUploadForm
 from .models import Album, AlbumImage, ImagePost
 from my_site.media_helpers import filter_existing_media_instances, invalidate_cache_keys, invalidate_public_view_caches, media_file_exists, prime_id_cache
-from my_site.site_views import render_public_cached_template
+from my_site.site_views import queue_operation_success, render_public_cached_template
+from my_site.sorting import build_sort_context
 
 
 PUBLIC_GALLERY_HTML_CACHE_TTL = 60 * 60 * 24 * 30
@@ -36,6 +37,18 @@ def _invalidate_image_public_views():
 
 
 def album_list(request):
+    sort_context = build_sort_context(
+        request,
+        {
+            "newest": "Newest",
+            "oldest": "Oldest",
+            "title_az": "Title A-Z",
+            "title_za": "Title Z-A",
+            "most_items": "Most Images",
+            "fewest_items": "Fewest Images",
+        },
+        default_sort="newest",
+    )
     album_ids = cache.get("album_list:valid_album_ids")
     if album_ids is None:
         album_queryset = Album.objects.select_related("uploaded_by").prefetch_related("images").order_by("-created")
@@ -50,10 +63,20 @@ def album_list(request):
         for album in Album.objects.select_related("uploaded_by").prefetch_related("images").filter(id__in=album_ids)
     }
     albums = [album_map[album_id] for album_id in album_ids if album_id in album_map]
-    paginator = Paginator(albums, 18)
+    if sort_context["selected_sort"] == "oldest":
+        albums.sort(key=lambda album: (album.created, album.id))
+    elif sort_context["selected_sort"] == "title_az":
+        albums.sort(key=lambda album: ((album.title or "").lower(), -album.id))
+    elif sort_context["selected_sort"] == "title_za":
+        albums.sort(key=lambda album: ((album.title or "").lower(), -album.id), reverse=True)
+    elif sort_context["selected_sort"] == "most_items":
+        albums.sort(key=lambda album: (album.image_count, album.created, album.id), reverse=True)
+    elif sort_context["selected_sort"] == "fewest_items":
+        albums.sort(key=lambda album: (album.image_count, album.created, album.id))
+    paginator = Paginator(albums, 20)
     page_obj = paginator.get_page(request.GET.get("page"))
-    context = {"albums": page_obj.object_list, "page_obj": page_obj, "total_albums": len(albums)}
-    cache_key = f"view:album_list:page:{request.GET.get('page', 1)}"
+    context = {"albums": page_obj.object_list, "page_obj": page_obj, "total_albums": len(albums), **sort_context}
+    cache_key = f"view:album_list:page:{request.GET.get('page', 1)}:sort:{sort_context['selected_sort']}"
     return _render_public_cached_template(request, cache_key, "images/album_list.html", context)
 
 
@@ -83,8 +106,16 @@ def album_upload(request):
 
             invalidate_cache_keys("album_list:valid_album_ids")
             _invalidate_image_public_views()
-            messages.success(request, f"Album created successfully. {len(uploads)} image(s) were added to this album.")
-            return redirect("blog:images:album_list")
+            messages.success(request, f"Album created successfully. {len(uploads)} image(s) were added.")
+            return queue_operation_success(
+                request,
+                title="Album Created",
+                message=f"Album created successfully. {len(uploads)} image(s) were added.",
+                primary_label="Open Album",
+                primary_url=redirect("blog:images:album_detail", image_id=album.id).url,
+                secondary_label="Album List",
+                secondary_url=redirect("blog:images:album_list").url,
+            )
         except ValidationError as exc:
             form.add_error("images", exc)
     else:
@@ -114,7 +145,7 @@ def album_detail(request, image_id):
 def album_edit(request, image_id):
     album = get_object_or_404(Album, pk=image_id)
     if album.uploaded_by_id != request.user.id and not request.user.is_superuser:
-        messages.error(request, "You do not have permission to edit this album.")
+        messages.error(request, "Permission denied for editing this album.")
         return redirect("blog:images:album_detail", image_id=album.id)
 
     if request.method == "POST":
@@ -124,7 +155,15 @@ def album_edit(request, image_id):
             invalidate_cache_keys("album_list:valid_album_ids")
             _invalidate_image_public_views()
             messages.success(request, "Album details updated.")
-            return redirect("blog:images:album_detail", image_id=album.id)
+            return queue_operation_success(
+                request,
+                title="Album Updated",
+                message="Album details were updated successfully.",
+                primary_label="View Album",
+                primary_url=redirect("blog:images:album_detail", image_id=album.id).url,
+                secondary_label="Album List",
+                secondary_url=redirect("blog:images:album_list").url,
+            )
     else:
         form = AlbumEditForm(instance=album)
 
@@ -135,7 +174,7 @@ def album_edit(request, image_id):
 def album_delete(request, image_id):
     album = get_object_or_404(Album.objects.prefetch_related("images"), pk=image_id)
     if album.uploaded_by_id != request.user.id and not request.user.is_superuser:
-        messages.error(request, "You do not have permission to delete this album.")
+        messages.error(request, "Permission denied for deleting this album.")
         return redirect("blog:images:album_detail", image_id=album.id)
 
     if request.method == "POST":
@@ -143,7 +182,13 @@ def album_delete(request, image_id):
         invalidate_cache_keys("album_list:valid_album_ids")
         _invalidate_image_public_views()
         messages.success(request, "Album deleted.")
-        return redirect("blog:images:album_list")
+        return queue_operation_success(
+            request,
+            title="Album Deleted",
+            message="The album was deleted successfully.",
+            primary_label="Open Album List",
+            primary_url=redirect("blog:images:album_list").url,
+        )
 
     return render(request, "images/album_delete_confirm.html", {"album": album})
 
@@ -192,6 +237,16 @@ def _prime_gallery_list_cache(new_items=None):
 
 
 def gallery_list(request):
+    sort_context = build_sort_context(
+        request,
+        {
+            "newest": "Newest",
+            "oldest": "Oldest",
+            "title_az": "Title A-Z",
+            "title_za": "Title Z-A",
+        },
+        default_sort="newest",
+    )
     image_ids = cache.get("gallery_list:valid_image_ids")
     if image_ids is None:
         image_ids = _prime_gallery_list_cache()
@@ -200,10 +255,16 @@ def gallery_list(request):
         for image in ImagePost.objects.select_related("uploaded_by").filter(id__in=image_ids)
     }
     images = [image_map[image_id] for image_id in image_ids if image_id in image_map]
+    if sort_context["selected_sort"] == "oldest":
+        images.sort(key=lambda image: (image.created, image.id))
+    elif sort_context["selected_sort"] == "title_az":
+        images.sort(key=lambda image: ((image.title or "").lower(), -image.id))
+    elif sort_context["selected_sort"] == "title_za":
+        images.sort(key=lambda image: ((image.title or "").lower(), -image.id), reverse=True)
     paginator = Paginator(images, 20)
     page_obj = paginator.get_page(request.GET.get("page"))
-    context = {"images": page_obj.object_list, "page_obj": page_obj}
-    cache_key = f"view:gallery_list:page:{request.GET.get('page', 1)}"
+    context = {"images": page_obj.object_list, "page_obj": page_obj, **sort_context}
+    cache_key = f"view:gallery_list:page:{request.GET.get('page', 1)}:sort:{sort_context['selected_sort']}"
     return _render_public_cached_template(request, cache_key, "images/gallery_list.html", context)
 
 
@@ -256,7 +317,13 @@ def gallery_upload(request):
             _prime_gallery_list_cache()
             _invalidate_image_public_views()
             messages.success(request, "Image uploaded successfully. It is now available in Gallery.")
-            return redirect("blog:images:gallery_list")
+            return queue_operation_success(
+                request,
+                title="Image Uploaded",
+                message="Image uploaded successfully. It is now available in Gallery.",
+                primary_label="Open Gallery",
+                primary_url=redirect("blog:images:gallery_list").url,
+            )
         except ValidationError as exc:
             form.add_error("images", exc)
     else:
@@ -269,14 +336,20 @@ def gallery_upload(request):
 def gallery_delete(request, image_id):
     image = get_object_or_404(ImagePost, pk=image_id)
     if image.uploaded_by_id != request.user.id and not request.user.is_superuser:
-        messages.error(request, "You do not have permission to delete this image.")
+        messages.error(request, "Permission denied for deleting this image.")
         return redirect("blog:images:gallery_detail", image_id=image.id)
 
     if request.method == "POST":
         image.delete()
         _invalidate_image_public_views()
         messages.success(request, "Image deleted.")
-        return redirect("blog:images:gallery_list")
+        return queue_operation_success(
+            request,
+            title="Image Deleted",
+            message="The image was deleted successfully.",
+            primary_label="Open Gallery",
+            primary_url=redirect("blog:images:gallery_list").url,
+        )
 
     return render(request, "images/gallery_delete_confirm.html", {"image": image})
 
@@ -285,7 +358,7 @@ def gallery_delete(request, image_id):
 def gallery_edit(request, image_id):
     image = get_object_or_404(ImagePost, pk=image_id)
     if image.uploaded_by_id != request.user.id and not request.user.is_superuser:
-        messages.error(request, "You do not have permission to edit this image.")
+        messages.error(request, "Permission denied for editing this image.")
         return redirect("blog:images:gallery_detail", image_id=image.id)
 
     if request.method == "POST":
@@ -294,7 +367,15 @@ def gallery_edit(request, image_id):
             form.save()
             _invalidate_image_public_views()
             messages.success(request, "Image details updated.")
-            return redirect("blog:images:gallery_detail", image_id=image.id)
+            return queue_operation_success(
+                request,
+                title="Image Updated",
+                message="Image details were updated successfully.",
+                primary_label="View Image",
+                primary_url=redirect("blog:images:gallery_detail", image_id=image.id).url,
+                secondary_label="Open Gallery",
+                secondary_url=redirect("blog:images:gallery_list").url,
+            )
     else:
         form = GalleryImageEditForm(instance=image)
 

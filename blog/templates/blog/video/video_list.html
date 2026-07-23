@@ -32,6 +32,7 @@
 {% block hero_page_description %}Browse uploaded videos in one place. Guests can watch the list here, and account-only actions will ask them to sign in first.{% endblock %}
 {% block hero_body %}
     {% if videos %}
+        {% include "includes/sort_controls.html" %}
         <div class="video-list">
             {% for video in videos %}
                 <article class="video-row">
@@ -63,17 +64,17 @@
         {% if page_obj and page_obj.paginator.num_pages > 1 %}
             <nav class="video-pagination">
                 {% if page_obj.has_previous %}
-                    <a href="?page={{ page_obj.previous_page_number }}">Prev</a>
+                    <a href="?page={{ page_obj.previous_page_number }}{% if pagination_suffix %}&{{ pagination_suffix|slice:'1:' }}{% endif %}">Prev</a>
                 {% endif %}
                 {% for page_number in page_obj.paginator.page_range %}
                     {% if page_number == page_obj.number %}
                         <span class="is-current">{{ page_number }}</span>
                     {% else %}
-                        <a href="?page={{ page_number }}">{{ page_number }}</a>
+                        <a href="?page={{ page_number }}{% if pagination_suffix %}&{{ pagination_suffix|slice:'1:' }}{% endif %}">{{ page_number }}</a>
                     {% endif %}
                 {% endfor %}
                 {% if page_obj.has_next %}
-                    <a href="?page={{ page_obj.next_page_number }}">Next</a>
+                    <a href="?page={{ page_obj.next_page_number }}{% if pagination_suffix %}&{{ pagination_suffix|slice:'1:' }}{% endif %}">Next</a>
                 {% endif %}
             </nav>
         {% endif %}

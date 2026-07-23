@@ -58,6 +58,7 @@
 {% block hero_page_description %}Browse uploaded tracks in a clean list, keep loop control on each track, and make sure only one audio player runs at a time.{% endblock %}
 {% block hero_body %}
     {% if audios %}
+        {% include "includes/sort_controls.html" %}
         <div class="audio-list">
             {% for audio in audios %}
                 <article class="audio-row">
@@ -102,17 +103,17 @@
         {% if page_obj and page_obj.paginator.num_pages > 1 %}
             <nav class="audio-pagination">
                 {% if page_obj.has_previous %}
-                    <a href="?page={{ page_obj.previous_page_number }}">Prev</a>
+                    <a href="?page={{ page_obj.previous_page_number }}{% if pagination_suffix %}&{{ pagination_suffix|slice:'1:' }}{% endif %}">Prev</a>
                 {% endif %}
                 {% for page_number in page_obj.paginator.page_range %}
                     {% if page_number == page_obj.number %}
                         <span class="is-current">{{ page_number }}</span>
                     {% else %}
-                        <a href="?page={{ page_number }}">{{ page_number }}</a>
+                        <a href="?page={{ page_number }}{% if pagination_suffix %}&{{ pagination_suffix|slice:'1:' }}{% endif %}">{{ page_number }}</a>
                     {% endif %}
                 {% endfor %}
                 {% if page_obj.has_next %}
-                    <a href="?page={{ page_obj.next_page_number }}">Next</a>
+                    <a href="?page={{ page_obj.next_page_number }}{% if pagination_suffix %}&{{ pagination_suffix|slice:'1:' }}{% endif %}">Next</a>
                 {% endif %}
             </nav>
         {% endif %}
