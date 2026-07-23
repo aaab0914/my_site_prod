@@ -44,7 +44,7 @@ def stale_log_files(path: Path, days: int) -> list[str]:
 
 
 def main() -> int:
-    retention_days = int(os.environ.get("LOG_RETENTION_DAYS", "30"))
+    retention_days = int(os.environ.get("LOG_RETENTION_DAYS", "120"))
     report = {
         "generated_at_utc": datetime.now(tz=timezone.utc).isoformat(),
         "logs": directory_summary(PROJECT_DIR / "logs"),
