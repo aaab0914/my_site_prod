@@ -149,7 +149,7 @@ ROOT_URLCONF = "my_site.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",  # Django template engine
-        "DIRS": [BASE_DIR / "my_site" / "templates"],  # Project-level templates such as the public homepage
+        "DIRS": [str(BASE_DIR / "my_site" / "templates")],  # Project-level templates such as the public homepage
         "APP_DIRS": True,  # Whether to look for templates inside each app's 'templates/' directory
         "OPTIONS": {
             "context_processors": [  # Functions that add variables to every template context
