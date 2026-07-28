@@ -1,83 +1,81 @@
-{% extends "blog/base.html" %}
+{% extends "blog/hero_base.html" %}
 {% load blog_tags %}
 
 {% block title %}My_Site's Blog{% endblock %}
 
-{% block content %}
-    <h1>My_Site's Blog</h1>
+{% block hero_class %}hero-theme-teal{% endblock %}
+{% block hero_page_title %}My_Site's Blog{% endblock %}
+{% block hero_description %}
+<p class="page-hero-copy">Browse published posts and adjust the sort order without leaving the list.</p>
+{% endblock %}
+{% block hero_base_css %}
+<style>
+  .blog-home-body {
+    width: 100%;
+  }
+  .blog-home-body .sort-toolbar,
+  .blog-home-body .post-list,
+  .blog-home-body .pagination {
+    width: 100%;
+    max-width: none;
+    margin-left: 0;
+    margin-right: auto;
+  }
+</style>
+{% endblock %}
 
-    <!-- Display tag filter heading if a tag is selected -->
-    {% if tag %}
-        <h2>Posts tagged with "{{ tag.name }}"</h2>
-    {% endif %}
+{% block hero_body %}
+    <div class="blog-home-body">
+        {% if tag %}
+            <h2>Posts tagged with "{{ tag.name }}"</h2>
+        {% endif %}
 
-    {% include "includes/sort_controls.html" %}
+        {% include "includes/sort_controls.html" %}
 
-    <!-- Article list section -->
-    <div class="post-list">
-        <!-- Loop through each post in the paginated posts queryset -->
-        {% for post in posts %}
-            <div class="post-item" style="margin-bottom: 30px; border-bottom: 1px solid #eee; padding-bottom: 20px;">
+        <div class="post-list">
+            {% for post in posts %}
+                <div class="post-item" style="margin-bottom: 30px; border-bottom: 1px solid #eee; padding-bottom: 20px;">
+                    <h2>
+                        <a href="{{ post.get_absolute_url }}">{{ post.title }}</a>
+                    </h2>
 
-                <!-- Post title linked to its detail page -->
-                <h2>
-                    <a href="{{ post.get_absolute_url }}">{{ post.title }}</a>
-                </h2>
-
-                <!-- Display tags associated with this post -->
-                <p class="tags">
-                    Tags:
-                    {% for tag in post.tags.all %}
-                        {% if tag.slug %}
-                            <!--
-                              Each tag links to a filtered list of posts with that tag
-                              Requires a URL named 'blog:post_list_by_tag' in urls.py
-                              Example: /blog/tag/django/
-                            -->
-                            <a href="{% url "blog:post_list_by_tag" tag.slug %}" class="tag-button">
+                    <p class="tags">
+                        Tags:
+                        {% for tag in post.tags.all %}
+                            {% if tag.slug %}
+                                <a href="{% url "blog:post_list_by_tag" tag.slug %}" class="tag-button">
+                                    {{ tag.name }}
+                                </a>
+                            {% else %}
                                 {{ tag.name }}
-                            </a>
-                        {% else %}
-                            <!-- Fallback if tag has no slug (unlikely in proper Django setup) -->
-                            {{ tag.name }}
-                        {% endif %}
-                        <!-- Add comma separator for all but the last tag -->
-                        {% if not forloop.last %}, {% endif %}
-                    {% endfor %}
-                </p>
+                            {% endif %}
+                            {% if not forloop.last %}, {% endif %}
+                        {% endfor %}
+                    </p>
 
-                <div style="margin-top: 10px;">
-                    {{ post.body|markdown|striptags|truncatechars:100 }}
-                </div>
-
-                {% if post.cover_image %}
-                    <div style="margin: 12px 0 0;">
-                        <!--
-                          post.cover_image.url: Absolute URL to the uploaded image file
-                          Django automatically serves media files when DEBUG=True
-                        -->
-                        <img src="{{ post.get_cover_image_proxy_url }}" alt="{{ post.title }}"
-                             style="display: block; width: 100%; max-width: 420px; height: auto; max-height: 240px; object-fit: cover; border-radius: 8px;">
+                    <div style="margin-top: 10px;">
+                        {{ post.body|markdown|striptags|truncatechars:100 }}
                     </div>
-                {% endif %}
 
-                <!-- 发布时间移到了这里，在内容和封面图的下方 -->
-                <p class="date" style="margin-top: 12px;">
-                    Published {{ post.publish }} by
-                    <a href="{% url 'users:profile_by_username' post.author.username %}" class="author-button">
-                        {{ post.author }}
-                    </a>
-                </p>
-            </div>
-        {% endfor %}
-    </div>
+                    {% if post.cover_image %}
+                        <div style="margin: 12px 0 0;">
+                            <img src="{{ post.get_cover_image_proxy_url }}" alt="{{ post.title }}"
+                                 style="display: block; width: 100%; max-width: 420px; height: auto; max-height: 240px; object-fit: cover; border-radius: 8px;">
+                        </div>
+                    {% endif %}
 
-    <!--
-      Pagination controls displayed below the post list
-      Includes the page object (posts) as context
-      The pagination.html template handles previous/next page links
-    -->
-    <div style="margin-top: 20px; text-align: center; clear: both;">
-        {% include "blog/pagination.html" with page=posts %}
+                    <p class="date" style="margin-top: 12px;">
+                        Published {{ post.publish }} by
+                        <a href="{% url 'users:profile_by_username' post.author.username %}" class="author-button">
+                            {{ post.author }}
+                        </a>
+                    </p>
+                </div>
+            {% endfor %}
+        </div>
+
+        <div style="margin-top: 20px; text-align: center; clear: both;">
+            {% include "blog/pagination.html" with page=posts %}
+        </div>
     </div>
 {% endblock %}

@@ -9,7 +9,7 @@
 {% endblock %}
 
 {% block content %}
-<div id="content-main" style="max-width: 1180px;">
+<div id="content-main" style="max-width: 1280px;">
   <div class="app-blog module">
     <table>
       <caption>Database Backup Status</caption>
@@ -47,6 +47,16 @@
           <td>{{ item.path }}</td>
         </tr>
         {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="app-blog module" style="margin-top: 24px;">
+    <table>
+      <caption>Audit Control Status</caption>
+      <tbody>
+        <tr><th scope="row">Current policy</th><td>{{ audit_rate_limit_summary }}</td></tr>
+        <tr><th scope="row">Audit rows since current hour</th><td>{{ recent_audit_count }}</td></tr>
       </tbody>
     </table>
   </div>

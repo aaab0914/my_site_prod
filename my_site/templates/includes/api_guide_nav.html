@@ -1,0 +1,18 @@
+<section class="guide-panel">
+  <h2>Navigation</h2>
+  <div class="guide-actions">
+    <a class="guide-button" href="/blog/">Blog Home</a>
+    {% if show_token_link %}
+    <a class="guide-button alt" href="/users/api-token/">API Token</a>
+    {% endif %}
+    {% if show_endpoints_link %}
+    <a class="guide-button alt" href="/api/endpoints/">API Endpoints</a>
+    {% endif %}
+    {% if show_curl_link %}
+    <a class="guide-button alt" href="/api/guide/">cURL Guide</a>
+    {% endif %}
+    {% if show_python_link %}
+    <a class="guide-button alt" href="/api/python-guide/">Python Guide</a>
+    {% endif %}
+  </div>
+</section>

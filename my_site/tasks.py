@@ -8,6 +8,40 @@ from django.utils import timezone
 from blog.models import AuditLog
 
 
+LOG_FILE_PREFIXES = {
+    "django": "django",
+    "django-error": "django-error",
+    "celery": "celery",
+    "gunicorn-access": "gunicorn-access",
+    "gunicorn-error": "gunicorn-error",
+    "nginx-access": "nginx-access",
+    "nginx-error": "nginx-error",
+    "backup": "backup",
+}
+
+
+def ensure_daily_runtime_logs():
+    log_root = Path(settings.BASE_DIR) / "logs"
+    now = timezone.localtime()
+    month_dir = now.strftime("%Y-%m")
+    day = now.strftime("%Y-%m-%d")
+    created = []
+
+    for log_type, prefix in LOG_FILE_PREFIXES.items():
+        target_dir = log_root / log_type / month_dir
+        target_dir.mkdir(parents=True, exist_ok=True)
+        target_file = target_dir / f"{prefix}-{day}.log"
+        if not target_file.exists():
+            target_file.touch()
+            created.append(str(target_file))
+
+    return {
+        "log_root": str(log_root),
+        "created": created,
+        "ensured": [str((log_root / log_type / month_dir / f"{prefix}-{day}.log")) for log_type, prefix in LOG_FILE_PREFIXES.items()],
+    }
+
+
 @shared_task
 def sync_site_media_task():
     return {
@@ -43,7 +77,7 @@ def purge_old_runtime_logs_task(days=30):
         file_path.unlink(missing_ok=True)
         deleted_files += 1
 
-    month_dirs = sorted((path for path in log_root.iterdir() if path.is_dir()), reverse=True)
+    month_dirs = sorted((path for path in log_root.rglob("*") if path.is_dir()), reverse=True)
     for directory in month_dirs:
         try:
             next(directory.iterdir())
@@ -58,3 +92,8 @@ def purge_old_runtime_logs_task(days=30):
         "deleted_dirs": deleted_dirs,
         "log_root": str(log_root),
     }
+
+
+@shared_task
+def ensure_daily_runtime_logs_task():
+    return ensure_daily_runtime_logs()

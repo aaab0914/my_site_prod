@@ -1,0 +1,16 @@
+<script>
+document.querySelectorAll('[data-copy-target]').forEach(function (button) {
+  button.addEventListener('click', async function () {
+    const target = document.getElementById(button.getAttribute('data-copy-target'));
+    if (!target) return;
+    try {
+      await navigator.clipboard.writeText(target.textContent.trim());
+      button.classList.add('is-copied');
+      setTimeout(function () { button.classList.remove('is-copied'); }, 1200);
+    } catch (err) {
+      button.classList.add('is-failed');
+      setTimeout(function () { button.classList.remove('is-failed'); }, 1200);
+    }
+  });
+});
+</script>

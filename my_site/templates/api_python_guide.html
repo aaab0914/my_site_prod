@@ -1,0 +1,121 @@
+{% extends "blog/hero_base.html" %}
+{% block title %}Python API Guide{% endblock %}
+{% block hero_base_css %}
+{% include "includes/api_guide_shared_css.html" %}
+{% endblock %}
+{% block hero_shell_class %}guide-page{% endblock %}
+{% block hero_class %}hero-theme-teal{% endblock %}
+{% block hero_pretitle %}<p class="eyebrow">Python API Guide</p>{% endblock %}
+{% block hero_page_title %}Use the API With Python Only{% endblock %}
+{% block hero_page_description %}This page now follows the same hero-base layout as the rest of the site and keeps Python examples grouped into clearer categories.{% endblock %}
+{% block hero_body %}
+<div class="guide-grid">
+  <section class="guide-panel">
+    <h2>Python Only</h2>
+    <ul class="guide-list">
+      <li>Search posts and comments.</li>
+      <li>Read the latest 10 posts or comments.</li>
+      <li>Create, edit, and delete posts and comments.</li>
+      <li>Replace <code>YOUR_TOKEN_HERE</code> before running.</li>
+    </ul>
+    <div class="guide-note">All examples use <code>requests</code>. Install it first if needed with <code>pip install requests</code>.</div>
+  </section>
+  {% include "includes/api_guide_nav.html" with show_token_link=True show_endpoints_link=True %}
+</div>
+{% include "includes/api_guide_categories.html" with current_guide='python' %}
+<section class="guide-panel">
+  <h2>Live API Endpoints</h2>
+  <div class="guide-actions">
+    <a class="guide-button" href="/blog/api/posts/">Posts API</a>
+    <a class="guide-button alt" href="/blog/api/comments/">Comments API</a>
+  </div>
+</section>
+<section class="guide-panel">
+  <h2>10 Python Examples</h2>
+  <div class="example-stack">
+    <div class="example"><h4>Python: Search Posts</h4><div class="code-wrap"><button class="copy-button" type="button" data-copy-target="py-search-posts" aria-label="Copy"></button><pre id="py-search-posts">import requests
+
+url = "https://rgavanp.kdns.fr/blog/api/posts/?search=API"
+response = requests.get(url, timeout=30)
+print(response.status_code)
+print(response.text)</pre></div></div>
+    <div class="example"><h4>Python: Search Comments</h4><div class="code-wrap"><button class="copy-button" type="button" data-copy-target="py-search-comments" aria-label="Copy"></button><pre id="py-search-comments">import requests
+
+url = "https://rgavanp.kdns.fr/blog/api/comments/?search=python"
+response = requests.get(url, timeout=30)
+print(response.status_code)
+print(response.text)</pre></div></div>
+    <div class="example"><h4>Python: Recent 10 Posts</h4><div class="code-wrap"><button class="copy-button" type="button" data-copy-target="py-recent-posts" aria-label="Copy"></button><pre id="py-recent-posts">import requests
+
+url = "https://rgavanp.kdns.fr/blog/api/posts/"
+response = requests.get(url, timeout=30)
+print(response.status_code)
+for item in response.json()[:10]:
+    print(item["id"], item["title"], item["publish"])</pre></div></div>
+    <div class="example"><h4>Python: Recent 10 Comments</h4><div class="code-wrap"><button class="copy-button" type="button" data-copy-target="py-recent-comments" aria-label="Copy"></button><pre id="py-recent-comments">import requests
+
+url = "https://rgavanp.kdns.fr/blog/api/comments/"
+response = requests.get(url, timeout=30)
+print(response.status_code)
+for item in response.json()[:10]:
+    print(item["id"], item["post_title"], item["body"])</pre></div></div>
+    <div class="example"><h4>Python: Read One Post</h4><div class="code-wrap"><button class="copy-button" type="button" data-copy-target="py-one-post" aria-label="Copy"></button><pre id="py-one-post">import requests
+
+post_id = 1
+url = f"https://rgavanp.kdns.fr/blog/api/posts/{post_id}/"
+response = requests.get(url, timeout=30)
+print(response.status_code)
+print(response.text)</pre></div></div>
+    <div class="example"><h4>Python: Read One Comment</h4><div class="code-wrap"><button class="copy-button" type="button" data-copy-target="py-one-comment" aria-label="Copy"></button><pre id="py-one-comment">import requests
+
+comment_id = 1
+url = f"https://rgavanp.kdns.fr/blog/api/comments/{comment_id}/"
+response = requests.get(url, timeout=30)
+print(response.status_code)
+print(response.text)</pre></div></div>
+    <div class="example"><h4>Python: Create Post</h4><div class="code-wrap"><button class="copy-button" type="button" data-copy-target="py-create-post" aria-label="Copy"></button><pre id="py-create-post">import requests
+
+token = "YOUR_TOKEN_HERE"
+url = "https://rgavanp.kdns.fr/blog/api/posts/"
+payload = {
+    "title": "API Post",
+    "slug": "api-post-example-change-this-slug",
+    "body": "posted from python api",
+    "status": "PB",
+    "tags": ["#api", "#python"],
+}
+response = requests.post(url, headers={"Authorization": f"Token {token}", "Content-Type": "application/json"}, json=payload, timeout=30)
+print(response.status_code)
+print(response.text)</pre></div></div>
+    <div class="example"><h4>Python: Create Comment</h4><div class="code-wrap"><button class="copy-button" type="button" data-copy-target="py-create-comment" aria-label="Copy"></button><pre id="py-create-comment">import requests
+
+token = "YOUR_TOKEN_HERE"
+url = "https://rgavanp.kdns.fr/blog/api/comments/"
+payload = {
+    "post": 1,
+    "body": "comment from python api",
+}
+response = requests.post(url, headers={"Authorization": f"Token {token}", "Content-Type": "application/json"}, json=payload, timeout=30)
+print(response.status_code)
+print(response.text)</pre></div></div>
+    <div class="example"><h4>Python: Edit Post</h4><div class="code-wrap"><button class="copy-button" type="button" data-copy-target="py-edit-post" aria-label="Copy"></button><pre id="py-edit-post">import requests
+
+token = "YOUR_TOKEN_HERE"
+post_id = 1
+url = f"https://rgavanp.kdns.fr/blog/api/posts/{post_id}/"
+payload = {"title": "Updated title from python", "body": "updated body from python api"}
+response = requests.patch(url, headers={"Authorization": f"Token {token}", "Content-Type": "application/json"}, json=payload, timeout=30)
+print(response.status_code)
+print(response.text)</pre></div></div>
+    <div class="example"><h4>Python: Delete Comment</h4><div class="code-wrap"><button class="copy-button" type="button" data-copy-target="py-delete-comment" aria-label="Copy"></button><pre id="py-delete-comment">import requests
+
+token = "YOUR_TOKEN_HERE"
+headers = {"Authorization": f"Token {token}"}
+comment_response = requests.delete("https://rgavanp.kdns.fr/blog/api/comments/1/", headers=headers, timeout=30)
+print("comment", comment_response.status_code, comment_response.text)</pre></div></div>
+  </div>
+</section>
+{% endblock %}
+{% block extra_scripts %}
+{% include "includes/api_guide_copy_script.html" %}
+{% endblock %}

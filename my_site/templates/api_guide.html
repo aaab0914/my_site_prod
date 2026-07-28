@@ -1,0 +1,51 @@
+{% extends "blog/hero_base.html" %}
+{% block title %}cURL API Guide{% endblock %}
+{% block hero_base_css %}
+{% include "includes/api_guide_shared_css.html" %}
+{% endblock %}
+{% block hero_shell_class %}guide-page{% endblock %}
+{% block hero_class %}hero-theme-teal{% endblock %}
+{% block hero_pretitle %}<p class="eyebrow">cURL API Guide</p>{% endblock %}
+{% block hero_page_title %}Read API Output With cURL{% endblock %}
+{% block hero_page_description %}This page now follows the same hero-base layout as the rest of the site and keeps cURL examples grouped into clearer categories.{% endblock %}
+{% block hero_body %}
+<div class="guide-grid">
+  <section class="guide-panel">
+    <h2>How These Examples Work</h2>
+    <ul class="guide-list">
+      <li>Use small result windows such as the latest 10 posts or comments.</li>
+      <li>Search posts with <code>?search=keyword</code>.</li>
+      <li>Search comments with <code>?search=keyword</code>.</li>
+      <li>Use token auth only for create, edit, or delete operations.</li>
+    </ul>
+    <div class="guide-note">If 您 prefer Python scripts only, use the separate <code>/api/python-guide/</code> page.</div>
+  </section>
+  {% include "includes/api_guide_nav.html" with show_token_link=True show_endpoints_link=True %}
+</div>
+{% include "includes/api_guide_categories.html" with current_guide='curl' %}
+<section class="guide-panel">
+  <h2>Live API Endpoints</h2>
+  <div class="guide-actions">
+    <a class="guide-button" href="/blog/api/posts/">Posts API</a>
+    <a class="guide-button alt" href="/blog/api/comments/">Comments API</a>
+  </div>
+</section>
+<section class="guide-panel">
+  <h2>cURL Examples</h2>
+  <div class="example-stack">
+    <div class="example"><h4>cURL: Search Posts</h4><div class="code-wrap"><button class="copy-button" type="button" data-copy-target="curl-1" aria-label="Copy"></button><pre id="curl-1">curl "https://rgavanp.kdns.fr/blog/api/posts/?search=API"</pre></div></div>
+    <div class="example"><h4>cURL: Search Comments</h4><div class="code-wrap"><button class="copy-button" type="button" data-copy-target="curl-2" aria-label="Copy"></button><pre id="curl-2">curl "https://rgavanp.kdns.fr/blog/api/comments/?search=python"</pre></div></div>
+    <div class="example"><h4>cURL: Recent 10 Posts</h4><div class="code-wrap"><button class="copy-button" type="button" data-copy-target="curl-3" aria-label="Copy"></button><pre id="curl-3">curl "https://rgavanp.kdns.fr/blog/api/posts/" | jq '.[0:10]'</pre></div></div>
+    <div class="example"><h4>cURL: Recent 10 Comments</h4><div class="code-wrap"><button class="copy-button" type="button" data-copy-target="curl-4" aria-label="Copy"></button><pre id="curl-4">curl "https://rgavanp.kdns.fr/blog/api/comments/" | jq '.[0:10]'</pre></div></div>
+    <div class="example"><h4>cURL: Read One Post</h4><div class="code-wrap"><button class="copy-button" type="button" data-copy-target="curl-5" aria-label="Copy"></button><pre id="curl-5">curl "https://rgavanp.kdns.fr/blog/api/posts/1/"</pre></div></div>
+    <div class="example"><h4>cURL: Read One Comment</h4><div class="code-wrap"><button class="copy-button" type="button" data-copy-target="curl-6" aria-label="Copy"></button><pre id="curl-6">curl "https://rgavanp.kdns.fr/blog/api/comments/1/"</pre></div></div>
+    <div class="example"><h4>cURL: Create Post</h4><div class="code-wrap"><button class="copy-button" type="button" data-copy-target="curl-7" aria-label="Copy"></button><pre id="curl-7">curl -X POST "https://rgavanp.kdns.fr/blog/api/posts/" -H "Authorization: Token YOUR_TOKEN_HERE" -H "Content-Type: application/json" -d '{"title":"API Post","slug":"api-post-example-change-this-slug","body":"posted from api","status":"PB","tags":["#api"]}'</pre></div></div>
+    <div class="example"><h4>cURL: Create Comment</h4><div class="code-wrap"><button class="copy-button" type="button" data-copy-target="curl-8" aria-label="Copy"></button><pre id="curl-8">curl -X POST "https://rgavanp.kdns.fr/blog/api/comments/" -H "Authorization: Token YOUR_TOKEN_HERE" -H "Content-Type: application/json" -d '{"post":1,"body":"comment from api"}'</pre></div></div>
+    <div class="example"><h4>cURL: Edit Post</h4><div class="code-wrap"><button class="copy-button" type="button" data-copy-target="curl-9" aria-label="Copy"></button><pre id="curl-9">curl -X PATCH "https://rgavanp.kdns.fr/blog/api/posts/1/" -H "Authorization: Token YOUR_TOKEN_HERE" -H "Content-Type: application/json" -d '{"title":"Updated title from api"}'</pre></div></div>
+    <div class="example"><h4>cURL: Delete Comment</h4><div class="code-wrap"><button class="copy-button" type="button" data-copy-target="curl-10" aria-label="Copy"></button><pre id="curl-10">curl -X DELETE "https://rgavanp.kdns.fr/blog/api/comments/1/" -H "Authorization: Token YOUR_TOKEN_HERE"</pre></div></div>
+  </div>
+</section>
+{% endblock %}
+{% block extra_scripts %}
+{% include "includes/api_guide_copy_script.html" %}
+{% endblock %}

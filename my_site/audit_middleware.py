@@ -2,6 +2,7 @@ import logging
 import time
 
 from django.conf import settings
+from django.core.cache import cache
 
 from blog.models import AuditLog
 
@@ -19,6 +20,8 @@ _SKIP_PREFIXES = (
     "/metrics",
     "/celery-metrics/",
 )
+
+_SAFE_METHOD_RATE_LIMIT_SECONDS = 60 * 60
 
 
 class AuditLoggingMiddleware:
@@ -41,6 +44,8 @@ class AuditLoggingMiddleware:
             response = self.get_response(request)
             response_time = time.time() - start_time
             if not self.should_log(request, response):
+                return response
+            if self.should_skip_due_to_rate_limit(request, response):
                 return response
 
             ip = self.get_client_ip(request)
@@ -70,13 +75,27 @@ class AuditLoggingMiddleware:
 
         method = (request.method or "GET").upper()
         if path.startswith(self.admin_prefix):
-            return True
+            return method in {"POST", "PUT", "PATCH", "DELETE"} or response.status_code >= 400
         if method in {"POST", "PUT", "PATCH", "DELETE"}:
             return True
         if path.startswith(self.auth_paths):
             return True
         if response.status_code >= 400:
             return True
+        return False
+
+    def should_skip_due_to_rate_limit(self, request, response):
+        method = (request.method or "GET").upper()
+        if method not in {"GET", "HEAD", "OPTIONS"}:
+            return False
+
+        ip = self.get_client_ip(request) or "unknown"
+        user_id = getattr(request.user, "pk", None) or "anonymous"
+        status_code = response.status_code or 0
+        cache_key = f"audit-rate:{method}:{request.path}:{status_code}:{ip}:{user_id}"
+        if cache.get(cache_key):
+            return True
+        cache.set(cache_key, True, timeout=_SAFE_METHOD_RATE_LIMIT_SECONDS)
         return False
 
     def get_client_ip(self, request):

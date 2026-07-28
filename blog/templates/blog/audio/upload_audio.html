@@ -255,7 +255,7 @@
             <div class="audio-upload-field">
                 <label for="{{ form.cover_image.id_for_label }}">Cover image</label>
                 {{ form.cover_image }}
-                <div class="audio-upload-help">Optional. Supported: JPG, PNG, WebP. Max 3MB. Applied when uploading a single track.</div>
+                <div class="audio-upload-help">Optional. Supported: JPG, JPEG, PNG, WebP, GIF. Max 5MB. Applied when uploading a single track. Media cache is 90 days across 15 formats total: 5 image, 5 audio, and 5 video formats.</div>
                 {% if form.cover_image.errors %}
                     <div class="audio-upload-error">{{ form.cover_image.errors }}</div>
                 {% endif %}
@@ -280,8 +280,8 @@
         <aside class="audio-upload-side">
             <section class="audio-upload-panel audio-upload-note">
                 <div class="audio-upload-stats">
-                    <span class="audio-upload-pill">Formats: MP3, WAV, OGG</span>
-                    <span class="audio-upload-pill">Max file size: 25 MB</span>
+                    <span class="audio-upload-pill">Formats: MP3, WAV, OGG, M4A, FLAC</span>
+                    <span class="audio-upload-pill">Max file size: 10 MB</span>
                     <span class="audio-upload-pill">Login required</span>
                 </div>
             </section>
@@ -291,7 +291,7 @@
                     <li>Single upload must include a track title.</li>
                     <li>Paste or select up to 10 files per submission.</li>
                     <li>Each file must stay within 25 MB.</li>
-                    <li>Supported formats: MP3, WAV, OGG.</li>
+                    <li>Supported formats: MP3, WAV, OGG, M4A, FLAC.</li>
                 </ul>
             </section>
 

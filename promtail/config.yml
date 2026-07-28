@@ -9,23 +9,44 @@ clients:
   - url: http://loki:3100/loki/api/v1/push
 
 scrape_configs:
-  - job_name: my-site-logs
+  - job_name: django-and-gunicorn
     static_configs:
       - targets: [localhost]
         labels:
-          job: my-site-logs
+          job: my-site
           host: ${HOSTNAME}
-          __path__: /var/log/my_site/**/*.log
+          source: app
+          __path__: /var/log/my_site/*/*/*.log
+    relabel_configs:
+      - source_labels: [__path__]
+        regex: '.*/([^/]+)/\d{4}-\d{2}/[^/]+-\d{4}-\d{2}-\d{2}\.log'
+        target_label: log_type
+        replacement: '$1'
     pipeline_stages:
       - regex:
           expression: '^(?P<level>[A-Z]+) (?P<ts>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d+) (?P<module>\S+) (?P<process>\d+) (?P<thread>\d+) (?P<message>.*)$'
       - labels:
           level:
           module:
+          log_type:
       - timestamp:
           source: ts
           format: '2006-01-02 15:04:05,000'
           location: UTC
+
+  - job_name: nginx
+    static_configs:
+      - targets: [localhost]
+        labels:
+          job: nginx
+          host: ${HOSTNAME}
+          source: nginx
+          __path__: /var/log/my_site/nginx-*/*.log
+    relabel_configs:
+      - source_labels: [__path__]
+        regex: '.*/([^/]+)/[^/]+\.log'
+        target_label: log_type
+        replacement: '$1'
 
   - job_name: backup-log
     static_configs:
@@ -33,4 +54,5 @@ scrape_configs:
         labels:
           job: backup-log
           host: ${HOSTNAME}
+          source: backup
           __path__: /var/log/my_site/backup.log

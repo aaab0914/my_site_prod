@@ -1,0 +1,35 @@
+{% extends "blog/hero_base.html" %}
+{% block title %}Success{% endblock %}
+{% block hero_page_title %}{{ title }}{% endblock %}
+{% block hero_page_description %}{{ message }}{% endblock %}
+{% block content_body %}
+<section class="page-card" style="max-width:920px;margin:0 auto;padding:28px;border:1px solid #d7e1ea;border-radius:24px;background:#fff;box-shadow:0 16px 36px rgba(15,23,42,.08);">
+  <p style="margin:0 0 22px;color:#546779;line-height:1.75;font-size:16px;">{{ message }}</p>
+  <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:18px;">
+    <a href="{{ primary_url }}" style="display:inline-flex;align-items:center;justify-content:center;padding:12px 20px;border-radius:999px;text-decoration:none;background:linear-gradient(135deg,#0f766e,#14532d);color:#fff;font-weight:700;">{{ primary_label }}</a>
+    {% if secondary_url and secondary_label %}<a href="{{ secondary_url }}" style="display:inline-flex;align-items:center;justify-content:center;padding:12px 20px;border-radius:999px;text-decoration:none;background:#e9eef3;color:#21384b;font-weight:700;">{{ secondary_label }}</a>{% endif %}
+  </div>
+  <div style="border-top:1px solid #e5edf3;padding-top:18px;display:flex;gap:12px;flex-wrap:wrap;">
+    <a href="/blog/" style="display:inline-flex;align-items:center;justify-content:center;padding:11px 18px;border-radius:999px;text-decoration:none;background:#f5f7fb;color:#1f3b53;font-weight:700;border:1px solid #d7e1ea;">Blog</a>
+    <a href="/blog/gallery/" style="display:inline-flex;align-items:center;justify-content:center;padding:11px 18px;border-radius:999px;text-decoration:none;background:#f5f7fb;color:#1f3b53;font-weight:700;border:1px solid #d7e1ea;">Gallery</a>
+    <a href="/blog/gallery/upload/" style="display:inline-flex;align-items:center;justify-content:center;padding:11px 18px;border-radius:999px;text-decoration:none;background:#f5f7fb;color:#1f3b53;font-weight:700;border:1px solid #d7e1ea;">Upload Media</a>
+  </div>
+</section>
+{% endblock %}
+{% block extra_scripts %}
+<script>
+(function () {
+  if (window.history && window.history.replaceState) {
+    window.history.replaceState(null, '', '/');
+  }
+  window.addEventListener('pageshow', function (event) {
+    if (event.persisted) {
+      window.location.replace('/');
+    }
+  });
+  window.addEventListener('popstate', function () {
+    window.location.replace('/');
+  });
+})();
+</script>
+{% endblock %}

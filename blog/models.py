@@ -40,6 +40,8 @@ from markdownx.models import MarkdownxField
 # MarkdownxField: A custom model field that stores Markdown content.
 
 from taggit.managers import TaggableManager
+
+from my_site.media_naming import dated_media_upload_to, media_display_name
 # TaggableManager: Manages many-to-many relationships with tags.
 
 
@@ -86,7 +88,7 @@ class Post(models.Model):
 
     # Core fields
     title = models.CharField(max_length=250)
-    cover_image = models.ImageField(upload_to="posts/%Y/%m/%d/", blank=True, null=True)
+    cover_image = models.ImageField(upload_to=dated_media_upload_to("posts"), blank=True, null=True)
     slug = models.SlugField(max_length=250, unique_for_date="publish")
     author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="blog_posts")
     body = MarkdownxField()
@@ -172,7 +174,7 @@ class Comment(models.Model):
     author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="blog_comments")
     email = models.EmailField()
     body = models.CharField(max_length=1000)
-    image = models.ImageField(upload_to="comments/%Y/%m/%d/", blank=True, null=True)
+    image = models.ImageField(upload_to=dated_media_upload_to("comments"), blank=True, null=True)
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
     active = models.BooleanField(default=True)
@@ -213,8 +215,8 @@ class AudioPost(models.Model):
         - Active/inactive state management
         - Automatic timestamp tracking
     """
-    audio_file = models.FileField(upload_to="audio/%Y/%m/%d")
-    cover_image = models.ImageField(upload_to="audio/covers/%Y/%m/%d", blank=True, null=True)
+    audio_file = models.FileField(upload_to=dated_media_upload_to("audio"))
+    cover_image = models.ImageField(upload_to=dated_media_upload_to("audio/covers"), blank=True, null=True)
     description = models.TextField(blank=True)
     uploaded_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="audio_posts")
     music_name = models.CharField(max_length=200, blank=True)
@@ -227,22 +229,22 @@ class AudioPost(models.Model):
         indexes = [models.Index(fields=["created"])]
 
     def __str__(self):
-        return self.music_name or self.audio_file.name.rsplit("/", 1)[-1]
+        return self.music_name or media_display_name(self.audio_file)
 
     def save(self, *args, **kwargs):
         if not self.music_name and self.audio_file:
-            self.music_name = os.path.splitext(os.path.basename(self.audio_file.name))[0]
+            self.music_name = os.path.splitext(media_display_name(self.audio_file))[0]
         super().save(*args, **kwargs)
 
     def get_audio_filename(self):
         if not self.audio_file:
             return ""
-        return self.audio_file.name.rsplit("/", 1)[-1]
+        return media_display_name(self.audio_file)
 
     def get_cover_filename(self):
         if not self.cover_image:
             return ""
-        return self.cover_image.name.rsplit("/", 1)[-1]
+        return media_display_name(self.cover_image)
 
     def get_audio_proxy_url(self):
         if not self.audio_file:
@@ -259,7 +261,7 @@ class AudioPost(models.Model):
 
 
 class VideoPost(models.Model):
-    video_file = models.FileField(upload_to="videos/%Y/%m/%d")
+    video_file = models.FileField(upload_to=dated_media_upload_to("videos"))
     title = models.CharField(max_length=200, blank=True)
     description = models.TextField(blank=True)
     uploaded_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="video_posts")
@@ -281,7 +283,7 @@ class VideoPost(models.Model):
     def get_video_filename(self):
         if not self.video_file:
             return ""
-        return self.video_file.name.rsplit("/", 1)[-1]
+        return media_display_name(self.video_file)
 
     def get_video_proxy_url(self):
         if not self.video_file:

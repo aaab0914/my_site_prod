@@ -7,6 +7,24 @@
         gap: 22px;
     }
 
+    .hero-page-kicker {
+        min-height: 18px;
+        margin-bottom: 12px;
+        display: flex;
+        align-items: center;
+    }
+
+    .hero-page-kicker:empty {
+        margin-bottom: 12px;
+    }
+
+    .hero-page-kicker .eyebrow {
+        margin: 0;
+        display: inline-flex;
+        align-items: center;
+        min-height: 18px;
+    }
+
     .hero-page-header {
         position: relative;
         overflow: hidden;
@@ -100,7 +118,7 @@
 
 <section class="page-shell hero-page-shell {% block hero_shell_class %}{% endblock %}">
     <header class="page-hero hero-page-header {% block hero_class %}{% endblock %}">
-        {% block hero_pretitle %}{% endblock %}
+        <div class="hero-page-kicker">{% block hero_pretitle %}{% endblock %}</div>
         <h1 class="page-hero-title">{% block hero_page_title %}{% endblock %}</h1>
         {% block hero_description %}
             <p class="page-hero-copy">{% block hero_page_description %}{% endblock %}</p>

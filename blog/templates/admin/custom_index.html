@@ -13,6 +13,29 @@
   {% include "admin/app_list.html" with app_list=app_list show_changelinks=True %}
   <div class="app-blog module" style="margin-top: 24px;">
     <table>
+      <caption>Quick Links</caption>
+      <tbody>
+        <tr class="model-gallery">
+          <th scope="row"><a href="/blog/gallery/">Gallery</a></th>
+          <td>Open the public gallery page.</td>
+        </tr>
+        <tr class="model-galleryupload">
+          <th scope="row"><a href="/blog/gallery/upload/">Upload Gallery</a></th>
+          <td>Upload a new gallery image.</td>
+        </tr>
+        <tr class="model-album">
+          <th scope="row"><a href="/blog/album/">Album</a></th>
+          <td>Open the public album page.</td>
+        </tr>
+        <tr class="model-albumupload">
+          <th scope="row"><a href="/blog/album/upload/">Upload Album</a></th>
+          <td>Upload a new album.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="app-blog module" style="margin-top: 24px;">
+    <table>
       <caption>System Monitoring</caption>
       <tbody>
         <tr class="model-systemstatus">

@@ -1,0 +1,96 @@
+{% extends "blog/hero_base.html" %}
+{% block title %}API Token{% endblock %}
+{% block hero_base_css %}
+<style>
+.token-shell { display:grid; gap:22px; }
+.token-grid { display:grid; grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr); gap:22px; align-items:start; }
+.token-panel { padding:24px; border-radius:22px; border:1px solid #d7e1ea; background:#fff; box-shadow:0 16px 36px rgba(15,23,42,.08); }
+.token-panel h2, .token-panel h3 { margin:0 0 14px; color:#16283a; }
+.token-title-row h2 { margin:0; }
+.token-note, .token-list, .token-example-group p { color:#526677; line-height:1.7; }
+.token-warning { margin-bottom:14px; padding:14px 16px; border-radius:16px; background:#fff7ed; border:1px solid #fdba74; color:#9a3412; }
+.token-actions { display:flex; gap:12px; flex-wrap:wrap; align-items:center; margin-top:16px; }
+.token-button, .token-link { display:inline-flex; align-items:center; justify-content:center; border:0; border-radius:999px; padding:12px 18px; text-decoration:none; font-weight:700; cursor:pointer; }
+.token-button { background:linear-gradient(135deg,#0f766e,#14532d); color:#fff; }
+.token-button[disabled] { opacity:.55; cursor:not-allowed; }
+.token-link { background:#e9eef3; color:#21384b; }
+.token-actions-note { color:#7a4b16; font-size:14px; font-weight:700; }
+.token-list { margin:0; padding-left:18px; }
+.token-examples { display:grid; gap:18px; }
+.token-example-group { padding:18px; border-radius:18px; background:#f8fbfd; border:1px solid #dde7f0; }
+.token-example-group h4 { margin:0 0 10px; color:#173247; font-size:15px; }
+.token-code-shell { margin-top:10px; padding:14px; border-radius:18px; border:1px solid #d7e1ea; background:#fff; }
+.token-code-wrap { position:relative; }
+.token-code { margin:0; padding:14px 62px 14px 16px; border-radius:16px; background:#0f172a; color:#e2e8f0; overflow-x:auto; white-space:pre-wrap; word-break:break-word; font:13px/1.7 Consolas,Monaco,monospace; }
+.copy-button { position:absolute; top:10px; right:10px; width:36px; height:36px; border:0; border-radius:999px; background:#eef2f7; color:#0f172a; cursor:pointer; }
+.copy-button::before, .copy-button::after { content:""; position:absolute; width:14px; height:14px; border:2px solid currentColor; border-radius:3px; box-sizing:border-box; }
+.copy-button::before { transform:translate(2px,-2px); }
+.copy-button::after { transform:translate(-2px,2px); }
+.copy-button.is-copied { background:#d1fae5; color:#166534; }
+.copy-button.is-failed { background:#fee2e2; color:#991b1b; }
+@media screen and (max-width:980px) { .token-grid { grid-template-columns:1fr; } }
+</style>
+{% endblock %}
+{% block hero_shell_class %}token-shell{% endblock %}
+{% block hero_class %}hero-theme-teal{% endblock %}
+{% block hero_page_title %}Python Token Center{% endblock %}
+{% block hero_description %}<p class="page-hero-copy">Copy your token once, then use Python commands only. This page no longer shows curl or PowerShell.</p>{% endblock %}
+{% block hero_body %}
+<div class="token-grid">
+<section class="token-panel">
+<div class="token-title-row"><h2>Your Token</h2></div>
+<p class="token-note">After you get this token, later Python API requests use the token header instead of your password. If you regenerate it, the old token stops working immediately.</p>
+{% if generated_now %}<div class="token-warning">A new token was generated just now. The old token has been invalidated and removed.</div>{% endif %}
+<div class="token-code-shell"><div class="token-code-wrap"><button class="copy-button" type="button" data-copy-target="token-value" aria-label="Copy token"></button><pre class="token-code" id="token-value">{{ token.key }}</pre></div></div>
+<div class="token-actions">
+<form method="post">{% csrf_token %}<input type="hidden" name="action" value="regenerate"><button class="token-button" type="submit" {% if not can_regenerate_token %}disabled{% endif %}>Regenerate Token</button></form>
+{% if is_admin_token %}<span class="token-actions-note">Administrators can regenerate at any time.</span>{% elif token_regeneration_remaining_days > 0 %}<span class="token-actions-note">You can generate a new token again in {{ token_regeneration_remaining_days }} day(s).</span>{% else %}<span class="token-actions-note">You can generate a new token once every {{ token_regeneration_cooldown_days }} days.</span>{% endif %}
+<a class="token-link" href="/api/python-guide/">Open Python API Guide</a>
+</div>
+</section>
+<aside class="token-panel">
+<h3>How to Use It</h3>
+<ol class="token-list">
+<li>Log into the website.</li>
+<li>Copy your token from this page.</li>
+<li>Paste the token into the Python code.</li>
+<li>Run the script from your own terminal.</li>
+</ol>
+<h3 style="margin-top:18px;">Permission Split</h3>
+<ul class="token-list">
+<li>Anonymous users can only read public API data.</li>
+<li>Normal user token can create content and manage only that user's own content.</li>
+<li>Administrator token can manage all API content.</li>
+<li>After you already have a token, later API requests do not need the password again.</li>
+</ul>
+</aside>
+</div>
+<section class="token-panel token-examples">
+<h3>10 Python Examples</h3>
+{% for example in python_examples %}
+<div class="token-example-group">
+<h4>{{ example.title }}</h4>
+<p>{{ example.description }}</p>
+<div class="token-code-shell"><div class="token-code-wrap"><button class="copy-button" type="button" data-copy-target="{{ example.dom_id }}" aria-label="Copy Python example"></button><pre class="token-code" id="{{ example.dom_id }}">{{ example.code }}</pre></div></div>
+</div>
+{% endfor %}
+</section>
+{% endblock %}
+{% block extra_scripts %}
+<script>
+document.querySelectorAll('[data-copy-target]').forEach(function (button) {
+  button.addEventListener('click', async function () {
+    const target = document.getElementById(button.getAttribute('data-copy-target'));
+    if (!target) return;
+    try {
+      await navigator.clipboard.writeText(target.textContent.trim());
+      button.classList.add('is-copied');
+      setTimeout(function () { button.classList.remove('is-copied'); }, 1200);
+    } catch (err) {
+      button.classList.add('is-failed');
+      setTimeout(function () { button.classList.remove('is-failed'); }, 1200);
+    }
+  });
+});
+</script>
+{% endblock %}

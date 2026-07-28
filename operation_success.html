@@ -1,0 +1,13 @@
+{% extends "blog/hero_base.html" %}
+{% block title %}Success{% endblock %}
+{% block hero_page_title %}{{ title }}{% endblock %}
+{% block hero_page_description %}{{ message }}{% endblock %}
+{% block hero_content %}
+<section class="page-card" style="max-width:860px;margin:0 auto;padding:24px;border:1px solid #d7e1ea;border-radius:20px;background:#fff;box-shadow:0 16px 36px rgba(15,23,42,.08);">
+  <p style="margin:0 0 18px;color:#546779;line-height:1.7;">{{ message }}</p>
+  <div style="display:flex;gap:12px;flex-wrap:wrap;">
+    <a href="{{ primary_url }}" style="display:inline-flex;align-items:center;justify-content:center;padding:12px 20px;border-radius:999px;text-decoration:none;background:linear-gradient(135deg,#0f766e,#14532d);color:#fff;font-weight:700;">{{ primary_label }}</a>
+    {% if secondary_url and secondary_label %}<a href="{{ secondary_url }}" style="display:inline-flex;align-items:center;justify-content:center;padding:12px 20px;border-radius:999px;text-decoration:none;background:#e9eef3;color:#21384b;font-weight:700;">{{ secondary_label }}</a>{% endif %}
+  </div>
+</section>
+{% endblock %}

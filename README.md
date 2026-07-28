@@ -1,16 +1,19 @@
 # My Site - Django Blog and Media Platform
 
-> A Docker-based Django platform for blogging, image galleries, albums, audio publishing, protected media delivery, user profiles, background jobs, and operations tooling.
+> A Docker-based Django platform for blogging, image galleries, albums, audio publishing, video publishing, protected media delivery, user profiles, API access, search, background jobs, and operations tooling.
 
 ## Current Feature Set
 
 ### Blog
 - Create, edit, publish, and delete posts
 - Markdown-based post authoring
-- Tag filtering and post search
+- Automatic slug generation and unique publish-date constraints
+- Tag support with normalized display rules
+- Blog search with sorting and pagination
 - RSS feeds for global and per-user content
 - Comment creation, editing, and deletion
 - Profile-linked author browsing
+- Operation success flows after create and upload actions
 
 ### Media
 - Gallery uploads with list, detail, edit, and delete pages
@@ -23,9 +26,10 @@
   - single-active-player behavior
   - edit and delete pages
   - optional cover image editing
-- Video uploads and management for superusers only
+- Video uploads and management for privileged users
 - Public video list page
 - Protected media proxy routes so storage paths are not exposed in normal UI
+- Unified media naming and directory separation for images, gallery, albums, audio, comments, posts, and videos
 - Deleted media moves to `.trash` instead of immediate permanent removal
 
 ### Accounts and Profiles
@@ -40,29 +44,60 @@
   - video uploads
 - Administrator badge for superusers
 - Avatar change cooldown support
+- Token generation page for authenticated users
+- Token regeneration cooldown for regular users with replacement of old tokens
+
+### API and Guides
+- Token-authenticated API access
+- Dedicated token issue flow at `/api/token/`
+- Public API entry points for posts and related content
+- Frontend API token page with copy-ready examples
+- Separate Python API guide page
+- Separate cURL API guide page
+- Terminal and script-friendly publishing workflows
+
+### Search, Sorting, and Browsing
+- Search page with result counts, paging, and sort controls
+- Search result inclusion for posts and additional media titles
+- Blog ordering options such as newest, oldest, and title-based modes
+- Gallery ordering support
+- Centralized browsing flows from the landing portal page
 
 ### Caching and Background Work
 - Redis-backed Django cache
 - Media list caching for gallery, audio, and video pages
 - Cache invalidation on media save/delete flows
+- Browser cache headers for common media formats
 - Celery worker and Celery Beat support
-- Media sync helpers for cleaning broken references and orphan files
+- Media maintenance helpers for cleaning broken references and orphan files
 
-### Operations
+### Operations and Logging
 - Docker Compose production stack
-- PostgreSQL, Redis, Elasticsearch, Celery, Flower, Prometheus, Grafana, and Nginx support
+- PostgreSQL, Redis, Elasticsearch, Celery, Flower, Prometheus, Grafana, Loki, Promtail, and Nginx support
 - Health checks in the production stack
 - Audit logging and backup support
+- Structured log directories for:
+  - Django
+  - Django error
+  - Gunicorn access
+  - Gunicorn error
+  - Celery
+  - Nginx access
+  - Nginx error
+- Portal landing page for quick access to public pages, account actions, API pages, and media areas
 
 ## Main Routes
 
 ### Public
+- `/` - portal landing page
 - `/blog/` - blog homepage
 - `/blog/search/` - post search
 - `/blog/audio/list/` - audio library
 - `/blog/video/list/` - video library
 - `/blog/gallery/` - gallery
 - `/blog/album/` - albums
+- `/api/guide/` - cURL API guide
+- `/api/python-guide/` - Python API guide
 - `/users/login/` - login
 - `/users/register/` - register
 
@@ -73,29 +108,34 @@
 - `/blog/album/upload/` - upload one album batch
 - `/users/profile/` - profile page
 - `/users/profile_edit/` - edit profile
+- `/users/api-token/` - token management page
+- `/operation/success/` - success page flow target
 
-### Superuser-only
+### Privileged
 - `/blog/video/upload/` - upload video
 - `/blog/video/<id>/` - video detail
 - `/blog/video/<id>/edit/` - video edit
 - `/blog/video/<id>/delete/` - video delete
+- `/secure-console-7f9a2c-admin/` - Django admin
 
 ## Production Stack
 
-Default services:
+Core services:
 - `web`
 - `db`
 - `redis`
 - `elasticsearch`
 - `celery`
 - `celery-beat`
+- `nginx`
 
-Optional profile services:
+Operations and observability services:
 - `flower`
 - `prometheus`
 - `grafana`
+- `loki`
+- `promtail`
 - `celery-exporter`
-- `nginx`
 
 ## Quick Start
 
@@ -134,7 +174,7 @@ docker compose exec web python manage.py createsuperuser
 
 1. Enter the project directory on the target server
 ```bash
-cd /path/to/my_site_prod-master
+cd /var/www/my_site_prod_repo_new
 ```
 
 2. Prepare the production environment file
@@ -143,12 +183,13 @@ Edit `.env.prod` and replace placeholder secrets before startup:
 - `DB_PASSWORD`
 - `ALLOWED_HOSTS`
 - `CSRF_TRUSTED_ORIGINS`
+- `ELASTICSEARCH_URL`
 - `PROMETHEUS_EXTERNAL_URL`
 - `GRAFANA_ROOT_URL`
 
 3. Start the main production services
 ```bash
-docker compose -f docker-compose.prod.yml up -d --build web db redis elasticsearch celery celery-beat
+docker compose -f docker-compose.prod.yml up -d --build web db redis elasticsearch celery celery-beat nginx
 ```
 
 4. Run migrations
@@ -163,19 +204,14 @@ docker compose -f docker-compose.prod.yml exec web python manage.py createsuperu
 
 ### Optional Operations Stack
 ```bash
-docker compose -f docker-compose.prod.yml --profile optional up -d --build flower prometheus grafana celery-exporter nginx
+docker compose -f docker-compose.prod.yml up -d flower prometheus grafana loki promtail celery-exporter
 ```
 
 ## Useful Commands
 
 Rebuild application services:
 ```bash
-docker compose -f docker-compose.prod.yml up -d --build web celery celery-beat
-```
-
-Rebuild local application services:
-```bash
-docker compose up -d --build web celery celery-beat
+docker compose -f docker-compose.prod.yml up -d --build web celery celery-beat nginx
 ```
 
 Run tests:
@@ -183,50 +219,36 @@ Run tests:
 docker compose -f docker-compose.prod.yml exec web python manage.py test
 ```
 
-Run tests in the local stack:
+Run deployment checks:
 ```bash
-docker compose exec web python manage.py test
+docker compose -f docker-compose.prod.yml exec web python manage.py check --deploy
 ```
 
-Run the focused media/profile regression set:
+Check current service state:
 ```bash
-docker compose -f docker-compose.prod.yml exec web python manage.py test users.tests.test_users.test_profile images.tests.test_gallery_upload blog.tests.test_blog.test_audio blog.tests.test_blog.test_video --keepdb
+docker compose -f docker-compose.prod.yml ps
+docker stats --no-stream
 ```
 
 ## Project Structure
 
 ```text
-my_site_prod-master/
+my_site_prod_repo_new/
 |- blog/                    # Posts, comments, audio, video, feeds, API
-|- users/                   # Authentication, profile, avatar, account settings
+|- users/                   # Authentication, profile, avatar, token controls
 |- images/                  # Gallery and album features
 |- my_site/                 # Settings, URLs, middleware, media helpers, runtime helpers
 |- media/                   # Uploaded files
 |- staticfiles/             # Collected static assets
-|- logs/                    # Runtime logs
+|- logs/                    # Runtime logs grouped by service
 |- grafana/                 # Grafana provisioning
+|- loki/                    # Loki configuration
+|- promtail/                # Promtail configuration
 |- backups/                 # Backup files
-|- .env.dev                 # Local environment template
-|- .env.prod                # Production environment template
-|- docker-compose.yml       # Local development stack
-|- docker-compose.prod.yml
+|- .env.prod                # Production environment file
+|- docker-compose.prod.yml  # Production stack
 |- Dockerfile
-|- nginx.conf
 |- nginx.prod.conf
-|- prometheus.yml
-|- requirements.txt
 |- README.md
-`- my_site/templates/index.html
+`- index.html               # Portal landing page
 ```
-
-## Security Notes
-- Protected media is served through proxy routes instead of exposing storage paths in normal UI
-- Superuser-only video management routes redirect unauthorized users to blog home
-- Denied protected routes return no-store / no-cache headers where configured
-- Uploads are validated by file type and size
-- Sensitive actions require authentication and ownership or superuser permission
-
-## Current Notes
-- Media list caching is active for gallery, audio, and video pages
-- Deleted media is moved to `.trash`
-- The project includes helper code for media cache invalidation and media file existence checks

@@ -12,6 +12,7 @@
       --muted: #5f5a4f;
       --accent: #c45b2d;
       --accent-dark: #8e3d1b;
+      --accent-soft: rgba(196, 91, 45, 0.08);
       --line: rgba(31, 31, 26, 0.12);
       --shadow: 0 24px 60px rgba(78, 48, 31, 0.18);
     }
@@ -34,7 +35,7 @@
     }
 
     .shell {
-      width: min(1100px, 100%);
+      width: min(1180px, 100%);
       background: var(--panel);
       border: 1px solid var(--line);
       border-radius: 28px;
@@ -65,7 +66,7 @@
 
     .lead {
       margin: 18px 0 0;
-      max-width: 720px;
+      max-width: 820px;
       font-size: 18px;
       line-height: 1.7;
       color: var(--muted);
@@ -131,13 +132,24 @@
     }
 
     .button.alt:hover {
-      background: rgba(196, 91, 45, 0.08);
+      background: var(--accent-soft);
+    }
+
+    .button.soft {
+      background: #fff;
+      color: var(--accent-dark);
+      border-color: rgba(196, 91, 45, 0.22);
+    }
+
+    .button.soft:hover {
+      background: #fff6ef;
     }
 
     .footer {
       padding: 0 56px 40px;
       color: var(--muted);
       font-size: 14px;
+      line-height: 1.7;
     }
 
     @media (max-width: 820px) {
@@ -155,52 +167,77 @@
       <p class="eyebrow">Site Entrance</p>
       <h1>Welcome to my_site</h1>
       <p class="lead">
-        Start from the public blog, open account pages, and jump into the main content areas from a cleaner public-facing landing page.
+        Start from the public blog, jump into account tools, open token and API guides, and move quickly into gallery, album, audio, video, and search flows from one cleaner landing page.
       </p>
     </section>
 
     <section class="grid">
       <article class="card">
         <h2>Blog</h2>
-        <p>Open the public blog homepage, browse posts, search content, and view tags.</p>
+        <p>Open the public blog homepage, browse posts, search content, and return to the main reading flow.</p>
         <div class="actions">
           <a class="button" href="/blog/">Blog Home</a>
           <a class="button alt" href="/blog/search/">Search</a>
+          <a class="button soft" href="/blog/api/posts/">Posts API</a>
         </div>
       </article>
 
       <article class="card">
-        <h2>Accounts</h2>
-        <p>Go directly to login, registration, or your current profile area.</p>
+        <h2>Accounts and Tokens</h2>
+        <p>Go directly to login, registration, profile, and token management for browser and terminal workflows.</p>
         <div class="actions">
           <a class="button" href="/users/login/">Login</a>
           <a class="button alt" href="/users/register/">Register</a>
           <a class="button alt" href="/users/profile/">Profile</a>
+          <a class="button soft" href="/users/api-token/">API Token</a>
         </div>
       </article>
 
       <article class="card">
-        <h2>Content Tools</h2>
-        <p>Jump to common authenticated content actions such as creating posts or uploading audio.</p>
+        <h2>Create and Upload</h2>
+        <p>Jump to the main author actions for posts and media uploads from the website UI.</p>
         <div class="actions">
           <a class="button" href="/blog/create/">Create Post</a>
           <a class="button alt" href="/blog/audio/upload/">Upload Audio</a>
           <a class="button alt" href="/blog/gallery/upload/">Upload Images</a>
+          <a class="button soft" href="/blog/album/upload/">Upload Album</a>
+          <a class="button soft" href="/blog/video/upload/">Upload Video</a>
         </div>
       </article>
 
       <article class="card">
-        <h2>Audio and Gallery</h2>
-        <p>Open the audio list or image gallery directly if you want quick access to media content.</p>
+        <h2>Media Areas</h2>
+        <p>Open the main media sections directly if you want fast access to gallery, albums, audio, or video content.</p>
         <div class="actions">
-          <a class="button" href="/blog/audio/list/">Audio List</a>
-          <a class="button alt" href="/blog/gallery/">Gallery</a>
+          <a class="button" href="/blog/gallery/">Gallery</a>
+          <a class="button alt" href="/blog/album/">Album</a>
+          <a class="button alt" href="/blog/audio/list/">Audio List</a>
+          <a class="button soft" href="/blog/video/list/">Video List</a>
+        </div>
+      </article>
+
+      <article class="card">
+        <h2>API Guides</h2>
+        <p>Use ready-made examples for token use, post creation, and scripted access from Python or cURL.</p>
+        <div class="actions">
+          <a class="button" href="/api/python-guide/">Python Guide</a>
+          <a class="button alt" href="/api/guide/">cURL Guide</a>
+          <a class="button soft" href="/api/token/">Token Endpoint</a>
+        </div>
+      </article>
+
+      <article class="card">
+        <h2>Admin and Success Flow</h2>
+        <p>Open the admin console or revisit the unified success flow used after create and upload actions.</p>
+        <div class="actions">
+          <a class="button" href="/secure-console-7f9a2c-admin/">Admin</a>
+          <a class="button alt" href="/operation/success/">Success Page</a>
         </div>
       </article>
     </section>
 
     <div class="footer">
-      This homepage now shows only public-facing and account-related navigation.
+      The portal now groups public pages, account access, token tools, API guides, admin entry, and media actions in one consistent landing page.
     </div>
   </main>
 </body>

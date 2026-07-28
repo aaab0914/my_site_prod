@@ -210,6 +210,10 @@ MEDIA_SYNC_BEAT_MINUTES = config("MEDIA_SYNC_BEAT_MINUTES", default=5, cast=int)
 LOG_RETENTION_DAYS = config("LOG_RETENTION_DAYS", default=30, cast=int)
 AUDIT_LOG_RETENTION_DAYS = config("AUDIT_LOG_RETENTION_DAYS", default=90, cast=int)
 CELERY_BEAT_SCHEDULE = {
+    "ensure-daily-runtime-logs": {
+        "task": "my_site.tasks.ensure_daily_runtime_logs_task",
+        "schedule": crontab(minute=1, hour=0),
+    },
     "ping-blog-task-every-5-minutes": {
         "task": "blog.tasks.ping_blog_task",
         "schedule": crontab(minute="*/5"),
@@ -225,6 +229,8 @@ CELERY_BEAT_SCHEDULE = {
         "kwargs": {"days": LOG_RETENTION_DAYS},
     },
 }
+
+ELASTICSEARCH_DSL_SIGNAL_PROCESSOR = "my_site.elasticsearch_signals.ResilientCelerySignalProcessor"
 
 ELASTICSEARCH_DSL = {
     "default": {

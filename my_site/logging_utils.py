@@ -62,7 +62,7 @@ class SkipNoisy404Filter:
 
 class DailyMonthlyFileHandler(FileHandler):
     """
-    Write logs into logs/YYYY-MM/prefix-YYYY-MM-DD.log.
+    Write logs into logs/<category>/YYYY-MM/<prefix>-YYYY-MM-DD.log.
 
     The target file is recalculated on each emit so long-running processes
     switch automatically when the day or month changes.
@@ -77,7 +77,7 @@ class DailyMonthlyFileHandler(FileHandler):
 
     def _build_path(self):
         now = datetime.now()
-        month_dir = self.log_dir / now.strftime("%Y-%m")
+        month_dir = self.log_dir / self.filename_prefix / now.strftime("%Y-%m")
         month_dir.mkdir(parents=True, exist_ok=True)
         return month_dir / f"{self.filename_prefix}-{now.strftime('%Y-%m-%d')}.log"
 

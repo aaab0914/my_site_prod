@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Search Status</title>
+  <style>
+    :root {
+      --bg: #f5efe8;
+      --panel: rgba(255,255,255,0.92);
+      --text: #1d1d19;
+      --muted: #5e5a51;
+      --line: rgba(29,29,25,0.12);
+      --accent: #c45b2d;
+      --accent-dark: #8e3d1b;
+      --ok: #1d6b4f;
+      --warn: #9f6a19;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Georgia, "Times New Roman", serif;
+      color: var(--text);
+      background: linear-gradient(135deg, #f8f4ec 0%, #efe6d8 100%);
+      padding: 28px 18px;
+    }
+    .shell {
+      width: min(980px, 100%);
+      margin: 0 auto;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      box-shadow: 0 24px 60px rgba(78, 48, 31, 0.16);
+      overflow: hidden;
+    }
+    .hero {
+      padding: 34px;
+      border-bottom: 1px solid var(--line);
+      background: linear-gradient(135deg, #17263d, #1f6f78 58%, #d3b179 150%);
+      color: #fff;
+    }
+    .hero h1 { margin: 0 0 10px; font-size: 38px; }
+    .hero p { margin: 0; line-height: 1.7; color: rgba(255,255,255,0.92); }
+    .content { padding: 28px 34px 34px; display: grid; gap: 18px; }
+    .grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 18px; }
+    .card {
+      padding: 22px;
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      background: rgba(255,255,255,0.72);
+    }
+    .card h2 { margin: 0 0 14px; font-size: 24px; }
+    .meta { display: grid; gap: 10px; }
+    .row { display: flex; justify-content: space-between; gap: 12px; border-bottom: 1px solid rgba(29,29,25,0.08); padding-bottom: 8px; }
+    .row:last-child { border-bottom: 0; padding-bottom: 0; }
+    .label { color: var(--muted); }
+    .value.ok { color: var(--ok); font-weight: 700; }
+    .value.warn { color: var(--warn); font-weight: 700; }
+    .actions { display: flex; flex-wrap: wrap; gap: 12px; }
+    .button {
+      display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 0 18px;
+      border-radius: 999px; border: 1px solid var(--accent); background: var(--accent); color: #fffaf5; text-decoration: none;
+    }
+    .button.alt { background: transparent; color: var(--accent-dark); }
+    .code { margin: 0; padding: 16px; border-radius: 16px; background: #f6f8fb; border: 1px solid #dde5ec; overflow-x: auto; }
+    @media (max-width: 820px) {
+      .grid { grid-template-columns: 1fr; }
+      .hero, .content { padding-left: 20px; padding-right: 20px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="hero">
+      <h1>Search Status</h1>
+      <p>Review Elasticsearch health, indexed document counts, and the current search sample without opening the server console.</p>
+    </section>
+    <section class="content">
+      <div class="actions">
+        <a class="button" href="/blog/">Blog Home</a>
+        <a class="button alt" href="/api/endpoints/">API Endpoints</a>
+        <a class="button alt" href="/api/guide/">cURL Guide</a>
+        <a class="button alt" href="/api/python-guide/">Python Guide</a>
+      </div>
+      <div class="grid">
+        <article class="card">
+          <h2>Cluster</h2>
+          <div class="meta">
+            <div class="row"><span class="label">Ping</span><span class="value {% if ping %}ok{% else %}warn{% endif %}">{{ ping }}</span></div>
+            <div class="row"><span class="label">Available Helper</span><span class="value {% if available %}ok{% else %}warn{% endif %}">{{ available }}</span></div>
+            <div class="row"><span class="label">Index Exists</span><span class="value {% if index_exists %}ok{% else %}warn{% endif %}">{{ index_exists }}</span></div>
+            <div class="row"><span class="label">Health</span><span class="value {% if health == 'green' or health == 'yellow' %}ok{% else %}warn{% endif %}">{{ health }}</span></div>
+            <div class="row"><span class="label">Documents</span><span class="value">{{ document_count }}</span></div>
+          </div>
+        </article>
+        <article class="card">
+          <h2>Sample Query</h2>
+          <div class="meta">
+            <div class="row"><span class="label">Query</span><span class="value">{{ sample_query }}</span></div>
+            <div class="row"><span class="label">Backend</span><span class="value">{{ sample_backend }}</span></div>
+            <div class="row"><span class="label">Results</span><span class="value">{{ sample_count }}</span></div>
+          </div>
+          <pre class="code">{{ sample_ids }}</pre>
+        </article>
+      </div>
+      <article class="card">
+        <h2>Server Control</h2>
+        <pre class="code">cd /var/www/my_site_prod_repo_new
+./scripts/search_control.sh status
+./scripts/search_control.sh rebuild
+./scripts/search_control.sh sample --query python
+./scripts/search_control.sh sync-post --post-id 40</pre>
+      </article>
+    </section>
+  </main>
+</body>
+</html>

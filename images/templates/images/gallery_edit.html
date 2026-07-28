@@ -3,15 +3,12 @@
 {% block title %}Edit Image{% endblock %}
 
 {% block content %}
+{% include "images/includes/gallery_shared_css.html" %}
 <style>
     .gallery-edit {
         max-width: 760px;
         margin: 0 auto 32px;
         padding: 24px;
-        border: 1px solid #dbe3eb;
-        border-radius: 20px;
-        background: #fff;
-        box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
     }
 
     .gallery-edit h1 {
@@ -47,33 +44,17 @@
     .gallery-edit-save,
     .gallery-edit-cancel {
         display: inline-block;
-        padding: 10px 16px;
-        border-radius: 999px;
-        text-decoration: none;
-        font-weight: 700;
-        border: 0;
-        cursor: pointer;
-    }
-
-    .gallery-edit-save {
-        background: #0f766e;
-        color: #fff;
-    }
-
-    .gallery-edit-cancel {
-        background: #e9eff4;
-        color: #22384a;
     }
 </style>
 
-<section class="gallery-edit">
+<section class="gallery-edit gallery-card-surface">
     <h1>Edit Image</h1>
     <form method="post">
         {% csrf_token %}
         {{ form.as_p }}
         <div class="gallery-edit-actions">
-            <button class="gallery-edit-save" type="submit">Save</button>
-            <a class="gallery-edit-cancel" href="{% url 'blog:images:gallery_detail' image.id %}">Cancel</a>
+            <button class="gallery-edit-save gallery-pill-button is-primary" type="submit">Save</button>
+            <a class="gallery-edit-cancel gallery-pill-button is-neutral" href="{% url 'blog:images:gallery_detail' image.id %}">Cancel</a>
         </div>
     </form>
 </section>

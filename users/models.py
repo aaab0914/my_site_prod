@@ -16,14 +16,19 @@ from django.dispatch import receiver
 from django.utils import timezone
 from django.urls import reverse
 
+from my_site.media_naming import static_media_upload_to
+
 
 class Profile(models.Model):
+    TOKEN_REGEN_COOLDOWN_DAYS = 5
+
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     bio = models.TextField(max_length=500, blank=True)
     location = models.CharField(max_length=30, blank=True)
     birth_date = models.DateField(null=True, blank=True)
-    avatar = models.ImageField(upload_to="avatars/", null=True, blank=True)
+    avatar = models.ImageField(upload_to=static_media_upload_to("avatars"), null=True, blank=True)
     last_avatar_change = models.DateTimeField(null=True, blank=True)
+    last_token_generated_at = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
         return f"{self.user.username} Profile"
@@ -41,6 +46,24 @@ class Profile(models.Model):
         if days_since_change >= 3:
             return 0
         return 3 - days_since_change
+
+    def can_regenerate_token(self):
+        if self.user.is_staff or self.user.is_superuser:
+            return True
+        if not self.last_token_generated_at:
+            return True
+        days_since_generation = (timezone.now() - self.last_token_generated_at).days
+        return days_since_generation >= self.TOKEN_REGEN_COOLDOWN_DAYS
+
+    def get_token_regeneration_remaining_days(self):
+        if self.user.is_staff or self.user.is_superuser:
+            return 0
+        if not self.last_token_generated_at:
+            return 0
+        days_since_generation = (timezone.now() - self.last_token_generated_at).days
+        if days_since_generation >= self.TOKEN_REGEN_COOLDOWN_DAYS:
+            return 0
+        return self.TOKEN_REGEN_COOLDOWN_DAYS - days_since_generation
 
     def get_avatar_proxy_url(self):
         if not self.avatar:

@@ -1,0 +1,56 @@
+{% extends "blog/hero_base.html" %}
+{% block title %}API Endpoints{% endblock %}
+{% block hero_base_css %}
+{% include "includes/api_guide_shared_css.html" %}
+<style>
+.endpoint-list { margin: 0; padding-left: 18px; }
+.endpoint-card-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.endpoint-card { border: 1px solid #dce7f0; border-radius: 20px; padding: 18px; background: #f8fbfd; }
+.endpoint-card code { display: block; margin-top: 10px; padding: 12px 14px; border-radius: 14px; background: #0f172a; color: #dbeafe; overflow-x: auto; }
+@media screen and (max-width: 980px) {
+  .endpoint-card-grid { grid-template-columns: 1fr; }
+}
+</style>
+{% endblock %}
+{% block hero_shell_class %}guide-page{% endblock %}
+{% block hero_class %}hero-theme-teal{% endblock %}
+{% block hero_pretitle %}<p class="eyebrow">API Endpoints</p>{% endblock %}
+{% block hero_page_title %}Browse the Live API Surface{% endblock %}
+{% block hero_page_description %}This page now uses the same hero-base layout as the other API pages and separates guide navigation from direct endpoint access.{% endblock %}
+{% block hero_body %}
+<div class="guide-grid">
+  <section class="guide-panel">
+    <h2>What This Page Covers</h2>
+    <ul class="endpoint-list">
+      <li>Direct links to the live posts and comments APIs.</li>
+      <li>Quick access to the cURL guide, Python guide, and token page.</li>
+      <li>Small, readable examples instead of dumping every possible route.</li>
+    </ul>
+  </section>
+  {% include "includes/api_guide_nav.html" with show_token_link=True show_curl_link=True show_python_link=True %}
+</div>
+{% include "includes/api_guide_categories.html" %}
+<section class="guide-panel">
+  <h2>Live API Endpoints</h2>
+  <div class="endpoint-card-grid">
+    <article class="endpoint-card">
+      <h3>Posts API</h3>
+      <p>Browse recent posts, search by keyword, or create content with a token.</p>
+      <div class="guide-actions">
+        <a class="guide-button" href="/blog/api/posts/">Open Posts API</a>
+      </div>
+      <code>GET /blog/api/posts/</code>
+      <code>GET /blog/api/posts/?search=keyword</code>
+    </article>
+    <article class="endpoint-card">
+      <h3>Comments API</h3>
+      <p>Browse recent comments, search comments, or post new comments with a token.</p>
+      <div class="guide-actions">
+        <a class="guide-button alt" href="/blog/api/comments/">Open Comments API</a>
+      </div>
+      <code>GET /blog/api/comments/</code>
+      <code>GET /blog/api/comments/?search=keyword</code>
+    </article>
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,29 @@
+<style>
+.guide-page { display: grid; gap: 22px; }
+.guide-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 22px; }
+.guide-panel { border: 1px solid #d7e1ea; border-radius: 24px; background: #fff; padding: 24px; box-shadow: 0 14px 32px rgba(15, 23, 42, .08); }
+.guide-panel h2, .guide-panel h3 { margin: 0 0 12px; color: #183247; }
+.guide-panel p, .guide-panel li { color: #5a6f81; line-height: 1.75; }
+.guide-list { margin: 0; padding-left: 18px; }
+.guide-actions { display: flex; flex-wrap: wrap; gap: 12px; }
+.guide-button { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 0 18px; border-radius: 999px; text-decoration: none; font-weight: 700; border: 1px solid #0f766e; background: #0f766e; color: #fff; }
+.guide-button.alt { background: #fff; color: #0f766e; border-color: #c7d6e4; }
+.guide-note { margin-top: 12px; padding: 14px 16px; border-radius: 16px; background: #eef6ff; border: 1px solid #bfdbfe; color: #1d4ed8; line-height: 1.7; }
+.guide-category-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.guide-category-card { border: 1px solid #dce7f0; border-radius: 20px; padding: 18px; background: #f8fbfd; }
+.guide-category-card h3 { margin-bottom: 8px; }
+.example-stack { display: grid; gap: 16px; }
+.example { padding: 16px; border-radius: 18px; background: #f8fbfd; border: 1px solid #dce7f0; }
+.example h4 { margin: 0 0 10px; color: #124434; font-size: 16px; }
+.code-wrap { position: relative; }
+pre { margin: 0; padding: 16px 60px 16px 16px; border-radius: 16px; overflow-x: auto; background: #0f172a; color: #dbeafe; white-space: pre-wrap; word-break: break-word; font: 13px/1.7 Consolas, Monaco, monospace; }
+.copy-button { position: absolute; top: 10px; right: 10px; width: 36px; height: 36px; border: 0; border-radius: 999px; background: #eef2f7; color: #0f172a; cursor: pointer; }
+.copy-button::before, .copy-button::after { content: ""; position: absolute; width: 14px; height: 14px; border: 2px solid currentColor; border-radius: 3px; box-sizing: border-box; }
+.copy-button::before { transform: translate(2px, -2px); }
+.copy-button::after { transform: translate(-2px, 2px); }
+.copy-button.is-copied { background: #d1fae5; color: #166534; }
+.copy-button.is-failed { background: #fee2e2; color: #991b1b; }
+@media screen and (max-width: 980px) {
+  .guide-grid, .guide-category-grid { grid-template-columns: 1fr; }
+}
+</style>

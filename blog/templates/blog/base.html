@@ -7,10 +7,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{% block title %}{% endblock %}</title>
     <link href="{% static "css/blog.css" %}" rel="stylesheet">
+    {% block extra_head %}{% endblock %}
 </head>
 <body>
 <style>
-    .messages { display: grid; gap: 12px; width: min(100%, 1120px); max-width: 1120px; margin: 0 auto 20px; }
+    .messages { display: grid; gap: 12px; width: min(100%, 1020px); max-width: 1020px; margin: 0 auto 20px; }
     .message { padding: 14px 16px; border-radius: 16px; border: 1px solid transparent; line-height: 1.6; box-shadow: 0 10px 24px rgba(15,23,42,.06); }
     .message-success { background: #edf9f2; color: #14532d; border-color: #b7e4c7; }
     .message-error { background: #fff1f2; color: #9f1239; border-color: #fecdd3; }
@@ -18,14 +19,17 @@
     .message-info { background: #eef6ff; color: #1d4ed8; border-color: #bfdbfe; }
 
     .page-shell {
-        width: min(100%, 1120px) !important;
-        max-width: 1120px !important;
+        width: min(100%, 1020px) !important;
+        max-width: 1020px !important;
         margin: 0 auto 36px !important;
     }
     .page-hero {
-        min-height: 184px !important;
+        height: 200px !important;
+        min-height: 200px !important;
+        box-sizing: border-box !important;
+        align-items: flex-start !important;
         margin-bottom: 24px !important;
-        padding: 30px !important;
+        padding: 34px 36px !important;
         border-radius: 28px !important;
         display: flex !important;
         flex-direction: column !important;
@@ -33,7 +37,10 @@
         box-shadow: 0 24px 54px rgba(15,23,42,.2) !important;
     }
     .page-hero.page-hero {
-        min-height: 184px !important;
+        height: 200px !important;
+        min-height: 200px !important;
+        box-sizing: border-box !important;
+        align-items: flex-start !important;
     }
     .page-hero-title,
     .page-hero.page-hero .page-hero-title {
@@ -51,6 +58,47 @@
         font-size: 16px !important;
         line-height: 1.7 !important;
     }
+    .blog-home {
+        width: min(100%, 1020px);
+        max-width: 1020px;
+        margin: 18px auto 18px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+    .blog-home-link {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 42px;
+        padding: 0 16px;
+        border-radius: 999px;
+        text-decoration: none;
+        font-weight: 700;
+        letter-spacing: .01em;
+        transition: transform .18s ease, box-shadow .18s ease, background .18s ease, color .18s ease;
+    }
+    .blog-home-link.portal-link {
+        background: linear-gradient(135deg, #fff7ed, #fde7d6);
+        border: 1px solid #f2c5a5;
+        color: #9a3412;
+        box-shadow: 0 12px 28px rgba(154,52,18,.12);
+    }
+    .blog-home-link.portal-link:hover {
+        transform: translateY(-1px);
+        background: linear-gradient(135deg, #ffedd5, #fddec7);
+    }
+    .blog-home-link.home-link {
+        background: #eef6ff;
+        border: 1px solid #bfd7f5;
+        color: #1d4ed8;
+        box-shadow: 0 12px 28px rgba(29,78,216,.10);
+    }
+    .blog-home-link.home-link:hover {
+        transform: translateY(-1px);
+        background: #dbeafe;
+    }
     @media screen and (max-width: 900px) {
         .page-shell {
             width: 100% !important;
@@ -63,6 +111,10 @@
         .page-hero-title,
         .page-hero.page-hero .page-hero-title {
             font-size: 32px !important;
+        }
+        .blog-home {
+            width: calc(100% - 24px);
+            margin: 14px auto 16px;
         }
     }
 
@@ -97,9 +149,26 @@
 </style>
 
 <div id="content">
-    <p class="blog-home">
-        <a href="{% url 'blog:all_posts_list' %}">🏠 Blog Home</a>
-    </p>
+    {% if request.user.is_authenticated %}
+        {% if request.path == "/blog/" %}
+        <p class="blog-home">
+            <a class="blog-home-link portal-link" href="/">Portal</a>
+        </p>
+        {% elif request.path|slice:":6" == "/blog/" %}
+        <p class="blog-home">
+            <a class="blog-home-link portal-link" href="/">Portal</a>
+            <a class="blog-home-link home-link" href="{% url 'blog:all_posts_list' %}">🏠 Blog Home</a>
+        </p>
+        {% else %}
+        <p class="blog-home">
+            <a class="blog-home-link home-link" href="{% url 'blog:all_posts_list' %}">🏠 Blog Home</a>
+        </p>
+        {% endif %}
+    {% elif request.path|slice:":6" == "/blog/" or request.path == "/blog/" %}
+        <p class="blog-home">
+            <a class="blog-home-link home-link" href="{% url 'blog:all_posts_list' %}">🏠 Blog Home</a>
+        </p>
+    {% endif %}
 
     {% if messages %}
         <div class="messages page-shell">
@@ -139,8 +208,9 @@
             <a href="{% url 'blog:images:album_upload' %}"><span class="sidebar-inline-icon">🧾</span>Upload Album</a>
         </p>
 
-        <p>
+                <p>
             <a href="{% url 'users:profile' %}"><span class="sidebar-inline-icon">👤</span>My Profile</a> |
+            <a href="/api/endpoints/"><span class="sidebar-inline-icon">🧭</span>API Endpoints</a> |
             <a href="{% url 'users:logout' %}"><span class="sidebar-inline-icon">↩️</span>Logout</a>
         </p>
         <p>

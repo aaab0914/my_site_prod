@@ -1,0 +1,24 @@
+<section class="guide-panel">
+  <h2>Guide Categories</h2>
+  <p>Use this dedicated category section to switch between the two documentation styles.</p>
+  <div class="guide-category-grid">
+    {% if current_guide != 'curl' %}
+    <article class="guide-category-card">
+      <h3>cURL Guide</h3>
+      <p>Shell-friendly commands for quick requests, reads, and write operations.</p>
+      <div class="guide-actions">
+        <a class="guide-button{% if current_guide == 'python' %} alt{% endif %}" href="/api/guide/">Open cURL Guide</a>
+      </div>
+    </article>
+    {% endif %}
+    {% if current_guide != 'python' %}
+    <article class="guide-category-card">
+      <h3>Python Guide</h3>
+      <p>Ready-to-run <code>requests</code> examples for scripting common API tasks.</p>
+      <div class="guide-actions">
+        <a class="guide-button{% if current_guide == 'curl' %} alt{% endif %}" href="/api/python-guide/">Open Python Guide</a>
+      </div>
+    </article>
+    {% endif %}
+  </div>
+</section>

@@ -7,17 +7,22 @@ export PATH
 SCRIPT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
 PROJECT_DIR="$SCRIPT_DIR"
 BACKUP_DIR="$PROJECT_DIR/backups/db"
-LOG_FILE="$PROJECT_DIR/logs/backup.log"
+DAY="$(date +"%Y-%m-%d")"
+MONTH_DIR="$(date +"%Y-%m")"
+LOG_DIR="$PROJECT_DIR/logs/backup/$MONTH_DIR"
+LOG_FILE="$LOG_DIR/backup-$DAY.log"
 LOCK_DIR="$PROJECT_DIR/.backup_db.lock"
 DOCKER_BIN="${DOCKER_BIN:-$(command -v docker || command -v docker.exe || true)}"
 COMPOSE_FILE="$PROJECT_DIR/docker-compose.prod.yml"
 TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
 BACKUP_FILE="$BACKUP_DIR/my_site_db_${TIMESTAMP}.sql"
 
-mkdir -p "$BACKUP_DIR" "$(dirname "$LOG_FILE")"
+mkdir -p "$BACKUP_DIR" "$LOG_DIR"
+: > "$LOG_FILE"
 
 log() {
-    printf '[%s] %s\n' "$(date '+%Y-%m-%d %H:%M:%S')" "$1" | tee -a "$LOG_FILE"
+    printf '[%s] %s
+' "$(date '+%Y-%m-%d %H:%M:%S')" "$1" | tee -a "$LOG_FILE"
 }
 
 if ! mkdir "$LOCK_DIR" 2>/dev/null; then

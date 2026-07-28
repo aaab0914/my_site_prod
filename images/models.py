@@ -4,23 +4,29 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.urls import reverse
 
+from my_site.media_naming import dated_media_upload_to
+
 
 class ImagePost(models.Model):
     title = models.CharField(max_length=200)
-    image = models.ImageField(upload_to="posts/%Y/%m/%d/")
+    image = models.ImageField(upload_to=dated_media_upload_to("gallery"))
     description = models.TextField(blank=True)
     uploaded_by = models.ForeignKey(User, on_delete=models.CASCADE)
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Gallery"
+        verbose_name_plural = "Gallery"
 
     def __str__(self):
         return self.title
 
     def clean(self):
         super().clean()
-        if self.image and self.image.size > 25 * 1024 * 1024:
+        if self.image and self.image.size > 5 * 1024 * 1024:
             raise ValidationError({
-                "image": f"图片文件大小不能超过 25MB。当前文件大小: {self.image.size / (1024 * 1024):.2f}MB"
+                "image": f"图片文件大小不能超过 5MB。当前文件大小: {self.image.size / (1024 * 1024):.2f}MB"
             })
 
     def save(self, *args, **kwargs):
@@ -56,7 +62,7 @@ class Album(models.Model):
 class AlbumImage(models.Model):
     album = models.ForeignKey(Album, on_delete=models.CASCADE, related_name="images", null=True, blank=True)
     title = models.CharField(max_length=200)
-    image = models.ImageField(upload_to="albums/%Y/%m/%d/")
+    image = models.ImageField(upload_to=dated_media_upload_to("albums"))
     description = models.TextField(blank=True)
     uploaded_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="album_images")
     created = models.DateTimeField(auto_now_add=True)

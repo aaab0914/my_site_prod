@@ -12,12 +12,12 @@
       --muted: #5f5a4f;
       --accent: #c45b2d;
       --accent-dark: #8e3d1b;
+      --accent-soft: rgba(196, 91, 45, 0.08);
       --line: rgba(31, 31, 26, 0.12);
       --shadow: 0 24px 60px rgba(78, 48, 31, 0.18);
     }
 
     * { box-sizing: border-box; }
-
     body {
       margin: 0;
       min-height: 100vh;
@@ -32,9 +32,8 @@
       justify-content: center;
       padding: 32px 20px;
     }
-
     .shell {
-      width: min(1100px, 100%);
+      width: min(1120px, 100%);
       background: var(--panel);
       border: 1px solid var(--line);
       border-radius: 28px;
@@ -42,12 +41,10 @@
       overflow: hidden;
       backdrop-filter: blur(10px);
     }
-
     .hero {
       padding: 56px 56px 28px;
       border-bottom: 1px solid var(--line);
     }
-
     .eyebrow {
       margin: 0 0 12px;
       font-size: 12px;
@@ -55,53 +52,45 @@
       text-transform: uppercase;
       color: var(--accent-dark);
     }
-
     h1 {
       margin: 0;
       font-size: clamp(36px, 6vw, 68px);
       line-height: 0.95;
       max-width: 8ch;
     }
-
     .lead {
       margin: 18px 0 0;
-      max-width: 720px;
+      max-width: 760px;
       font-size: 18px;
       line-height: 1.7;
       color: var(--muted);
     }
-
     .grid {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 18px;
       padding: 28px 56px 56px;
     }
-
     .card {
       border: 1px solid var(--line);
       border-radius: 22px;
       padding: 24px;
       background: rgba(255, 255, 255, 0.58);
     }
-
     .card h2 {
       margin: 0 0 10px;
       font-size: 24px;
     }
-
     .card p {
       margin: 0 0 18px;
       color: var(--muted);
       line-height: 1.6;
     }
-
     .actions {
       display: flex;
       flex-wrap: wrap;
       gap: 12px;
     }
-
     .button {
       display: inline-flex;
       align-items: center;
@@ -118,28 +107,31 @@
       font-family: inherit;
       font-size: 15px;
     }
-
     .button:hover {
       transform: translateY(-1px);
       background: var(--accent-dark);
       border-color: var(--accent-dark);
     }
-
     .button.alt {
       background: transparent;
       color: var(--accent-dark);
     }
-
     .button.alt:hover {
-      background: rgba(196, 91, 45, 0.08);
+      background: var(--accent-soft);
     }
-
+    .button.soft {
+      background: #fff;
+      color: var(--accent-dark);
+      border-color: rgba(196, 91, 45, 0.22);
+    }
+    .button.soft:hover {
+      background: #fff6ef;
+    }
     .footer {
       padding: 0 56px 40px;
       color: var(--muted);
       font-size: 14px;
     }
-
     @media (max-width: 820px) {
       .grid { grid-template-columns: 1fr; }
       .hero, .grid, .footer {
@@ -155,14 +147,14 @@
       <p class="eyebrow">Site Entrance</p>
       <h1>Welcome to my_site</h1>
       <p class="lead">
-        Start from the public blog, open account pages, and jump into the main content areas from a cleaner public-facing landing page.
+        Start from the public blog, open account tools, and jump straight into API, gallery, album, audio, and video areas from one cleaner landing page.
       </p>
     </section>
 
     <section class="grid">
       <article class="card">
         <h2>Blog</h2>
-        <p>Open the public blog homepage, browse posts, search content, and view tags.</p>
+        <p>Open the public blog homepage, browse posts, search content, and move back into the main reading flow.</p>
         <div class="actions">
           <a class="button" href="/blog/">Blog Home</a>
           <a class="button alt" href="/blog/search/">Search</a>
@@ -171,36 +163,61 @@
 
       <article class="card">
         <h2>Accounts</h2>
-        <p>Go directly to login, registration, or your current profile area.</p>
+        <p>Go directly to login, registration, profile, and token management from one simpler account area.</p>
         <div class="actions">
           <a class="button" href="/users/login/">Login</a>
           <a class="button alt" href="/users/register/">Register</a>
           <a class="button alt" href="/users/profile/">Profile</a>
+          <a class="button alt" href="/users/api-token/">API Token</a>
         </div>
       </article>
 
       <article class="card">
-        <h2>Content Tools</h2>
-        <p>Jump to common authenticated content actions such as creating posts or uploading audio.</p>
+        <h2>API Guides</h2>
+        <p>Open the frontend API guide pages for endpoint overview, cURL examples, and Python examples.</p>
+        <div class="actions">
+          <a class="button" href="/api/endpoints/">API Endpoints</a>
+          <a class="button alt" href="/api/guide/">cURL API Guide</a>
+          <a class="button soft" href="/api/python-guide/">Python API Guide</a>
+          <a class="button soft" href="/search/status/">Search Status</a>
+        </div>
+      </article>
+
+      <article class="card">
+        <h2>API Access</h2>
+        <p>Open direct backend API entry points for posts and comments without mixing them into the account card.</p>
+        <div class="actions">
+          <a class="button" href="/blog/api/posts/">Posts API</a>
+          <a class="button alt" href="/blog/api/comments/">Comments API</a>
+        </div>
+      </article>
+
+      <article class="card">
+        <h2>Create and Upload</h2>
+        <p>Jump to the common author actions for publishing posts and uploading media from the website UI.</p>
         <div class="actions">
           <a class="button" href="/blog/create/">Create Post</a>
           <a class="button alt" href="/blog/audio/upload/">Upload Audio</a>
           <a class="button alt" href="/blog/gallery/upload/">Upload Images</a>
+          <a class="button soft" href="/blog/album/upload/">Upload Album</a>
+          <a class="button soft" href="/blog/video/upload/">Upload Video</a>
         </div>
       </article>
 
       <article class="card">
-        <h2>Audio and Gallery</h2>
-        <p>Open the audio list or image gallery directly if you want quick access to media content.</p>
+        <h2>Media Areas</h2>
+        <p>Open the main media sections directly if you want fast access to gallery, albums, audio, or video content.</p>
         <div class="actions">
-          <a class="button" href="/blog/audio/list/">Audio List</a>
-          <a class="button alt" href="/blog/gallery/">Gallery</a>
+          <a class="button" href="/blog/gallery/">Gallery</a>
+          <a class="button alt" href="/blog/album/">Album</a>
+          <a class="button alt" href="/blog/audio/list/">Audio List</a>
+          <a class="button soft" href="/blog/video/list/">Video List</a>
         </div>
       </article>
     </section>
 
     <div class="footer">
-      This homepage now shows only public-facing and account-related navigation.
+      The portal now groups public pages, account access, API guides, direct endpoints, and media actions in one consistent landing page.
     </div>
   </main>
 </body>

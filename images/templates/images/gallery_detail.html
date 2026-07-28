@@ -3,6 +3,7 @@
 {% block title %}{{ image.title }}{% endblock %}
 
 {% block content %}
+{% include "images/includes/gallery_shared_css.html" %}
 <style>
     .gallery-detail {
         max-width: 980px;
@@ -25,12 +26,6 @@
 
     .gallery-detail-delete {
         display: inline-block;
-        padding: 10px 16px;
-        border-radius: 999px;
-        background: #b42318;
-        color: #fff;
-        text-decoration: none;
-        font-weight: 700;
     }
 
     .gallery-detail-actions {
@@ -41,20 +36,10 @@
 
     .gallery-detail-edit {
         display: inline-block;
-        padding: 10px 16px;
-        border-radius: 999px;
-        background: #0f766e;
-        color: #fff;
-        text-decoration: none;
-        font-weight: 700;
     }
 
     .gallery-detail-card {
-        border: 1px solid #dbe3eb;
-        border-radius: 20px;
         overflow: hidden;
-        background: #fff;
-        box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
     }
 
     .gallery-detail-image {
@@ -114,13 +99,13 @@
         <a class="gallery-detail-back" href="{% url 'blog:images:gallery_list' %}">Back to Gallery</a>
         {% if can_manage %}
             <div class="gallery-detail-actions">
-                <a class="gallery-detail-edit" href="{% url 'blog:images:gallery_edit' image.id %}">Edit</a>
-                <a class="gallery-detail-delete" href="{% url 'blog:images:gallery_delete' image.id %}">Delete</a>
+                <a class="gallery-detail-edit gallery-pill-button is-primary" href="{% url 'blog:images:gallery_edit' image.id %}">Edit</a>
+                <a class="gallery-detail-delete gallery-pill-button is-danger" href="{% url 'blog:images:gallery_delete' image.id %}">Delete</a>
             </div>
         {% endif %}
     </div>
 
-    <article class="gallery-detail-card">
+    <article class="gallery-detail-card gallery-card-surface">
         <img class="gallery-detail-image" src="{{ image.get_image_proxy_url }}" alt="{{ image.title }}">
         <div class="gallery-detail-body">
             {% if not can_manage %}

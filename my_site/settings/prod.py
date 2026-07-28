@@ -67,15 +67,32 @@ LOGGING["handlers"]["error_file"] = {
     "level": "WARNING",
     "class": "my_site.logging_utils.DailyMonthlyFileHandler",
     "log_dir": str(LOG_DIR),
-    "filename_prefix": "error",
+    "filename_prefix": "django-error",
     "formatter": "verbose",
     "filters": ["skip_noisy_404"],
+}
+LOGGING["handlers"]["celery_file"] = {
+    "level": "INFO",
+    "class": "my_site.logging_utils.DailyMonthlyFileHandler",
+    "log_dir": str(LOG_DIR),
+    "filename_prefix": "celery",
+    "formatter": "verbose",
 }
 LOGGING["loggers"]["django"]["handlers"] = ["console", "file", "error_file"]
 LOGGING["loggers"]["django.request"]["handlers"] = ["console", "error_file"]
 LOGGING["loggers"]["blog"]["handlers"] = ["console", "file", "error_file"]
 LOGGING["loggers"]["users"]["handlers"] = ["console", "file", "error_file"]
-LOGGING["loggers"]["celery"]["handlers"] = ["console", "file", "error_file"]
+LOGGING["loggers"]["celery"]["handlers"] = ["console", "celery_file", "error_file"]
+LOGGING["loggers"]["celery.app.trace"] = {
+    "handlers": ["console", "celery_file", "error_file"],
+    "level": "INFO",
+    "propagate": False,
+}
+LOGGING["loggers"]["celery.redirected"] = {
+    "handlers": ["console", "celery_file", "error_file"],
+    "level": "INFO",
+    "propagate": False,
+}
 
 if TESTING:
     CACHES = {

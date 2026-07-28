@@ -85,6 +85,7 @@
                         {% if profile_user == request.user %}
                             <a href="{% url 'users:profile_edit' %}" class="profile-button">Edit Profile</a>
                             <a href="{% url 'users:username_change' %}" class="profile-link">Change Username</a>
+                            <a href="{% url 'users:api_token_manage' %}" class="profile-link">API Token</a>
                         {% endif %}
                     </div>
                 </div>

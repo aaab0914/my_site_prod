@@ -35,6 +35,7 @@
         color: #173042;
     }
 
+    .upload-field input[type="text"],
     .upload-field input[type="file"],
     .upload-field textarea {
         width: 100%;
@@ -212,6 +213,14 @@
             {% endif %}
 
             <div class="upload-field">
+                <label for="{{ form.title.id_for_label }}">Album title</label>
+                {{ form.title }}
+                {% if form.title.errors %}
+                    <div class="upload-error">{{ form.title.errors }}</div>
+                {% endif %}
+            </div>
+
+            <div class="upload-field">
                 <label for="{{ form.images.id_for_label }}">Local image files</label>
                 {{ form.images }}
                 {% if form.images.errors %}
@@ -253,8 +262,9 @@
                 <h3>Rules</h3>
                 <ul>
                     <li>Only logged-in users can upload.</li>
-                    <li>Supported formats: JPEG, PNG, WebP.</li>
-                    <li>JPEG, PNG, and WebP are supported.</li>
+                    <li>Supported image formats: JPG, JPEG, PNG, WebP, GIF.</li>
+                    <li>Browser and edge cache for media files is 90 days.</li>
+                    <li>The media cache policy covers 15 formats in total: 5 image, 5 audio, and 5 video formats.</li>
                     <li>You can submit up to 99 images at one time.</li>
                     <li>Large images are optimized before saving.</li>
                 </ul>

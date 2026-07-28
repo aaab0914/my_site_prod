@@ -21,6 +21,8 @@ services:
   redis:
     image: redis:7
     restart: always
+    volumes:
+      - redis_data:/data
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 15s
@@ -99,6 +101,8 @@ services:
       SENTRY_TRACES_SAMPLE_RATE: ${SENTRY_TRACES_SAMPLE_RATE}
       SENTRY_PROFILES_SAMPLE_RATE: ${SENTRY_PROFILES_SAMPLE_RATE}
       RUNNING_IN_DOCKER: ${RUNNING_IN_DOCKER}
+    volumes:
+      - ./logs:/code/logs
     depends_on:
       db:
         condition: service_healthy
@@ -132,6 +136,8 @@ services:
       SENTRY_TRACES_SAMPLE_RATE: ${SENTRY_TRACES_SAMPLE_RATE}
       SENTRY_PROFILES_SAMPLE_RATE: ${SENTRY_PROFILES_SAMPLE_RATE}
       RUNNING_IN_DOCKER: ${RUNNING_IN_DOCKER}
+    volumes:
+      - ./logs:/code/logs
     depends_on:
       redis:
         condition: service_healthy
@@ -182,6 +188,7 @@ services:
       - "--web.route-prefix=/"
     volumes:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
     ports:
       - "127.0.0.1:19098:9090"
     depends_on:
@@ -251,6 +258,8 @@ services:
       - ./staticfiles:/static:ro
       - ./media:/media:ro
       - ./ssl:/etc/nginx/ssl:ro
+      - ./logs/nginx-access:/var/log/nginx-access
+      - ./logs/nginx-error:/var/log/nginx-error
     ports:
       - "8080:80"
       - "8443:443"
@@ -260,6 +269,8 @@ services:
 
 volumes:
   postgres_data:
+  redis_data:
+  prometheus_data:
   elasticsearch_data:
   grafana_data:
   loki_data:

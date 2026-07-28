@@ -43,9 +43,6 @@ def authorized_media_delete():
 
 
 def move_media_file_to_trash(relative_name):
-    if not is_browser_delete_request():
-        return None
-
     normalized_relative_name = _normalize_relative_name(relative_name)
     if not normalized_relative_name:
         return None
@@ -68,12 +65,23 @@ def move_media_file_to_trash(relative_name):
 
 
 def cleanup_instance_media_files(instance):
-    if not is_browser_delete_request():
-        return []
-
     trashed_files = []
     for relative_name in getattr(instance, "_media_files_to_trash", []):
         trashed_path = move_media_file_to_trash(relative_name)
         if trashed_path is not None:
             trashed_files.append(trashed_path)
     return trashed_files
+
+
+def handle_instance_pre_delete(instance):
+    if not is_browser_delete_request():
+        return []
+    files_to_trash = collect_instance_media_files(instance)
+    instance._media_files_to_trash = files_to_trash
+    return files_to_trash
+
+
+def handle_instance_post_delete(instance):
+    if not is_browser_delete_request():
+        return []
+    return cleanup_instance_media_files(instance)

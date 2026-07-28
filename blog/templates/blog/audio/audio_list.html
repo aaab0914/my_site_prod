@@ -63,8 +63,8 @@
             {% for audio in audios %}
                 <article class="audio-row">
                     <div class="audio-row-main">
-                        <h2>{{ audio.music_name }}</h2>
-                        <p class="audio-meta">Uploaded by {{ audio.uploaded_by_username }} on {{ audio.created|slice:":16"|cut:"T"|add:"" }}</p>
+                        <h2>{{ audio.music_name|default:audio.get_audio_filename }}</h2>
+                        <p class="audio-meta">Uploaded by {{ audio.uploaded_by.username }} on {{ audio.created|date:"Y-m-d H:i" }}</p>
                         {% if audio.description %}
                             <div class="audio-description">{{ audio.description }}</div>
                         {% endif %}
@@ -78,7 +78,7 @@
                             webkit-playsinline
                             class="audio-player"
                             id="audio-player-{{ audio.id }}"
-                            src="{{ audio.audio_url }}"
+                            src="{{ audio.get_audio_proxy_url }}"
                         >
                             Your browser does not support audio playback.
                         </audio>

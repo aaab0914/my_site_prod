@@ -37,23 +37,20 @@
             {% for video in videos %}
                 <article class="video-row">
                     <div class="video-row-main">
-                        <h2>{{ video.title|default:video.filename }}</h2>
-                        <p class="video-meta">Uploaded by {{ video.uploaded_by_username }} on {{ video.created|slice:":16"|cut:"T"|add:"" }}</p>
+                        <h2>{{ video.title|default:video.get_video_filename }}</h2>
+                        <p class="video-meta">Uploaded by {{ video.uploaded_by.username }} on {{ video.created|date:"Y-m-d H:i" }}</p>
                         {% if video.description %}
                             <div class="video-description">{{ video.description }}</div>
                         {% endif %}
                         <div class="video-actions">
                             {% if request.user.is_authenticated %}
-                                <a href="{% url 'blog:video_detail' video.id %}" class="video-button-primary">View Details</a>
-                                <a href="{% url 'blog:video_upload' %}" class="video-button-secondary">Upload More</a>
-                            {% else %}
-                                <a href="{% url 'users:login' %}?next={% url 'blog:video_detail' video.id %}" class="video-button-primary">View Details</a>
+                                <a href="{% url 'blog:video_upload' %}" class="video-button-secondary">Refresh List</a>
                             {% endif %}
                         </div>
                     </div>
                     <div class="video-frame">
                         <video controls preload="metadata" class="video-player">
-                            <source src="{{ video.video_url }}">
+                            <source src="{{ video.get_video_proxy_url }}">
                             Your browser does not support video playback.
                         </video>
                     </div>
