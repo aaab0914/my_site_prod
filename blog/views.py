@@ -26,6 +26,7 @@ from .forms import (
 
 from images.models import ImagePost
 from .models import Post, Comment, AudioPost, VideoPost
+from my_site.protected_media import serve_protected_media
 from my_site.site_views import queue_operation_success
 
 
@@ -33,18 +34,8 @@ def _is_post_request(request):
     return request.method == "POST"
 
 
-def _serve_uploaded_file(field_file):
-    if not field_file:
-        raise Http404("File not found.")
-
-    file_path = Path(field_file.path)
-    if not file_path.is_file():
-        raise Http404("File not found.")
-
-    content_type, _ = mimetypes.guess_type(file_path.name)
-    response = FileResponse(open(file_path, "rb"), content_type=content_type or "application/octet-stream")
-    response["Content-Disposition"] = f'inline; filename="{file_path.name}"'
-    return response
+def _serve_uploaded_file(field_file, request=None, cache_prefix="media"):
+    return serve_protected_media(field_file, request=request, cache_prefix=cache_prefix)
 
 
 def _redirect_to_comment_post(comment):
@@ -269,22 +260,22 @@ def post_create(request):
 
 def post_cover_image(request, pk):
     post = get_object_or_404(Post, pk=pk)
-    return _serve_uploaded_file(post.cover_image)
+    return _serve_uploaded_file(post.cover_image, request=request, cache_prefix="post-cover")
 
 
 def comment_image(request, comment_id):
     comment = get_object_or_404(Comment, pk=comment_id)
-    return _serve_uploaded_file(comment.image)
+    return _serve_uploaded_file(comment.image, request=request, cache_prefix="comment-image")
 
 
 def audio_file_proxy(request, pk):
     audio = get_object_or_404(AudioPost, pk=pk)
-    return _serve_uploaded_file(audio.audio_file)
+    return _serve_uploaded_file(audio.audio_file, request=request, cache_prefix="audio")
 
 
 def video_file_proxy(request, pk):
     video = get_object_or_404(VideoPost, pk=pk)
-    return _serve_uploaded_file(video.video_file)
+    return _serve_uploaded_file(video.video_file, request=request, cache_prefix="video")
 
 
 def post_delete_success(request):
