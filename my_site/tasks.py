@@ -1,4 +1,4 @@
-from datetime import timedelta, timezone as dt_timezone
+from datetime import timedelta
 from pathlib import Path
 
 from django.conf import settings
@@ -6,6 +6,7 @@ from celery import shared_task
 from django.utils import timezone
 
 from blog.models import AuditLog
+from my_site.logging_policy import ensure_runtime_log_heartbeats, purge_runtime_logs
 
 
 @shared_task
@@ -26,35 +27,7 @@ def purge_old_audit_logs_task(days=90):
 @shared_task
 def purge_old_runtime_logs_task(days=30):
     log_root = Path(settings.BASE_DIR) / "logs"
-    if not log_root.exists():
-        return {"deleted_files": 0, "deleted_dirs": 0, "log_root": str(log_root)}
-
-    cutoff = timezone.now() - timedelta(days=days)
-    deleted_files = 0
-    deleted_dirs = 0
-
-    for file_path in log_root.rglob("*.log"):
-        try:
-            modified = timezone.datetime.fromtimestamp(file_path.stat().st_mtime, tz=dt_timezone.utc)
-        except FileNotFoundError:
-            continue
-        if modified >= cutoff:
-            continue
-        file_path.unlink(missing_ok=True)
-        deleted_files += 1
-
-    month_dirs = sorted((path for path in log_root.iterdir() if path.is_dir()), reverse=True)
-    for directory in month_dirs:
-        try:
-            next(directory.iterdir())
-        except StopIteration:
-            directory.rmdir()
-            deleted_dirs += 1
-        except FileNotFoundError:
-            continue
-
-    return {
-        "deleted_files": deleted_files,
-        "deleted_dirs": deleted_dirs,
-        "log_root": str(log_root),
-    }
+    heartbeat_result = ensure_runtime_log_heartbeats(log_root)
+    purge_result = purge_runtime_logs(log_root, retention_days=days)
+    purge_result["heartbeats"] = heartbeat_result
+    return purge_result

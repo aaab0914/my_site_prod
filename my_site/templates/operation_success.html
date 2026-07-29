@@ -1,0 +1,31 @@
+{% extends "blog/hero_base.html" %}
+
+{% block title %}Operation Complete{% endblock %}
+
+{% block hero_base_css %}
+<style>
+    .operation-success-shell { width: min(100%, 960px); margin: 0 auto 36px; }
+    .operation-success-panel { padding: 24px; border-radius: 22px; border: 1px solid #d7e1ea; background: #fff; box-shadow: 0 16px 36px rgba(15,23,42,.08); }
+    .operation-success-panel p { margin: 0 0 18px; color: #546779; line-height: 1.7; }
+    .operation-success-actions { display: flex; gap: 12px; flex-wrap: wrap; }
+    .operation-success-button, .operation-success-link {
+        display: inline-flex; align-items: center; justify-content: center; min-width: 152px;
+        border-radius: 999px; padding: 12px 20px; font-size: 14px; font-weight: 700; line-height: 1.2; text-decoration: none;
+    }
+    .operation-success-button { background: linear-gradient(135deg, #1d4f7b, #17365d); color: #fff; }
+    .operation-success-link { background: #e9eef3; color: #21384b; }
+</style>
+{% endblock %}
+{% block hero_shell_class %}operation-success-shell{% endblock %}
+{% block hero_class %}hero-theme-gallery{% endblock %}
+{% block hero_page_title %}{{ title }}{% endblock %}
+{% block hero_page_description %}The requested operation finished successfully.{% endblock %}
+{% block hero_body %}
+<section class="operation-success-panel">
+    <p>{{ message }}</p>
+    <div class="operation-success-actions">
+        <a href="{{ primary_url }}" class="operation-success-button">{{ primary_label }}</a>
+        <a href="{{ secondary_url }}" class="operation-success-link">{{ secondary_label }}</a>
+    </div>
+</section>
+{% endblock %}

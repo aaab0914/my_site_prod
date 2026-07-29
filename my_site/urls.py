@@ -26,7 +26,7 @@ from markdownx.views import ImageUploadView
 
 from blog.sitemaps import PostSitemap
 from .metrics import metrics_view
-from .site_views import site_index
+from .site_views import health_check, operation_success, site_index
 # PostSitemap: Sitemap class for Post model (defined in blog/sitemaps.py)
 # Tells Django which posts to include in the sitemap
 
@@ -59,6 +59,11 @@ sitemaps = {
 
 urlpatterns = [
     path("", site_index, name="site_index"),
+    path("operation/success/", operation_success, name="operation_success"),
+    # ===== HEALTH CHECK =====
+    # Lightweight probe used by Docker health checks. Returns 200 without any
+    # database or cache dependency so it stays fast even under load.
+    path("health/", health_check, name="health_check"),
     # ===== ADMIN INTERFACE =====
     # Django Admin dashboard for managing models
     # Accessible at: http://localhost:8001/secure-console-7f9a2c-secure-console-7f9a2c-admin/

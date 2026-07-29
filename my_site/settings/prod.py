@@ -33,7 +33,7 @@ CACHES = {
     "default": {
         "BACKEND": "django.core.cache.backends.redis.RedisCache",
         "LOCATION": REDIS_URL,
-        "TIMEOUT": 300,
+        "TIMEOUT": 60 * 60 * 24 * 30,  # 30 days
     }
 }
 
