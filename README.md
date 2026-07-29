@@ -47,12 +47,15 @@
 - Cache invalidation on media save/delete flows
 - Celery worker and Celery Beat support
 - Media sync helpers for cleaning broken references and orphan files
+- Public HTML caching is disabled in development so template and CSS changes show immediately
 
 ### Operations
 - Docker Compose production stack
 - PostgreSQL, Redis, Elasticsearch, Celery, Flower, Prometheus, Grafana, and Nginx support
 - Health checks in the production stack
-- Audit logging and backup support
+- Audit logging, runtime log policy, Sentry configuration, and backup support
+- Runtime logs for Celery, Nginx, Gunicorn, Django, and Django errors are controlled by `my_site/logging_policy.py`
+- Runtime logs older than 120 days are moved to `.trash/logs/` instead of being permanently deleted
 
 ## Main Routes
 
@@ -73,6 +76,7 @@
 - `/blog/album/upload/` - upload one album batch
 - `/users/profile/` - profile page
 - `/users/profile_edit/` - edit profile
+- `/users/api/token/` - obtain an API token with username and password
 
 ### Superuser-only
 - `/blog/video/upload/` - upload video
@@ -117,18 +121,20 @@ cp .env.dev .env.dev.local
 
 3. Start the local stack
 ```bash
-docker compose up -d --build
+docker compose --env-file .env.dev -f docker-compose.dev.yml up -d --build
 ```
 
 4. Run migrations
 ```bash
-docker compose exec web python manage.py migrate
+docker compose --env-file .env.dev -f docker-compose.dev.yml exec web python manage.py migrate
 ```
 
 5. Create a superuser
 ```bash
-docker compose exec web python manage.py createsuperuser
+docker compose --env-file .env.dev -f docker-compose.dev.yml exec web python manage.py createsuperuser
 ```
+
+The development web service is exposed on `http://127.0.0.1:8001` by default, and PostgreSQL is exposed on host port `5433`.
 
 ### Production Deployment
 
@@ -145,6 +151,7 @@ Edit `.env.prod` and replace placeholder secrets before startup:
 - `CSRF_TRUSTED_ORIGINS`
 - `PROMETHEUS_EXTERNAL_URL`
 - `GRAFANA_ROOT_URL`
+- `SENTRY_DSN` if error reporting should be enabled
 
 3. Start the main production services
 ```bash
@@ -185,7 +192,14 @@ docker compose -f docker-compose.prod.yml exec web python manage.py test
 
 Run tests in the local stack:
 ```bash
-docker compose exec web python manage.py test
+docker compose --env-file .env.dev -f docker-compose.dev.yml exec web python manage.py test
+```
+
+Get an API token:
+```bash
+curl -X POST http://127.0.0.1:8001/users/api/token/ \
+  -H "Content-Type: application/json" \
+  -d '{"username":"admin","password":"your-password"}'
 ```
 
 Run the focused media/profile regression set:
@@ -201,6 +215,7 @@ my_site_prod-master/
 |- users/                   # Authentication, profile, avatar, account settings
 |- images/                  # Gallery and album features
 |- my_site/                 # Settings, URLs, middleware, media helpers, runtime helpers
+|- scripts/                 # Runtime checks and log routing helpers
 |- media/                   # Uploaded files
 |- staticfiles/             # Collected static assets
 |- logs/                    # Runtime logs
@@ -208,9 +223,10 @@ my_site_prod-master/
 |- backups/                 # Backup files
 |- .env.dev                 # Local environment template
 |- .env.prod                # Production environment template
-|- docker-compose.yml       # Local development stack
+|- docker-compose.dev.yml   # Local development stack
 |- docker-compose.prod.yml
-|- Dockerfile
+|- Dockerfile.dev
+|- Dockerfile.prod
 |- nginx.conf
 |- nginx.prod.conf
 |- prometheus.yml
@@ -230,3 +246,5 @@ my_site_prod-master/
 - Media list caching is active for gallery, audio, and video pages
 - Deleted media is moved to `.trash`
 - The project includes helper code for media cache invalidation and media file existence checks
+- Blog list post previews are truncated to 100 characters for both English and Chinese content
+- Albums show 20 items per page with a 5-column desktop layout

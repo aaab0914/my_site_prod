@@ -1,8 +1,0 @@
-# This file is intentionally non-functional for production.
-# Use the production compose file explicitly:
-#   docker compose -f docker-compose.prod.yml up -d --build
-#
-# Keeping this file as a guard prevents accidental deployment with:
-#   docker compose up -d
-
-services: {}
