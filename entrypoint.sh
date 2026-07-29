@@ -17,34 +17,23 @@ echo "Host cron handles database backups; skipping in-container backup loop" >&2
 
 mkdir -p "/code/logs/$(date +%Y-%m)"
 
-start_daily_log_router() {
-  pipe_path="$1"
-  prefix="$2"
-
-  rm -f "$pipe_path"
-  mkfifo "$pipe_path"
-
-  (
-    while IFS= read -r line || [ -n "$line" ]; do
-      month_dir="/code/logs/$(date +%Y-%m)"
-      day="$(date +%Y-%m-%d)"
-      mkdir -p "$month_dir"
-      printf '%s\n' "$line" >> "$month_dir/${prefix}-${day}.log"
-    done < "$pipe_path"
-  ) &
-}
-
+# 自定义命令（如 celery worker/beat）以 app 用户身份运行
 if [ "$#" -gt 0 ]; then
-  exec "$@"
+  exec gosu app "$@"
 fi
 
 ACCESS_PIPE="/tmp/gunicorn-access.pipe"
 ERROR_PIPE="/tmp/gunicorn-error.pipe"
-start_daily_log_router "$ACCESS_PIPE" "gunicorn-access"
-start_daily_log_router "$ERROR_PIPE" "gunicorn-error"
+rm -f "$ACCESS_PIPE" "$ERROR_PIPE"
+mkfifo "$ACCESS_PIPE"
+mkfifo "$ERROR_PIPE"
 
-exec gunicorn \
-  --workers 2 \
+python /code/scripts/runtime_log_router.py gunicorn_access < "$ACCESS_PIPE" &
+python /code/scripts/runtime_log_router.py gunicorn_error < "$ERROR_PIPE" &
+
+exec gosu app gunicorn \
+  --workers ${GUNICORN_WORKERS:-2} \
+  --worker-tmp-dir /dev/shm \
   --bind 0.0.0.0:8000 \
   --access-logfile "$ACCESS_PIPE" \
   --error-logfile "$ERROR_PIPE" \
