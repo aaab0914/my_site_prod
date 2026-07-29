@@ -75,3 +75,20 @@ class BlogApiPermissionTests(TestCase):
         response = self.client.delete(reverse("blog:api_comment_detail", kwargs={"pk": self.comment.pk}))
         self.assertEqual(response.status_code, 405)
         self.assertTrue(Comment.objects.filter(pk=self.comment.pk).exists())
+
+    def test_comment_list_api_requires_login_for_list(self):
+        response = self.client.get(reverse("blog:api_comment_list"))
+        self.assertEqual(response.status_code, 403)
+
+    def test_comment_detail_api_requires_login_for_retrieve(self):
+        response = self.client.get(reverse("blog:api_comment_detail", kwargs={"pk": self.comment.pk}))
+        self.assertEqual(response.status_code, 403)
+
+    def test_comment_list_api_requires_login_for_create(self):
+        response = self.client.post(
+            reverse("blog:api_comment_list"),
+            {"post": self.post.pk, "body": "Anonymous comment"},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(Comment.objects.count(), 1)

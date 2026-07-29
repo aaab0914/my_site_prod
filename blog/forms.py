@@ -27,6 +27,11 @@ from PIL import Image
 # PIL.Image: Python Imaging Library, used for opening and processing image files.
 
 from .models import Post, Comment, AudioPost, VideoPost
+from my_site.upload_limits import (
+    validate_audio_upload,
+    validate_image_upload,
+    validate_video_upload,
+)
 
 
 # Post: The main blog post model.
@@ -137,11 +142,7 @@ class PostCreateForm(forms.ModelForm):
         """
         image = self.cleaned_data.get("cover_image")
         if image:
-            allowed_types = {"image/jpeg", "image/png", "image/webp"}
-            if getattr(image, "content_type", "") not in allowed_types:
-                raise ValidationError("Cover image must be a JPEG, PNG, or WebP image.")
-            if image.size > 3 * 1024 * 1024:
-                raise ValidationError("Cover image must be 3MB or smaller before optimization.")
+            validate_image_upload(image, label="Cover image")
             img = Image.open(image)
             if img.mode in ("RGBA", "LA", "P"):
                 img = img.convert("RGB")
@@ -218,7 +219,7 @@ class AudioMultipleFileField(forms.FileField):
             if initial:
                 return initial
             if self.required:
-                raise ValidationError("Please choose at least one audio file.")
+                raise ValidationError("Select at least one audio file.")
             return []
 
         files = data if isinstance(data, (list, tuple)) else [data]
@@ -256,7 +257,7 @@ class AudioUploadForm(forms.ModelForm):
         model = AudioPost
         fields = ["music_name", "audio_file", "cover_image", "description"]
         widgets = {
-            "music_name": forms.TextInput(attrs={"placeholder": "Required for single upload"}),
+            "music_name": forms.TextInput(attrs={"placeholder": "Title required for single-file uploads"}),
             "cover_image": AudioEditCoverInput(attrs={"accept": ".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"}),
             "description": forms.Textarea(attrs={"row": 3}),
         }
@@ -276,21 +277,7 @@ class AudioUploadForm(forms.ModelForm):
         if not audio_file:
             return audio_file
 
-        allowed_types = {
-            "audio/mpeg",
-            "audio/mp3",
-            "audio/wav",
-            "audio/x-wav",
-            "audio/ogg",
-        }
-        allowed_extensions = (".mp3", ".wav", ".ogg")
-        if getattr(audio_file, "content_type", "") not in allowed_types:
-            raise ValidationError("Audio upload must be an MP3, WAV, or OGG file.")
-        if not audio_file.name.lower().endswith(allowed_extensions):
-            raise ValidationError("Audio file extension must be .mp3, .wav, or .ogg.")
-        if audio_file.size > 25 * 1024 * 1024:
-            raise ValidationError("Audio upload must be 25MB or smaller.")
-        return audio_file
+        return validate_audio_upload(audio_file)
 
     def clean_audio_file(self):
         """
@@ -404,15 +391,7 @@ class AudioPostEditForm(forms.ModelForm):
         if not image or not hasattr(image, "content_type"):
             return self.instance.cover_image
 
-        allowed_types = {"image/jpeg", "image/png", "image/webp"}
-        allowed_extensions = (".jpg", ".jpeg", ".png", ".webp")
-        if getattr(image, "content_type", "") not in allowed_types:
-            raise ValidationError("Cover image must be a JPEG, PNG, or WebP image.")
-        if not image.name.lower().endswith(allowed_extensions):
-            raise ValidationError("Cover image extension must be .jpg, .jpeg, .png, or .webp.")
-        if image.size > 3 * 1024 * 1024:
-            raise ValidationError("Cover image must be 3MB or smaller.")
-        return image
+        return validate_image_upload(image, label="Cover image")
 
 
 
@@ -421,7 +400,7 @@ class AudioPostEditForm(forms.ModelForm):
 class VideoPostEditForm(forms.ModelForm):
     video_file = forms.FileField(
         required=False,
-        widget=forms.FileInput(attrs={"accept": ".mp4,.webm,.mov,video/mp4,video/webm,video/quicktime"}),
+        widget=forms.FileInput(attrs={"accept": ".mp4,.webm,.mov,.mkv,video/mp4,video/webm,video/quicktime,video/x-matroska"}),
     )
 
     class Meta:
@@ -444,24 +423,16 @@ class VideoUploadForm(forms.ModelForm):
         fields = ["title", "video_file", "description"]
         widgets = {
             "title": forms.TextInput(attrs={"class": "form-control", "placeholder": "Optional title"}),
-            "video_file": forms.FileInput(attrs={"accept": ".mp4,.webm,.mov,video/mp4,video/webm,video/quicktime"}),
+            "video_file": forms.FileInput(attrs={"accept": ".mp4,.webm,.mov,.mkv,video/mp4,video/webm,video/quicktime,video/x-matroska"}),
             "description": forms.Textarea(attrs={"rows": 4}),
         }
 
     @staticmethod
     def validate_video_file(video_file):
-        allowed_types = {"video/mp4", "video/webm", "video/quicktime"}
-        allowed_extensions = (".mp4", ".webm", ".mov")
-        if getattr(video_file, "content_type", "") not in allowed_types:
-            raise ValidationError("Video upload must be an MP4, WebM, or MOV file.")
-        if not video_file.name.lower().endswith(allowed_extensions):
-            raise ValidationError("Video file extension must be .mp4, .webm, or .mov.")
-        if video_file.size > 200 * 1024 * 1024:
-            raise ValidationError("Video upload must be 200MB or smaller.")
-        return video_file
+        return validate_video_upload(video_file)
 
     def clean_video_file(self):
         video_file = self.cleaned_data.get("video_file")
         if not video_file:
-            raise ValidationError("Please choose a video file.")
+            raise ValidationError("Select a video file.")
         return self.validate_video_file(video_file)

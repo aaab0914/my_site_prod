@@ -7,106 +7,52 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{% block title %}{% endblock %}</title>
     <link href="{% static "css/blog.css" %}" rel="stylesheet">
+    <link href="{% static "blog/css/blog_theme.css" %}" rel="stylesheet">
 </head>
 <body>
-<style>
-    .messages { display: grid; gap: 12px; width: min(100%, 1120px); max-width: 1120px; margin: 0 auto 20px; }
-    .message { padding: 14px 16px; border-radius: 16px; border: 1px solid transparent; line-height: 1.6; box-shadow: 0 10px 24px rgba(15,23,42,.06); }
-    .message-success { background: #edf9f2; color: #14532d; border-color: #b7e4c7; }
-    .message-error { background: #fff1f2; color: #9f1239; border-color: #fecdd3; }
-    .message-warning { background: #fff8e8; color: #92400e; border-color: #fcd34d; }
-    .message-info { background: #eef6ff; color: #1d4ed8; border-color: #bfdbfe; }
-
-    .page-shell {
-        width: min(100%, 1120px) !important;
-        max-width: 1120px !important;
-        margin: 0 auto 36px !important;
-    }
-    .page-hero {
-        min-height: 184px !important;
-        margin-bottom: 24px !important;
-        padding: 30px !important;
-        border-radius: 28px !important;
-        display: flex !important;
-        flex-direction: column !important;
-        justify-content: center !important;
-        box-shadow: 0 24px 54px rgba(15,23,42,.2) !important;
-    }
-    .page-hero.page-hero {
-        min-height: 184px !important;
-    }
-    .page-hero-title,
-    .page-hero.page-hero .page-hero-title {
-        margin: 0 0 10px !important;
-        padding: 0 !important;
-        border: 0 !important;
-        font-size: 42px !important;
-        font-weight: 800 !important;
-        letter-spacing: -.03em !important;
-    }
-    .page-hero-copy,
-    .page-hero.page-hero .page-hero-copy {
-        margin: 0 !important;
-        max-width: 760px !important;
-        font-size: 16px !important;
-        line-height: 1.7 !important;
-    }
-    @media screen and (max-width: 900px) {
-        .page-shell {
-            width: 100% !important;
-            margin: 0 auto 24px !important;
-        }
-        .page-hero {
-            min-height: 0 !important;
-            padding: 24px 20px !important;
-        }
-        .page-hero-title,
-        .page-hero.page-hero .page-hero-title {
-            font-size: 32px !important;
-        }
-    }
-
-    .sidebar-inline-icon {
-        display: inline-block;
-        width: 1.05em;
-        margin-right: 4px;
-        text-align: center;
-        font-size: 0.95em;
-        vertical-align: -0.05em;
-    }
-
-    #sidebar {
-        position: relative;
-    }
-    .sidebar-admin-badge {
-        position: absolute;
-        top: 14px;
-        right: 14px;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        padding: 8px 14px;
-        border-radius: 999px;
-        background: #b42318;
-        color: #fff;
-        font-size: 13px;
-        font-weight: 800;
-        letter-spacing: .02em;
-        z-index: 2;
-    }
-</style>
 
 <div id="content">
-    <p class="blog-home">
-        <a href="{% url 'blog:all_posts_list' %}">🏠 Blog Home</a>
-    </p>
+    <div class="top-nav">
+        {% if request.resolver_match.url_name != 'all_posts_list' %}
+            <p class="blog-home">
+                <a href="{% url 'blog:all_posts_list' %}" class="nav-pill nav-pill-home">Blog Home</a>
+            </p>
+        {% endif %}
+        <p class="back-link">
+            <a href="{% url 'blog:all_posts_list' %}" id="back-btn" class="nav-pill nav-pill-back">Back</a>
+        </p>
+    </div>
+    <script>
+    (function() {
+      var btn = document.getElementById('back-btn');
+      if (btn && window.history.length > 1 && document.referrer !== '') {
+        btn.addEventListener('click', function(event) {
+          event.preventDefault();
+          window.history.back();
+        });
+      }
+    })();
+    </script>
 
     {% if messages %}
-        <div class="messages page-shell">
+        <div class="messages page-shell" id="messages-container" data-session="{% now 'U' %}">
             {% for message in messages %}
                 <div class="message message-{{ message.tags }}">{{ message }}</div>
             {% endfor %}
         </div>
+        <script>
+        (function() {
+          var el = document.getElementById('messages-container');
+          if (el) {
+            var key = 'msg-shown-' + el.getAttribute('data-session');
+            if (sessionStorage.getItem(key)) {
+              el.style.display = 'none';
+            } else {
+              sessionStorage.setItem(key, '1');
+            }
+          }
+        })();
+        </script>
     {% endif %}
 
     {% block content %}

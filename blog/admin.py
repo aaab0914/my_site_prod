@@ -22,6 +22,7 @@ import taggit.admin
 from taggit.models import Tag
 
 from .models import Post, Comment, AudioPost, VideoPost, AuditLog
+from my_site.logging_policy import RUNTIME_LOG_TARGETS, runtime_log_path
 
 
 def make_active(modeladmin, request, queryset):
@@ -63,7 +64,6 @@ def _template_inventory():
     frontend_map = {
         "blog/templates/blog/audio/audio_list.html": "/blog/audio/list/",
         "blog/templates/blog/audio/audio_post_delete.html": "/blog/audio/list/",
-        "blog/templates/blog/audio/audio_post_delete_success.html": "/blog/audio/delete/success/",
         "blog/templates/blog/audio/audio_post_edit.html": "/blog/audio/list/",
         "blog/templates/blog/audio/upload_audio.html": "/blog/audio/upload/",
         "blog/templates/blog/base.html": "/blog/",
@@ -77,10 +77,8 @@ def _template_inventory():
         "blog/templates/blog/pagination.html": "/blog/",
         "blog/templates/blog/post/all_posts_list.html": "/blog/",
         "blog/templates/blog/post/create_post.html": "/blog/create/",
-        "blog/templates/blog/post/create_post_success.html": "/blog/create/",
         "blog/templates/blog/post/latest_posts.html": "/blog/",
         "blog/templates/blog/post/post_delete.html": "/blog/",
-        "blog/templates/blog/post/post_delete_success.html": "/blog/post_delete_success/",
         "blog/templates/blog/post/post_detail.html": "/blog/",
         "blog/templates/blog/post/post_edit.html": "/blog/",
         "blog/templates/blog/post/search_post.html": "/blog/search/",
@@ -131,22 +129,13 @@ def admin_system_status_view(request):
     logs_dir = base_dir / "logs"
     backups_dir = base_dir / "backups" / "db"
     today = now()
-    month_dir = logs_dir / today.strftime("%Y-%m")
-
-    log_prefixes = [
-        ("django", "Django"),
-        ("error", "Error"),
-        ("gunicorn-access", "Gunicorn Access"),
-        ("gunicorn-error", "Gunicorn Error"),
-    ]
-
     log_statuses = []
-    for prefix, label in log_prefixes:
-        path = month_dir / f"{prefix}-{today.strftime('%Y-%m-%d')}.log"
+    for target in RUNTIME_LOG_TARGETS:
+        path = runtime_log_path(logs_dir, target, today)
         exists = path.exists()
         log_statuses.append(
             {
-                "label": label,
+                "label": target.label,
                 "path": path,
                 "exists": exists,
                 "size": _human_size(path.stat().st_size) if exists else "-",
@@ -267,14 +256,27 @@ class PostAdminForm(forms.ModelForm):
 class PostAdmin(admin.ModelAdmin):
     form = PostAdminForm
     change_form_template = "admin/blog/post/change_form.html"
-    list_display = ["title", "slug", "author", "publish", "status"]
-    list_filter = ["status", "created", "publish", "author"]
-    search_fields = ["title", "body"]
+    list_display = ["title", "slug", "author", "publish", "status", "created", "updated"]
+    list_filter = ["status", "created", "publish", "updated", "author", "tags"]
+    search_fields = ["title", "body", "slug", "author__username", "tags__name"]
+    list_editable = ["status"]
     prepopulated_fields = {"slug": ("title",)}
     raw_id_fields = ["author"]
+    autocomplete_fields = ["author", "tags"]
     date_hierarchy = "publish"
-    ordering = ["status", "publish"]
+    ordering = ["status", "-publish"]
+    list_per_page = 25
+    list_select_related = ["author"]
+    actions = ["make_published", "make_draft"]
     show_facets = admin.ShowFacets.ALWAYS
+
+    @admin.action(description="Mark selected posts as published")
+    def make_published(self, request, queryset):
+        queryset.update(status=Post.Status.PUBLISHED)
+
+    @admin.action(description="Mark selected posts as draft")
+    def make_draft(self, request, queryset):
+        queryset.update(status=Post.Status.DRAFT)
 
 
 class CommentAdminForm(forms.ModelForm):
@@ -294,9 +296,16 @@ class CommentAdminForm(forms.ModelForm):
 class CommentAdmin(admin.ModelAdmin):
     form = CommentAdminForm
     list_display = ["comment_preview", "post", "author", "email", "created", "active"]
-    list_filter = ["active", "created", "updated"]
-    search_fields = ["author__username", "email", "body"]
+    list_filter = ["active", "created", "updated", "post", "author"]
+    search_fields = ["author__username", "email", "body", "post__title"]
+    list_editable = ["active"]
     autocomplete_fields = ["post", "author"]
+    date_hierarchy = "created"
+    ordering = ["-created"]
+    list_per_page = 50
+    list_select_related = ["post", "author"]
+    actions = [make_active, make_inactive]
+    show_facets = admin.ShowFacets.ALWAYS
 
     @admin.display(description="Comment")
     def comment_preview(self, obj):

@@ -127,7 +127,7 @@ class CommentListAPIView(generics.ListCreateAPIView):
     # Only active comments are exposed via the public API.
     queryset = Comment.objects.filter(active=True)
     serializer_class = CommentSerializer
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    permission_classes = [permissions.IsAuthenticated]
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ["post", "author__username", "active"]
 
@@ -145,7 +145,7 @@ class CommentDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
     """
     queryset = Comment.objects.filter(active=True)
     serializer_class = CommentSerializer
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [permissions.IsAuthenticated]
 
     def update(self, request, *args, **kwargs):
         """
