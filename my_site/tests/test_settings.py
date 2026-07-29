@@ -14,11 +14,11 @@ class SettingsSplitTests(SimpleTestCase):
         self.assertIn('my_site.settings.dev', manage_py)
 
     def test_dockerfile_defaults_to_prod_settings(self):
-        dockerfile = (self._base_dir() / "Dockerfile").read_text(encoding="utf-8")
+        dockerfile = (self._base_dir() / "Dockerfile.prod").read_text(encoding="utf-8")
         self.assertIn("DJANGO_SETTINGS_MODULE=my_site.settings.prod", dockerfile)
 
     def test_compose_explicitly_sets_prod_settings_module(self):
-        compose = (self._base_dir() / "docker-compose.yml").read_text(encoding="utf-8")
+        compose = (self._base_dir() / "docker-compose.dev.yml").read_text(encoding="utf-8")
         self.assertIn("DJANGO_SETTINGS_MODULE: my_site.settings.dev", compose)
 
     def test_prod_compose_explicitly_sets_prod_settings_module(self):

@@ -14,7 +14,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 class CeleryIntegrationTests(TestCase):
     def setUp(self):
         self.base_settings = (BASE_DIR / "my_site" / "settings" / "base.py").read_text(encoding="utf-8")
-        self.compose = (BASE_DIR / "docker-compose.yml").read_text(encoding="utf-8")
+        self.compose = (BASE_DIR / "docker-compose.dev.yml").read_text(encoding="utf-8")
 
     def test_celery_integration_is_configured_for_events_and_scheduling(self):
         self.assertIn('command: celery -A my_site worker -l info -E', self.compose)
@@ -27,7 +27,7 @@ class CeleryIntegrationTests(TestCase):
         self.assertNotIn('"task": "my_site.tasks.sync_site_media_task"', self.base_settings)
         self.assertIn('"task": "my_site.tasks.purge_old_audit_logs_task"', self.base_settings)
         self.assertIn('"task": "my_site.tasks.purge_old_runtime_logs_task"', self.base_settings)
-        self.assertIn('LOG_RETENTION_DAYS = config("LOG_RETENTION_DAYS", default=30, cast=int)', self.base_settings)
+        self.assertIn('LOG_RETENTION_DAYS = config("LOG_RETENTION_DAYS", default=120, cast=int)', self.base_settings)
 
     @override_settings(CELERY_TASK_ALWAYS_EAGER=True, CELERY_TASK_EAGER_PROPAGATES=True)
     def test_celery_task_executes_successfully_in_eager_mode(self):

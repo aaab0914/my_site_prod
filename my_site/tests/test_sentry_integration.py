@@ -15,7 +15,9 @@ class SentryIntegrationTests(SimpleTestCase):
         self.assertIn("from sentry_sdk.integrations.celery import CeleryIntegration", self.base_settings)
         self.assertIn("from sentry_sdk.integrations.django import DjangoIntegration", self.base_settings)
         self.assertIn("SENTRY_DSN = config(", self.base_settings)
-        self.assertIn("integrations=[DjangoIntegration(), CeleryIntegration()]", self.base_settings)
+        self.assertIn('"integrations": [DjangoIntegration(), CeleryIntegration()]', self.base_settings)
+        self.assertIn("SENTRY_ENVIRONMENT = config(", self.base_settings)
+        self.assertIn("SENTRY_RELEASE = config(", self.base_settings)
         self.assertIn("sentry_sdk.init(", self.base_settings)
 
     def test_sentry_sdk_init_receives_django_and_celery_integrations(self):
@@ -31,6 +33,8 @@ class SentryIntegrationTests(SimpleTestCase):
             "ELASTICSEARCH_URL": "http://elasticsearch:9200",
             "STATIC_ROOT": str(BASE_DIR / "staticfiles"),
             "SENTRY_DSN": "https://examplePublicKey@o0.ingest.sentry.io/0",
+            "SENTRY_ENVIRONMENT": "production",
+            "SENTRY_RELEASE": "my-site@test",
             "SENTRY_TRACES_SAMPLE_RATE": "0.5",
             "SENTRY_PROFILES_SAMPLE_RATE": "0.1",
         }.get(key, default))
@@ -45,6 +49,9 @@ class SentryIntegrationTests(SimpleTestCase):
             importlib.reload(base_module)
 
         sentry_init.assert_called_once()
+        self.assertEqual(sentry_init.call_args.kwargs["dsn"], "https://examplePublicKey@o0.ingest.sentry.io/0")
+        self.assertEqual(sentry_init.call_args.kwargs["environment"], "production")
+        self.assertEqual(sentry_init.call_args.kwargs["release"], "my-site@test")
         integrations = sentry_init.call_args.kwargs["integrations"]
         self.assertEqual(integrations, [django_integration, celery_integration])
 
