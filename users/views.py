@@ -6,13 +6,17 @@ from pathlib import Path
 # --- users/views/auth.py ---
 from django.contrib import messages
 from django.contrib.auth import login, logout
+from django.contrib.auth.models import User
 from django.core.cache import cache
 from django.core.paginator import Paginator
 from django.http import FileResponse, Http404, HttpResponse
 from django.shortcuts import redirect, render
+from rest_framework.authtoken.models import Token
+from rest_framework.authtoken.views import ObtainAuthToken
+from rest_framework.response import Response
 
 from .forms import UserLoginForm, UserRegisterForm
-from my_site.site_views import render_public_cached_template
+from my_site.site_views import queue_operation_success, render_public_cached_template
 
 LOGIN_RATE_LIMIT_WINDOW = 900
 LOGIN_RATE_LIMIT_MAX_FAILURES = 5
@@ -34,7 +38,15 @@ def register(request):
             user = form.save()
             login(request, user)
             messages.success(request, "Register Successful!")
-            return redirect("blog:all_posts_list")
+            return queue_operation_success(
+                request,
+                title="Registration Complete",
+                message="Your account was created successfully.",
+                primary_label="Open Blog Home",
+                primary_url=redirect("blog:all_posts_list").url,
+                secondary_label="Open Profile",
+                secondary_url=redirect("users:profile").url,
+            )
     else:
         form = UserRegisterForm()
     return render(request, "users/register.html", {"form": form})
@@ -69,10 +81,22 @@ def logout_view(request):
         return render(request, "users/logout.html", {"logged_out": True})
     return render(request, "users/logout.html", {"logged_out": False})
 
+
+class ApiTokenView(ObtainAuthToken):
+    def post(self, request, *args, **kwargs):
+        response = super().post(request, *args, **kwargs)
+        token = Token.objects.get(key=response.data["token"])
+        return Response(
+            {
+                "token": token.key,
+                "user_id": token.user_id,
+                "username": token.user.username,
+            }
+        )
+
 # --- users/views/account.py ---
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.models import User
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.utils.http import http_date, parse_http_date_safe, quote_etag
@@ -145,7 +169,13 @@ def profile_edit(request):
             else:
                 form.save()
                 messages.success(request, "Your profile picture has been updated.")
-            return redirect("users:profile")
+            return queue_operation_success(
+                request,
+                title="Profile Updated",
+                message="Your profile details were updated successfully.",
+                primary_label="Open Profile",
+                primary_url=redirect("users:profile").url,
+            )
     else:
         form = UserProfileForm(instance=profile)
     remaining = profile.get_avatar_change_remaining_days()
@@ -224,7 +254,13 @@ def account_delete(request):
         username = request.user.username
         request.user.delete()
         messages.success(request, f'Account "{username}" has been permanently deleted.')
-        return redirect("blog:all_posts_list")
+        return queue_operation_success(
+            request,
+            title="Account Deleted",
+            message=f'Account "{username}" has been permanently deleted.',
+            primary_label="Open Blog Home",
+            primary_url=redirect("blog:all_posts_list").url,
+        )
     return render(request, "users/account_delete.html")
 
 
@@ -236,7 +272,13 @@ def username_change(request):
             new_username = form.cleaned_data["username"]
             form.save()
             messages.success(request, f'User "{new_username}" has been changed.')
-            return redirect("users:profile")
+            return queue_operation_success(
+                request,
+                title="Username Updated",
+                message=f'Username changed successfully to "{new_username}".',
+                primary_label="Open Profile",
+                primary_url=redirect("users:profile").url,
+            )
         for error in form.errors.get("username", []):
             messages.error(request, error)
     else:

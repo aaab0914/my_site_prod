@@ -9,6 +9,7 @@ from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import InMemoryUploadedFile, SimpleUploadedFile
 
 from .models import Album, AlbumImage, ImagePost
+from my_site.upload_limits import validate_image_upload
 
 
 class ImagePostForm(forms.ModelForm):
@@ -32,6 +33,11 @@ class MultipleImageInput(forms.ClearableFileInput):
 
 
 class GallerySingleUploadForm(forms.Form):
+    title = forms.CharField(
+        required=False,
+        max_length=200,
+        widget=forms.TextInput(attrs={"class": "form-control", "placeholder": "Optional title"}),
+    )
     images = forms.CharField(
         required=False,
         widget=MultipleImageInput(attrs={"class": "form-control", "accept": ".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"}),
@@ -51,7 +57,7 @@ class GallerySingleUploadForm(forms.Form):
         all_uploads = file_uploads + pasted_uploads
 
         if not all_uploads:
-            raise ValidationError("Please upload at least one image.")
+            raise ValidationError("Upload at least one image.")
         if len(all_uploads) > 1:
             raise ValidationError("Gallery upload allows only 1 image at a time.")
 
@@ -62,6 +68,10 @@ class GallerySingleUploadForm(forms.Form):
         return optimized_uploads
 
     def build_title(self, image, index):
+        cleaned_data = getattr(self, "cleaned_data", {}) or {}
+        custom_title = (cleaned_data.get("title") or self.data.get("title") or "").strip()
+        if custom_title:
+            return custom_title[:200]
         base_name = image.name.rsplit(".", 1)[0].strip() or "gallery-image"
         return f"{base_name[:180]}-{index}"
 
@@ -115,12 +125,7 @@ class GalleryImageEditForm(forms.ModelForm):
 
 
 def optimize_uploaded_image(image):
-    allowed_types = {"image/jpeg", "image/png", "image/webp"}
-    if getattr(image, "content_type", "") not in allowed_types:
-        raise ValidationError("Image must be a JPEG, PNG, or WebP file.")
-
-    if image.size > 25 * 1024 * 1024:
-        raise ValidationError("Image must be 25MB or smaller before optimization.")
+    validate_image_upload(image)
 
     try:
         if hasattr(image, "seek"):
@@ -198,9 +203,9 @@ class AlbumUploadForm(forms.Form):
         all_uploads = file_uploads + pasted_uploads
 
         if not all_uploads:
-            raise ValidationError("Please upload at least one image.")
+            raise ValidationError("Upload at least one image.")
         if len(all_uploads) > 99:
-            raise ValidationError("You can upload at most 99 images at one time.")
+            raise ValidationError("A maximum of 99 images can be uploaded at one time.")
 
         optimized_uploads = []
         for image in all_uploads:

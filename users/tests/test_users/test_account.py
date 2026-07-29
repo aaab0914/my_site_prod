@@ -1,6 +1,7 @@
 from django.contrib.auth.models import User
 from django.test import Client, TestCase
 from django.urls import reverse
+from rest_framework.authtoken.models import Token
 
 
 class UserAccountDeleteTests(TestCase):
@@ -19,11 +20,22 @@ class UserAccountDeleteTests(TestCase):
         self.client.post(self.delete_url, {"confirm_delete": True})
         self.assertFalse(User.objects.filter(id=user_id).exists())
 
+    def test_delete_account_requires_confirmation(self):
+        user_id = self.user.id
+        self.client.post(self.delete_url, {})
+        self.assertTrue(User.objects.filter(id=user_id).exists())
+
     def test_delete_account_get_only_shows_confirmation(self):
         user_id = self.user.id
         response = self.client.get(self.delete_url)
         self.assertEqual(response.status_code, 200)
         self.assertTrue(User.objects.filter(id=user_id).exists())
+
+    def test_delete_account_logs_user_out(self):
+        response = self.client.post(self.delete_url, {"confirm_delete": True}, follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(response.wsgi_request.user.is_authenticated)
+        self.assertContains(response, "Blog Home")
 
     def test_delete_requires_login(self):
         self.client.logout()
@@ -94,3 +106,34 @@ class LogoutViewTests(TestCase):
         self.assertContains(response, "Logged Out")
         follow_up = self.client.get(reverse("users:profile"))
         self.assertEqual(follow_up.status_code, 302)
+
+
+class ApiTokenViewTests(TestCase):
+    def test_admin_can_get_api_token(self):
+        admin = User.objects.create_superuser(
+            username="adminuser",
+            email="admin@example.com",
+            password="StrongPass123!",
+        )
+        response = self.client.post(
+            reverse("users:api_token"),
+            {"username": "adminuser", "password": "StrongPass123!"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["user_id"], admin.id)
+        self.assertEqual(response.json()["username"], "adminuser")
+        self.assertEqual(response.json()["token"], Token.objects.get(user=admin).key)
+
+    def test_api_token_rejects_invalid_password(self):
+        User.objects.create_superuser(
+            username="adminuser",
+            email="admin@example.com",
+            password="StrongPass123!",
+        )
+        response = self.client.post(
+            reverse("users:api_token"),
+            {"username": "adminuser", "password": "wrong-password"},
+        )
+
+        self.assertEqual(response.status_code, 400)

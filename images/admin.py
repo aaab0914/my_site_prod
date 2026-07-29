@@ -17,10 +17,10 @@ class AlbumImageInline(admin.TabularInline):
 @admin.register(ImagePost)
 class ImageAdmin(admin.ModelAdmin):
     form = ImagePostForm
-    list_display = ["title", "uploaded_by", "created", "updated"]
+    list_display = ["thumbnail_preview", "title", "uploaded_by", "created", "updated"]
     list_filter = ["created", "updated", "uploaded_by"]
     search_fields = ["title", "description", "uploaded_by__username"]
-    readonly_fields = ["created", "updated"]
+    readonly_fields = ["thumbnail_preview", "created", "updated"]
     raw_id_fields = ["uploaded_by"]
     autocomplete_fields = ["uploaded_by"]
     ordering = ["-created"]
@@ -40,10 +40,10 @@ class ImageAdmin(admin.ModelAdmin):
 
 @admin.register(Album)
 class AlbumAdmin(admin.ModelAdmin):
-    list_display = ["title", "uploaded_by", "image_count", "created", "updated"]
+    list_display = ["cover_preview", "title", "uploaded_by", "image_count", "created", "updated"]
     list_filter = ["created", "updated", "uploaded_by"]
     search_fields = ["title", "description", "uploaded_by__username"]
-    readonly_fields = ["created", "updated"]
+    readonly_fields = ["cover_preview", "created", "updated"]
     raw_id_fields = ["uploaded_by"]
     autocomplete_fields = ["uploaded_by"]
     ordering = ["-created"]

@@ -212,6 +212,14 @@
             {% endif %}
 
             <div class="upload-field">
+                <label for="{{ form.title.id_for_label }}">Title</label>
+                {{ form.title }}
+                {% if form.title.errors %}
+                    <div class="upload-error">{{ form.title.errors }}</div>
+                {% endif %}
+            </div>
+
+            <div class="upload-field">
                 <label for="{{ form.images.id_for_label }}">Local image file</label>
                 {{ form.images }}
                 {% if form.images.errors %}
@@ -253,9 +261,10 @@
                 <h3>Rules</h3>
                 <ul>
                     <li>Only logged-in users can upload.</li>
+                    <li>Only 1 image is allowed per submission.</li>
+                    <li>The title is optional. If left blank, the file name is used.</li>
                     <li>Supported formats: JPEG, PNG, WebP.</li>
-                    <li>JPEG, PNG, and WebP are supported.</li>
-                    <li>You can submit up to 99 images at one time.</li>
+                    <li>Maximum file size: 5MB.</li>
                     <li>Large images are optimized before saving.</li>
                 </ul>
             </section>
@@ -274,7 +283,7 @@
     let localFiles = [];
 
     function getAllFiles() {
-        return localFiles.concat(pastedFiles).slice(0, 99);
+        return localFiles.concat(pastedFiles).slice(0, 1);
     }
 
     function syncPastedImagesField() {
@@ -320,7 +329,9 @@
     }
 
     fileInput.addEventListener("change", () => {
-        localFiles = Array.from(fileInput.files || []).slice(0, 99 - pastedFiles.length);
+        localFiles = Array.from(fileInput.files || []).slice(0, 1);
+        pastedFiles = [];
+        pastedImagesInput.value = "";
         renderPreview();
     });
 
@@ -335,17 +346,15 @@
         }
 
         event.preventDefault();
-        imageItems.forEach((item, index) => {
-            const file = item.getAsFile();
-            if (!file) {
-                return;
-            }
-            const extension = file.type.split("/")[1] || "png";
-            const wrapped = new File([file], `pasted-image-${Date.now()}-${index}.${extension}`, { type: file.type });
-            pastedFiles.push(wrapped);
-        });
-
-        pastedFiles = pastedFiles.slice(0, 99 - localFiles.length);
+        const file = imageItems[0].getAsFile();
+        if (!file) {
+            return;
+        }
+        const extension = file.type.split("/")[1] || "png";
+        const wrapped = new File([file], `pasted-image-${Date.now()}.${extension}`, { type: file.type });
+        pastedFiles = [wrapped];
+        localFiles = [];
+        fileInput.value = "";
         renderPreview();
         syncPastedImagesField();
     });
