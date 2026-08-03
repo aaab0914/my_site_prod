@@ -76,7 +76,7 @@ class MediaCleanupContractTests(SimpleTestCase):
 class BackupSystemContractTests(SimpleTestCase):
     def setUp(self):
         self.entrypoint = (BASE_DIR / "entrypoint.sh").read_text(encoding="utf-8")
-        self.dev_compose = (BASE_DIR / "docker-compose.yml").read_text(encoding="utf-8")
+        self.dev_compose = (BASE_DIR / "docker-compose.dev.yml").read_text(encoding="utf-8")
         self.prod_compose = (BASE_DIR / "docker-compose.prod.yml").read_text(encoding="utf-8")
 
     def test_backup_storage_is_mounted_but_not_started_from_container_entrypoint(self):

@@ -8,7 +8,7 @@ from .common import BASE_DIR
 
 class GunicornContainerConfigTests(SimpleTestCase):
     def setUp(self):
-        self.dockerfile = (BASE_DIR / "Dockerfile").read_text(encoding="utf-8")
+        self.dockerfile = (BASE_DIR / "Dockerfile.prod").read_text(encoding="utf-8")
         self.entrypoint = (BASE_DIR / "entrypoint.sh").read_text(encoding="utf-8")
 
     def test_dockerfile_exposes_gunicorn_port(self):

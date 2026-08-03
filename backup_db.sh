@@ -14,6 +14,7 @@ LOG_FILE="$LOG_DIR/backup-$DAY.log"
 LOCK_DIR="$PROJECT_DIR/.backup_db.lock"
 DOCKER_BIN="${DOCKER_BIN:-$(command -v docker || command -v docker.exe || true)}"
 COMPOSE_FILE="$PROJECT_DIR/docker-compose.prod.yml"
+ENV_FILE="$PROJECT_DIR/.env.prod"
 TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
 BACKUP_FILE="$BACKUP_DIR/my_site_db_${TIMESTAMP}.sql"
 
@@ -39,7 +40,7 @@ fi
 cd "$PROJECT_DIR"
 log "Starting database backup to $BACKUP_FILE"
 
-if "$DOCKER_BIN" compose -f "$COMPOSE_FILE" exec -T db sh -c 'PGPASSWORD="$POSTGRES_PASSWORD" pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB"' > "$BACKUP_FILE"; then
+if "$DOCKER_BIN" compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" exec -T db sh -c 'PGPASSWORD="$POSTGRES_PASSWORD" pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB"' > "$BACKUP_FILE"; then
     size=$(wc -c < "$BACKUP_FILE")
     log "Backup succeeded: $BACKUP_FILE (${size} bytes)"
     find "$BACKUP_DIR" -name '*.sql' -type f | sort -r | tail -n +8 | xargs rm -f 2>/dev/null || true

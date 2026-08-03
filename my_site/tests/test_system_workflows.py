@@ -10,6 +10,7 @@ from django.test import SimpleTestCase, TestCase, override_settings
 
 from images.models import ImagePost
 from my_site.logging_utils import DailyMonthlyFileHandler
+from my_site.logging_policy import RUNTIME_LOG_TARGETS, ensure_runtime_log_heartbeats, purge_runtime_logs
 from my_site.media_cleanup import move_media_file_to_trash
 from my_site.media_sync import sync_site_media
 from my_site.request_context import reset_current_request, set_current_request
@@ -46,7 +47,7 @@ class LoggingSystemTests(SimpleTestCase):
 
     def test_runtime_self_check_script_references_both_compose_files(self):
         script = (BASE_DIR / "scripts" / "runtime_self_check.py").read_text(encoding="utf-8")
-        self.assertIn("docker-compose.yml", script)
+        self.assertIn("docker-compose.dev.yml", script)
         self.assertIn("docker-compose.prod.yml", script)
 
     def test_long_run_check_script_reports_json(self):
@@ -54,7 +55,7 @@ class LoggingSystemTests(SimpleTestCase):
         self.assertIn("json.dumps(report", script)
 
     @override_settings(BASE_DIR=BASE_DIR)
-    def test_purge_old_runtime_logs_task_deletes_only_old_logs(self):
+    def test_purge_old_runtime_logs_task_moves_old_logs_to_trash(self):
         old_dir = BASE_DIR / "logs" / "1999-01"
         old_dir.mkdir(parents=True, exist_ok=True)
         old_file = old_dir / "django-1999-01-01.log"
@@ -65,7 +66,48 @@ class LoggingSystemTests(SimpleTestCase):
         result = purge_old_runtime_logs_task(days=1)
 
         self.assertFalse(old_file.exists())
-        self.assertGreaterEqual(result["deleted_files"], 1)
+        self.assertGreaterEqual(result["trashed_files"], 1)
+        self.assertTrue(any((BASE_DIR / ".trash" / "logs").rglob("django-1999-01-01.log")))
+
+    def test_runtime_log_purge_does_not_move_unmanaged_logs(self):
+        with tempfile.TemporaryDirectory(prefix="runtime-log-scope-") as temp_dir:
+            log_root = Path(temp_dir) / "logs"
+            old_dir = log_root / "1999-01"
+            old_dir.mkdir(parents=True, exist_ok=True)
+            managed_log = old_dir / "django-1999-01-01.log"
+            backup_log = log_root / "backup.log"
+            nginx_access_log = log_root / "nginx" / "access.log"
+            unmanaged_error_log = old_dir / "error-custom.log"
+
+            for path in [managed_log, backup_log, nginx_access_log, unmanaged_error_log]:
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text("old", encoding="utf-8")
+                os.utime(path, (946684800, 946684800))
+
+            result = purge_runtime_logs(log_root, retention_days=1)
+
+            self.assertEqual(result["trashed_files"], 1)
+            self.assertFalse(managed_log.exists())
+            self.assertTrue(backup_log.exists())
+            self.assertTrue(nginx_access_log.exists())
+            self.assertTrue(unmanaged_error_log.exists())
+
+    def test_runtime_log_heartbeats_create_all_managed_logs(self):
+        with tempfile.TemporaryDirectory(prefix="runtime-log-policy-") as temp_dir:
+            result = ensure_runtime_log_heartbeats(Path(temp_dir))
+
+            self.assertEqual(len(result), len(RUNTIME_LOG_TARGETS))
+            for item in result:
+                path = Path(item["path"])
+                self.assertTrue(path.exists())
+                self.assertIn("heartbeat: no new", path.read_text(encoding="utf-8"))
+
+    @override_settings(BASE_DIR=BASE_DIR)
+    def test_purge_old_runtime_logs_task_uses_heartbeat_policy(self):
+        result = purge_old_runtime_logs_task(days=2)
+
+        self.assertIn("heartbeats", result)
+        self.assertEqual(len(result["heartbeats"]), len(RUNTIME_LOG_TARGETS))
 
 
 @override_settings(MEDIA_SYNC_ENABLED=False)

@@ -1,0 +1,61 @@
+# =============================================
+# my_site — Production Docker image
+# =============================================
+
+FROM python:3.12-slim
+
+# =============================================
+# ENVIRONMENT
+# =============================================
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    DJANGO_SETTINGS_MODULE=my_site.settings.prod \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
+
+WORKDIR /code
+
+# =============================================
+# SYSTEM DEPENDENCIES
+# =============================================
+# gosu: 用于 entrypoint 从 root 降权到 app 用户运行进程
+# libpq-dev: psycopg 编译依赖（如果使用 psycopg2-binary 可移除）
+RUN addgroup --system app \
+    && adduser --system --ingroup app app \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends \
+        gosu \
+        libpq-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# =============================================
+# PYTHON DEPENDENCIES
+# =============================================
+# 先复制 requirements.txt（变更频率低）→ 利用层缓存
+COPY requirements.txt /tmp/requirements.txt
+RUN pip install --upgrade pip && \
+    pip install --no-cache-dir -r /tmp/requirements.txt
+
+# =============================================
+# APPLICATION CODE
+# =============================================
+# 再复制其余代码（变更频率高）
+COPY . .
+
+# =============================================
+# RUNTIME DIRECTORIES & PERMISSIONS
+# =============================================
+RUN mkdir -p /code/staticfiles /code/media /code/logs && \
+    chown -R app:app /code && \
+    chmod -R 755 /code/staticfiles /code/media /code/logs
+
+# =============================================
+# ENTRYPOINT
+# =============================================
+# 放在不受 /code 绑定挂载影响的位置
+COPY entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
+
+EXPOSE 8000
+
+ENTRYPOINT ["sh", "/usr/local/bin/entrypoint.sh"]

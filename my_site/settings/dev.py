@@ -1,4 +1,5 @@
 from copy import deepcopy
+import os
 
 from .base import *  # noqa: F401,F403
 
@@ -35,7 +36,15 @@ LOGGING["handlers"]["error_file"] = {
     "filename_prefix": "error",
     "formatter": "verbose",
 }
-LOGGING["loggers"]["django"]["handlers"] = ["console", "file", "error_file"]
-LOGGING["loggers"]["django.request"]["handlers"] = ["console", "file", "error_file"]
-LOGGING["loggers"]["blog"]["handlers"] = ["console", "file"]
-LOGGING["loggers"]["users"]["handlers"] = ["console", "file"]
+if os.environ.get("RUNNING_IN_DOCKER", "").lower() == "true":
+    LOGGING["handlers"].pop("file", None)
+    LOGGING["handlers"].pop("error_file", None)
+    LOGGING["loggers"]["django"]["handlers"] = ["console"]
+    LOGGING["loggers"]["django.request"]["handlers"] = ["console"]
+    LOGGING["loggers"]["blog"]["handlers"] = ["console"]
+    LOGGING["loggers"]["users"]["handlers"] = ["console"]
+else:
+    LOGGING["loggers"]["django"]["handlers"] = ["console", "file", "error_file"]
+    LOGGING["loggers"]["django.request"]["handlers"] = ["console", "file", "error_file"]
+    LOGGING["loggers"]["blog"]["handlers"] = ["console", "file"]
+    LOGGING["loggers"]["users"]["handlers"] = ["console", "file"]

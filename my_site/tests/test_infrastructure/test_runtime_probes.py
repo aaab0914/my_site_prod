@@ -10,8 +10,8 @@ from .common import BASE_DIR
 
 class FilesystemPermissionSafetyTests(SimpleTestCase):
     def setUp(self):
-        self.compose = (BASE_DIR / "docker-compose.yml").read_text(encoding="utf-8")
-        self.dockerfile = (BASE_DIR / "Dockerfile").read_text(encoding="utf-8")
+        self.compose = (BASE_DIR / "docker-compose.dev.yml").read_text(encoding="utf-8")
+        self.dockerfile = (BASE_DIR / "Dockerfile.dev").read_text(encoding="utf-8")
         self.entrypoint = (BASE_DIR / "entrypoint.sh").read_text(encoding="utf-8")
 
     def test_web_service_bind_mounts_project_code(self):
@@ -56,9 +56,11 @@ class DockerRuntimeProbeTests(SimpleTestCase):
         self.assertEqual(result.returncode, 0, msg=result.stderr)
         self.assertIn("db", result.stdout)
         self.assertIn("web", result.stdout)
-        self.assertIn("nginx", result.stdout)
+        self.assertIn("celery", result.stdout)
+        self.assertIn("celery-beat", result.stdout)
+        self.assertNotIn("nginx", result.stdout)
 
-    def test_nginx_serves_blog_route_when_stack_is_running(self):
+    def test_web_service_serves_blog_route_when_stack_is_running(self):
         docker = shutil.which("docker")
         if docker is None:
             self.skipTest("docker is not installed in this environment")
@@ -71,11 +73,11 @@ class DockerRuntimeProbeTests(SimpleTestCase):
         )
         if ps_result.returncode != 0:
             self.skipTest(ps_result.stderr.strip() or "docker compose ps failed")
-        if "nginx" not in ps_result.stdout:
-            self.skipTest("nginx service is not running")
+        if "web" not in ps_result.stdout:
+            self.skipTest("web service is not running")
         try:
             response = urlopen("http://127.0.0.1/blog/", timeout=10)
         except URLError as exc:
-            self.fail(f"nginx blog route probe failed: {exc}")
+            self.fail(f"web blog route probe failed: {exc}")
         self.assertGreaterEqual(response.status, 200)
         self.assertLess(response.status, 500)
