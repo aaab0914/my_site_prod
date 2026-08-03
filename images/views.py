@@ -209,10 +209,7 @@ def gallery_media(request, image_id):
         return FileResponse(
             open(file_path, "rb"),
             content_type=content_type or "application/octet-stream",
-            headers={
-                "Content-Disposition": f'inline; filename="{file_name}"',
-                "Cache-Control": "public, max-age=7776000, immutable",
-            },
+            headers={"Content-Disposition": f'inline; filename="{file_name}"'},
         )
     except OSError as exc:
         raise Http404("Image file is missing.") from exc
