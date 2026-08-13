@@ -20,7 +20,6 @@ from .forms import (
     EmailPostForm,
     PostCreateForm,
     SearchForm,
-    AudioEditForm,
     AudioUploadForm,
     VideoUploadForm,
 )
@@ -532,7 +531,7 @@ class PostDeleteView(LoginRequiredMixin, DeleteView):
 
 class AudioPostEditView(LoginRequiredMixin, UpdateView):
     model = AudioPost
-    form_class = AudioEditForm
+    form_class = AudioUploadForm
     template_name = "blog/audio/audio_post_edit.html"
     context_object_name = "audiopost"
 
