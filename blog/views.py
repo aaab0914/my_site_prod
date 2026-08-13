@@ -274,6 +274,11 @@ def audio_file_proxy(request, pk):
     return _serve_uploaded_file(audio.audio_file, request=request, cache_prefix="audio")
 
 
+def audio_cover_image_proxy(request, pk):
+    audio = get_object_or_404(AudioPost, pk=pk)
+    return _serve_uploaded_file(audio.cover_image, request=request, cache_prefix="audio-cover")
+
+
 def video_file_proxy(request, pk):
     video = get_object_or_404(VideoPost, pk=pk)
     return _serve_uploaded_file(video.video_file, request=request, cache_prefix="video")
