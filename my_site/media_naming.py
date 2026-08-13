@@ -1,5 +1,6 @@
 from pathlib import PurePosixPath
 
+from django.utils.deconstruct import deconstructible
 from django.utils.text import get_valid_filename
 
 
@@ -14,22 +15,28 @@ def _sanitize_filename(filename: str) -> str:
     return safe_name or "file"
 
 
-def dated_media_upload_to(prefix: str):
-    prefix = prefix.strip("/")
+@deconstructible
+class DatedMediaUploadTo:
+    def __init__(self, prefix: str):
+        self.prefix = prefix.strip("/")
 
-    def upload_to(instance, filename):
+    def __call__(self, instance, filename):
         created = getattr(instance, "created", None)
         if created:
-            return f"{prefix}/{created:%Y/%m/%d}/{_sanitize_filename(filename)}"
-        return f"{prefix}/%Y/%m/%d/{_sanitize_filename(filename)}"
+            return f"{self.prefix}/{created:%Y/%m/%d}/{_sanitize_filename(filename)}"
+        return f"{self.prefix}/%Y/%m/%d/{_sanitize_filename(filename)}"
 
-    return upload_to
+def dated_media_upload_to(prefix: str):
+    return DatedMediaUploadTo(prefix)
 
+
+@deconstructible
+class StaticMediaUploadTo:
+    def __init__(self, prefix: str):
+        self.prefix = prefix.strip("/")
+
+    def __call__(self, instance, filename):
+        return f"{self.prefix}/{_sanitize_filename(filename)}"
 
 def static_media_upload_to(prefix: str):
-    prefix = prefix.strip("/")
-
-    def upload_to(instance, filename):
-        return f"{prefix}/{_sanitize_filename(filename)}"
-
-    return upload_to
+    return StaticMediaUploadTo(prefix)
