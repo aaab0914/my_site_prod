@@ -123,6 +123,25 @@ class AudioRouteTests(TestCase):
         audio.refresh_from_db()
         self.assertEqual(audio.music_name, "Owner Track")
 
+    def test_audio_edit_keeps_existing_file_when_only_metadata_changes(self):
+        self.client.login(username="routeuser", password="testpass123")
+        audio = self.create_audio_post()
+        original_file_name = audio.audio_file.name
+
+        response = self.client.post(
+            reverse("blog:audio_post_edit", kwargs={"pk": audio.pk}),
+            {
+                "music_name": "Updated Track",
+                "description": "Updated description",
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+        audio.refresh_from_db()
+        self.assertEqual(audio.music_name, "Updated Track")
+        self.assertEqual(audio.description, "Updated description")
+        self.assertEqual(audio.audio_file.name, original_file_name)
+
     def test_audio_delete_rejects_non_owner(self):
         owner = User.objects.create_user(username="audioowner2", password="testpass123")
         audio = AudioPost.objects.create(

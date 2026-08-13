@@ -212,6 +212,39 @@ class AudioUploadForm(forms.ModelForm):
         return validated
 
 
+class AudioEditForm(forms.ModelForm):
+    """Edit one audio record without applying multi-upload semantics."""
+
+    class Meta:
+        model = AudioPost
+        fields = ["music_name", "audio_file", "cover_image", "description"]
+        widgets = {
+            "audio_file": forms.ClearableFileInput(attrs={"accept": ".mp3,.wav,.ogg,audio/*"}),
+            "cover_image": forms.ClearableFileInput(attrs={"accept": ".jpg,.jpeg,.png,.webp,image/*"}),
+            "description": forms.Textarea(attrs={"row": 3}),
+        }
+
+    def clean_audio_file(self):
+        audio_file = self.cleaned_data.get("audio_file")
+        if not audio_file or not hasattr(audio_file, "content_type"):
+            return audio_file
+        return AudioUploadForm.validate_audio_upload(audio_file)
+
+    def clean_cover_image(self):
+        cover_image = self.cleaned_data.get("cover_image")
+        if not cover_image or not hasattr(cover_image, "content_type"):
+            return cover_image
+
+        allowed_types = {"image/jpeg", "image/png", "image/webp"}
+        allowed_extensions = (".jpg", ".jpeg", ".png", ".webp")
+        if getattr(cover_image, "content_type", "") not in allowed_types:
+            raise ValidationError("Cover image must be a JPEG, PNG, or WebP image.")
+        if not cover_image.name.lower().endswith(allowed_extensions):
+            raise ValidationError("Cover image extension must be .jpg, .jpeg, .png, or .webp.")
+        if cover_image.size > 5 * 1024 * 1024:
+            raise ValidationError("Cover image must be 5MB or smaller.")
+        return cover_image
+
 
 class VideoUploadForm(forms.ModelForm):
     """Form for uploading a single video file."""
