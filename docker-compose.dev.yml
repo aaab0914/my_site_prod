@@ -1,0 +1,123 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: always
+    env_file:
+      - .env.dev
+    environment:
+      POSTGRES_DB: ${DB_NAME:-my_site_db}
+      POSTGRES_USER: ${DB_USER:-my_site_user}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-change-me}
+    ports:
+      - "${DEV_DB_PORT:-5433}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$DB_USER -d $$DB_NAME"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    restart: always
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.14.3
+    restart: always
+    environment:
+      discovery.type: single-node
+      xpack.security.enabled: "false"
+      ES_JAVA_OPTS: "-Xms192m -Xmx192m"
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s http://localhost:9200/_cluster/health | grep -qE 'green|yellow'"]
+      interval: 20s
+      timeout: 10s
+      retries: 5
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+      additional_contexts:
+        linux_wheels: G:/Projects/Linux_Python_Packages
+    restart: always
+    env_file:
+      - .env.dev
+    command: python manage.py runserver 0.0.0.0:8000
+    ports:
+      - "${DEV_WEB_PORT:-8001}:8000"
+    volumes:
+      - .:/code
+      - ./staticfiles:/code/staticfiles
+      - ./media:/code/media
+      - ./logs:/code/logs
+      - ./backups:/code/backups
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; req = urllib.request.Request('http://127.0.0.1:8000/health/', headers={'X-Forwarded-Proto': 'https', 'Host': 'localhost'}); r = urllib.request.urlopen(req, timeout=10); exit(0 if r.status == 200 else 1)\""]
+      interval: 15s
+      timeout: 15s
+      start_period: 30s
+      retries: 8
+
+  celery:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+      additional_contexts:
+        linux_wheels: G:/Projects/Linux_Python_Packages
+    restart: always
+    env_file:
+      - .env.dev
+    command: celery -A my_site worker -l info -E --concurrency=1
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "python - <<'PY'\nimport socket\nimport subprocess\nhost = socket.gethostname()\nresult = subprocess.run(['celery', '-A', 'my_site', 'inspect', 'ping', '-d', f'celery@{host}'], capture_output=True, text=True, timeout=20)\noutput = f'{result.stdout}\\n{result.stderr}'\nraise SystemExit(0 if result.returncode == 0 and 'pong' in output else 1)\nPY"]
+      interval: 30s
+      timeout: 25s
+      start_period: 40s
+      retries: 3
+
+  celery-beat:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+      additional_contexts:
+        linux_wheels: G:/Projects/Linux_Python_Packages
+    restart: always
+    env_file:
+      - .env.dev
+    command: celery -A my_site beat -l info
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "python - <<'PY'\nfrom pathlib import Path\ncmdline = Path('/proc/1/cmdline').read_text(encoding='utf-8', errors='ignore').replace('\\x00', ' ')\nraise SystemExit(0 if 'celery' in cmdline and 'beat' in cmdline else 1)\nPY"]
+      interval: 30s
+      timeout: 10s
+      start_period: 20s
+      retries: 3
+
+volumes:
+  postgres_data:
+  elasticsearch_data:

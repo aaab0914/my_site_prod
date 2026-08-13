@@ -1,11 +1,9 @@
-import mimetypes
-
 from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.core.files.storage import default_storage
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
-from django.http import FileResponse, Http404
+from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse_lazy
 
@@ -14,6 +12,7 @@ from blog.models import Post
 from .forms import AlbumUploadForm, GalleryImageEditForm, GalleryUploadForm
 from .models import Album, AlbumImage, ImagePost
 from my_site.media_sync import maybe_sync_site_media
+from my_site.protected_media import serve_protected_media
 from my_site.site_views import queue_operation_success
 
 
@@ -202,17 +201,11 @@ def gallery_media(request, image_id):
     image = get_object_or_404(ImagePost.objects.select_related("uploaded_by"), pk=image_id)
     if not image.image:
         raise Http404("Image file is missing.")
-    try:
-        file_path = image.image.path
-        file_name = image.image.name.rsplit("/", 1)[-1]
-        content_type, _ = mimetypes.guess_type(file_name)
-        return FileResponse(
-            open(file_path, "rb"),
-            content_type=content_type or "application/octet-stream",
-            headers={"Content-Disposition": f'inline; filename="{file_name}"'},
-        )
-    except OSError as exc:
-        raise Http404("Image file is missing.") from exc
+    return serve_protected_media(
+        image.image,
+        request=request,
+        cache_prefix="gallery-image",
+    )
 
 def album_list(request):
     maybe_sync_site_media()
@@ -323,15 +316,8 @@ def album_media(request, image_id):
     image = get_object_or_404(AlbumImage.objects.select_related("uploaded_by", "album"), pk=image_id)
     if not image.image:
         raise Http404("Image file is missing.")
-    try:
-        file_path = image.image.path
-        file_name = image.image.name.rsplit("/", 1)[-1]
-        content_type, _ = mimetypes.guess_type(file_name)
-        return FileResponse(
-            open(file_path, "rb"),
-            content_type=content_type or "application/octet-stream",
-            headers={"Content-Disposition": f'inline; filename="{file_name}"'},
-        )
-    except OSError as exc:
-        raise Http404("Image file is missing.") from exc
-
+    return serve_protected_media(
+        image.image,
+        request=request,
+        cache_prefix="album-image",
+    )

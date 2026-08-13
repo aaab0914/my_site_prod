@@ -26,6 +26,7 @@ from PIL import Image
 # PIL.Image: Python Imaging Library, used for opening and processing image files.
 
 from .models import Post, Comment, AudioPost, VideoPost
+from taggit.forms import TagWidget
 
 
 # Post: The main blog post model.
@@ -74,7 +75,7 @@ class PostCreateForm(forms.ModelForm):
             "title": forms.TextInput(attrs={"class": "form-control"}),
             "body": forms.Textarea(attrs={"class": "form-control", "rows": 10}),
             "cover_image": forms.FileInput(attrs={"class": "form-control"}),
-            "tags": forms.TextInput(attrs={"class": "form-control"}),
+            "tags": TagWidget(attrs={"class": "form-control"}),
         }
 
     def clean_cover_image(self):
