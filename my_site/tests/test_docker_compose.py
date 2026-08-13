@@ -11,65 +11,67 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 class DockerComposeFileTests(SimpleTestCase):
     def setUp(self):
-        self.compose_path = BASE_DIR / "docker-compose.yml"
-        self.compose_text = self.compose_path.read_text(encoding="utf-8")
         self.prod_compose_path = BASE_DIR / "docker-compose.prod.yml"
         self.prod_compose_text = self.prod_compose_path.read_text(encoding="utf-8")
+        self.prod_env_path = BASE_DIR / ".env.prod"
+        self.prod_env_text = self.prod_env_path.read_text(encoding="utf-8")
         self.readme_path = BASE_DIR / "README.md"
         self.readme_text = self.readme_path.read_text(encoding="utf-8")
 
-    def test_compose_symlink_targets_prod_layout(self):
-        self.assertIn("DJANGO_SETTINGS_MODULE: my_site.settings.dev", self.compose_text)
-        self.assertIn("DJANGO_SETTINGS_MODULE: my_site.settings.prod", self.prod_compose_text)
+    def test_prod_compose_targets_prod_layout(self):
+        """环境变量通过 .env.prod 注入，Dockerfile 使用 Dockerfile.prod"""
+        self.assertIn("DJANGO_SETTINGS_MODULE=my_site.settings.prod", self.prod_env_text)
+        self.assertIn("dockerfile: Dockerfile.prod", self.prod_compose_text)
 
-    def test_compose_defines_expected_services(self):
-        self.assertIn("services:", self.compose_text)
-        self.assertIn("db:", self.compose_text)
-        self.assertIn("web:", self.compose_text)
-        self.assertNotIn("nginx:", self.compose_text)
+    def test_prod_compose_defines_expected_services(self):
+        self.assertIn("services:", self.prod_compose_text)
+        self.assertIn("db:", self.prod_compose_text)
+        self.assertIn("web:", self.prod_compose_text)
         self.assertIn("nginx:", self.prod_compose_text)
 
-    def test_db_service_uses_postgres_16(self):
-        self.assertIn("image: postgres:16", self.compose_text)
+    def test_prod_db_service_uses_postgres_16(self):
+        self.assertIn("image: postgres:16", self.prod_compose_text)
 
-    def test_db_service_has_healthcheck(self):
-        self.assertIn("healthcheck:", self.compose_text)
-        self.assertIn("pg_isready -U ${DB_USER} -d ${DB_NAME}", self.compose_text)
+    def test_prod_db_service_has_healthcheck(self):
+        self.assertIn("healthcheck:", self.prod_compose_text)
+        self.assertIn("pg_isready -U ${DB_USER} -d ${DB_NAME}", self.prod_compose_text)
 
-    def test_redis_and_celery_services_have_healthchecks(self):
-        self.assertIn('test: ["CMD", "redis-cli", "ping"]', self.compose_text)
-        self.assertIn("inspect', 'ping'", self.compose_text)
-        self.assertIn("cmdline = Path('/proc/1/cmdline')", self.compose_text)
+    def test_prod_redis_and_celery_services_have_healthchecks(self):
+        self.assertIn('test: ["CMD", "redis-cli", "ping"]', self.prod_compose_text)
+        self.assertIn("inspect', 'ping'", self.prod_compose_text)
+        self.assertIn("cmdline = Path('/proc/1/cmdline')", self.prod_compose_text)
 
-    def test_web_service_builds_from_current_directory(self):
-        self.assertIn("build: .", self.compose_text)
+    def test_prod_web_service_builds_from_dockerfile_prod(self):
+        self.assertIn("dockerfile: Dockerfile.prod", self.prod_compose_text)
 
-    def test_web_service_uses_environment_substitution_for_database_settings(self):
-        self.assertIn("DB_NAME: ${DB_NAME}", self.compose_text)
-        self.assertIn("DB_USER: ${DB_USER}", self.compose_text)
-        self.assertIn("DB_PASSWORD: ${DB_PASSWORD}", self.compose_text)
-        self.assertIn("DB_HOST: ${DB_HOST}", self.compose_text)
-        self.assertIn("DB_PORT: ${DB_PORT}", self.compose_text)
+    def test_prod_web_service_uses_env_file_for_settings(self):
+        """环境变量通过 .env.prod 注入，而非写在 compose 的 environment 块中"""
+        self.assertIn("env_file:\n      - .env.prod", self.prod_compose_text)
+        self.assertIn("DB_NAME=my_site_db", self.prod_env_text)
+        self.assertIn("DB_USER=my_site_user", self.prod_env_text)
+        self.assertIn("DB_PASSWORD=", self.prod_env_text)
+        self.assertIn("DB_HOST=db", self.prod_env_text)
+        self.assertIn("DB_PORT=5432", self.prod_env_text)
 
-    def test_web_service_mounts_static_media_and_backups(self):
-        self.assertIn("- ./staticfiles:/code/staticfiles", self.compose_text)
-        self.assertIn("- ./media:/code/media", self.compose_text)
-        self.assertIn("- ./backups:/code/backups", self.compose_text)
+    def test_prod_web_service_mounts_static_media_and_backups(self):
+        self.assertIn("- ./staticfiles:/code/staticfiles", self.prod_compose_text)
+        self.assertIn("- ./media:/code/media", self.prod_compose_text)
+        self.assertIn("- ./backups:/code/backups", self.prod_compose_text)
 
-    def test_web_service_has_healthcheck(self):
-        self.assertIn("urllib.request.Request('http://127.0.0.1:8000/users/login/'", self.compose_text)
-        self.assertIn("build_opener(NoRedirect)", self.compose_text)
-        self.assertIn("'X-Forwarded-Proto': 'https'", self.compose_text)
+    def test_prod_web_service_has_healthcheck(self):
+        self.assertIn("urllib.request.Request('http://127.0.0.1:8000/health/'", self.prod_compose_text)
+        self.assertIn("exit(0 if r.status == 200 else 1)", self.prod_compose_text)
+        self.assertIn("'X-Forwarded-Proto': 'https'", self.prod_compose_text)
 
     def test_nginx_service_mounts_expected_files(self):
         self.assertIn("./nginx.prod.conf:/etc/nginx/conf.d/default.conf:ro", self.prod_compose_text)
         self.assertIn("./staticfiles:/static:ro", self.prod_compose_text)
         self.assertIn("./media:/media:ro", self.prod_compose_text)
 
-    def test_compose_declares_named_volumes(self):
-        self.assertIn("volumes:", self.compose_text)
-        self.assertIn("postgres_data:", self.compose_text)
-        self.assertIn("elasticsearch_data:", self.compose_text)
+    def test_prod_compose_declares_named_volumes(self):
+        self.assertIn("volumes:", self.prod_compose_text)
+        self.assertIn("postgres_data:", self.prod_compose_text)
+        self.assertIn("elasticsearch_data:", self.prod_compose_text)
 
     def test_production_compose_does_not_bind_mount_project_code(self):
         self.assertNotIn("- .:/code", self.prod_compose_text)
@@ -95,7 +97,7 @@ class DockerComposeFileTests(SimpleTestCase):
         self.assertEqual(result.returncode, 0, msg=result.stderr)
         self.assertIn("services:", result.stdout)
 
-    def test_compose_service_list_is_valid_when_docker_is_available(self):
+    def test_prod_compose_service_list_is_valid_when_docker_is_available(self):
         docker = shutil.which("docker")
         if docker is None:
             self.skipTest("docker is not installed in this environment")

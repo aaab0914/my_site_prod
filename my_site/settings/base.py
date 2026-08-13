@@ -195,6 +195,11 @@ REDIS_URL = config("REDIS_URL", default="redis://redis:6379/0")
 
 CELERY_BROKER_URL = config("CELERY_BROKER_URL", default=REDIS_URL)
 CELERY_RESULT_BACKEND = config("CELERY_RESULT_BACKEND", default=REDIS_URL)
+CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = config(
+    "CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP",
+    default=True,
+    cast=bool,
+)
 CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
@@ -207,7 +212,7 @@ CELERY_WORKER_SEND_TASK_EVENTS = config("CELERY_WORKER_SEND_TASK_EVENTS", defaul
 CELERY_TASK_SEND_SENT_EVENT = config("CELERY_TASK_SEND_SENT_EVENT", default=True, cast=bool)
 CELERY_RESULT_EXTENDED = config("CELERY_RESULT_EXTENDED", default=True, cast=bool)
 MEDIA_SYNC_BEAT_MINUTES = config("MEDIA_SYNC_BEAT_MINUTES", default=5, cast=int)
-LOG_RETENTION_DAYS = config("LOG_RETENTION_DAYS", default=30, cast=int)
+LOG_RETENTION_DAYS = config("LOG_RETENTION_DAYS", default=120, cast=int)
 AUDIT_LOG_RETENTION_DAYS = config("AUDIT_LOG_RETENTION_DAYS", default=90, cast=int)
 CELERY_BEAT_SCHEDULE = {
     "ensure-daily-runtime-logs": {
@@ -328,17 +333,23 @@ LOGGING = {
 }
 
 SENTRY_DSN = config("SENTRY_DSN", default="")
+SENTRY_ENVIRONMENT = config("SENTRY_ENVIRONMENT", default="development" if DEBUG else "production")
+SENTRY_RELEASE = config("SENTRY_RELEASE", default="")
 SENTRY_TRACES_SAMPLE_RATE = config("SENTRY_TRACES_SAMPLE_RATE", default=0.0, cast=float)
 SENTRY_PROFILES_SAMPLE_RATE = config("SENTRY_PROFILES_SAMPLE_RATE", default=0.0, cast=float)
 
 if SENTRY_DSN:
-    sentry_sdk.init(
-        dsn=SENTRY_DSN,
-        integrations=[DjangoIntegration(), CeleryIntegration()],
-        traces_sample_rate=SENTRY_TRACES_SAMPLE_RATE,
-        profiles_sample_rate=SENTRY_PROFILES_SAMPLE_RATE,
-        send_default_pii=False,
-    )
+    sentry_options = {
+        "dsn": SENTRY_DSN,
+        "integrations": [DjangoIntegration(), CeleryIntegration()],
+        "environment": SENTRY_ENVIRONMENT,
+        "traces_sample_rate": SENTRY_TRACES_SAMPLE_RATE,
+        "profiles_sample_rate": SENTRY_PROFILES_SAMPLE_RATE,
+        "send_default_pii": False,
+    }
+    if SENTRY_RELEASE:
+        sentry_options["release"] = SENTRY_RELEASE
+    sentry_sdk.init(**sentry_options)
 
 # ============================================================================
 # SECURITY SETTINGS (HTTPS, SSL, HSTS)
@@ -378,12 +389,23 @@ X_FRAME_OPTIONS = "DENY"
 # FILE UPLOAD & DATA LIMITS
 # ============================================================================
 
+# UPLOAD_MAX_MEMORY_SIZE: Shared upper bound for request and file uploads.
+UPLOAD_MAX_MEMORY_SIZE = config("UPLOAD_MAX_MEMORY_SIZE", default=120 * 1024 * 1024, cast=int)  # 120MB
+
 # DATA_UPLOAD_MAX_MEMORY_SIZE: Maximum size of POST data (in bytes)
 # Prevents large uploads from consuming too much memory
-DATA_UPLOAD_MAX_MEMORY_SIZE = config("DATA_UPLOAD_MAX_MEMORY_SIZE", default=25 * 1024 * 1024, cast=int)  # 25MB
+DATA_UPLOAD_MAX_MEMORY_SIZE = config(
+    "DATA_UPLOAD_MAX_MEMORY_SIZE",
+    default=UPLOAD_MAX_MEMORY_SIZE,
+    cast=int,
+)
 
 # FILE_UPLOAD_MAX_MEMORY_SIZE: Maximum size of file uploads (in bytes)
-FILE_UPLOAD_MAX_MEMORY_SIZE = config("FILE_UPLOAD_MAX_MEMORY_SIZE", default=25 * 1024 * 1024, cast=int)  # 25MB
+FILE_UPLOAD_MAX_MEMORY_SIZE = config(
+    "FILE_UPLOAD_MAX_MEMORY_SIZE",
+    default=UPLOAD_MAX_MEMORY_SIZE,
+    cast=int,
+)
 
 # ============================================================================
 # URLS & DEFAULT FIELD

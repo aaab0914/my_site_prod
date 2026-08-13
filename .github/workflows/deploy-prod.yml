@@ -27,6 +27,8 @@ jobs:
           rsync -az --delete \
             --exclude '.git' \
             --exclude '.github' \
+            --exclude '.env.prod' \
+            --exclude '.env.dev' \
             --exclude '.venv' \
             --exclude 'venv' \
             --exclude '__pycache__' \
