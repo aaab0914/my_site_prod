@@ -84,8 +84,8 @@ class PostCreateForm(forms.ModelForm):
             allowed_types = {"image/jpeg", "image/png", "image/webp"}
             if getattr(image, "content_type", "") not in allowed_types:
                 raise ValidationError("Cover image must be a JPEG, PNG, or WebP image.")
-            if image.size > 3 * 1024 * 1024:
-                raise ValidationError("Cover image must be 3MB or smaller before optimization.")
+            if image.size > 5 * 1024 * 1024:
+                raise ValidationError("Cover image must be 5MB or smaller before optimization.")
             img = Image.open(image)
             if hasattr(image, "seek"):
                 image.seek(0)
@@ -185,8 +185,8 @@ class AudioUploadForm(forms.ModelForm):
             raise ValidationError("Audio upload must be an MP3, WAV, or OGG file.")
         if not audio_file.name.lower().endswith(allowed_extensions):
             raise ValidationError("Audio file extension must be .mp3, .wav, or .ogg.")
-        if audio_file.size > 25 * 1024 * 1024:
-            raise ValidationError("Audio upload must be 25MB or smaller.")
+        if audio_file.size > 10 * 1024 * 1024:
+            raise ValidationError("Audio upload must be 10MB or smaller.")
         return audio_file
 
     def clean_audio_file(self):
@@ -240,8 +240,8 @@ class VideoUploadForm(forms.ModelForm):
             raise ValidationError("Video upload must be an MP4, WebM, OGG, MOV, or M4V file.")
         if not video_file.name.lower().endswith(allowed_extensions):
             raise ValidationError("Video file extension must be .mp4, .webm, .ogg, .mov, or .m4v.")
-        if video_file.size > 200 * 1024 * 1024:
-            raise ValidationError("Video upload must be 200MB or smaller.")
+        if video_file.size > 50 * 1024 * 1024:
+            raise ValidationError("Video upload must be 50MB or smaller.")
         return video_file
 # ┌─────────────────────────────────────────────────────────────────────────────┐
 # │                         blog/forms.py                                      │

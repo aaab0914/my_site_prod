@@ -52,8 +52,8 @@ class UserProfileForm(forms.ModelForm):
         allowed_types = {"image/jpeg", "image/png", "image/webp"}
         if getattr(avatar, "content_type", "") not in allowed_types:
             raise ValidationError("Avatar must be a JPEG, PNG, or WebP image.")
-        if avatar.size > 3 * 1024 * 1024:
-            raise ValidationError("Avatar must be 3MB or smaller.")
+        if avatar.size > 5 * 1024 * 1024:
+            raise ValidationError("Avatar must be 5MB or smaller.")
         return avatar
 
 

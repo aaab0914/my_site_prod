@@ -155,8 +155,8 @@ def optimize_uploaded_image(image):
     if getattr(image, "content_type", "") not in allowed_types:
         raise ValidationError("Image must be a JPEG, PNG, or WebP file.")
 
-    if image.size > 25 * 1024 * 1024:
-        raise ValidationError("Image must be 25MB or smaller before optimization.")
+    if image.size > 5 * 1024 * 1024:
+        raise ValidationError("Image must be 5MB or smaller before optimization.")
 
     try:
         if hasattr(image, "seek"):

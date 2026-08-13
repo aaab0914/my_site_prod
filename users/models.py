@@ -5,8 +5,8 @@ from django.core.exceptions import ValidationError
 
 
 def validate_image_size(image):
-    if image.size > 3 * 1024 * 1024:
-        raise ValidationError("图片大小不能超过3MB")
+    if image.size > 5 * 1024 * 1024:
+        raise ValidationError("图片大小不能超过5MB")
 
 # --- users/models/profile.py ---
 from django.contrib.auth.models import User
