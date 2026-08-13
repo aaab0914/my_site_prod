@@ -142,6 +142,24 @@ class AudioRouteTests(TestCase):
         self.assertEqual(audio.description, "Updated description")
         self.assertEqual(audio.audio_file.name, original_file_name)
 
+    def test_audio_edit_page_renders_when_track_has_cover_image(self):
+        self.client.login(username="routeuser", password="testpass123")
+        audio = self.create_audio_post()
+        audio.cover_image = SimpleUploadedFile(
+            "cover.jpg",
+            b"cover image bytes",
+            content_type="image/jpeg",
+        )
+        audio.save(update_fields=["cover_image", "updated"])
+
+        response = self.client.get(reverse("blog:audio_post_edit", kwargs={"pk": audio.pk}))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(
+            response,
+            reverse("blog:audio_cover_image_proxy", kwargs={"pk": audio.pk}),
+        )
+
     def test_audio_delete_rejects_non_owner(self):
         owner = User.objects.create_user(username="audioowner2", password="testpass123")
         audio = AudioPost.objects.create(

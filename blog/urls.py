@@ -29,6 +29,7 @@ comment_urlpatterns = [
 
 audio_urlpatterns = [
     path("media/audio/<int:pk>/", views.audio_file_proxy, name="audio_file_proxy"),
+    path("media/audio-cover/<int:pk>/", views.audio_cover_image_proxy, name="audio_cover_image_proxy"),
     path("media/video/<int:pk>/", views.video_file_proxy, name="video_file_proxy"),
     path("audio/upload/", views.audio_upload, name="audio_upload"),
     path("audio/list/", views.audio_list, name="audio_list"),
