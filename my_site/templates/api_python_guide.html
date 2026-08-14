@@ -50,14 +50,14 @@ print(response.text)</pre></div></div>
 url = "https://rgavanp.kdns.fr/blog/api/posts/"
 response = requests.get(url, timeout=30)
 print(response.status_code)
-for item in response.json()[:10]:
+for item in response.json()["results"][:10]:
     print(item["id"], item["title"], item["publish"])</pre></div></div>
     <div class="example"><h4>Python: Recent 10 Comments</h4><div class="code-wrap"><button class="copy-button" type="button" data-copy-target="py-recent-comments" aria-label="Copy"></button><pre id="py-recent-comments">import requests
 
 url = "https://rgavanp.kdns.fr/blog/api/comments/"
 response = requests.get(url, timeout=30)
 print(response.status_code)
-for item in response.json()[:10]:
+for item in response.json()["results"][:10]:
     print(item["id"], item["post_title"], item["body"])</pre></div></div>
     <div class="example"><h4>Python: Read One Post</h4><div class="code-wrap"><button class="copy-button" type="button" data-copy-target="py-one-post" aria-label="Copy"></button><pre id="py-one-post">import requests
 
@@ -68,7 +68,7 @@ print(response.status_code)
 print(response.text)</pre></div></div>
     <div class="example"><h4>Python: Read One Comment</h4><div class="code-wrap"><button class="copy-button" type="button" data-copy-target="py-one-comment" aria-label="Copy"></button><pre id="py-one-comment">import requests
 
-comment_id = 1
+comment_id = 6
 url = f"https://rgavanp.kdns.fr/blog/api/comments/{comment_id}/"
 response = requests.get(url, timeout=30)
 print(response.status_code)
@@ -111,7 +111,7 @@ print(response.text)</pre></div></div>
 
 token = "YOUR_TOKEN_HERE"
 headers = {"Authorization": f"Token {token}"}
-comment_response = requests.delete("https://rgavanp.kdns.fr/blog/api/comments/1/", headers=headers, timeout=30)
+comment_response = requests.delete("https://rgavanp.kdns.fr/blog/api/comments/6/", headers=headers, timeout=30)
 print("comment", comment_response.status_code, comment_response.text)</pre></div></div>
   </div>
 </section>
