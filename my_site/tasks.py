@@ -1,3 +1,4 @@
+import shutil
 from datetime import timedelta, timezone as dt_timezone
 from pathlib import Path
 
@@ -61,10 +62,11 @@ def purge_old_audit_logs_task(days=90):
 def purge_old_runtime_logs_task(days=30):
     log_root = Path(settings.BASE_DIR) / "logs"
     if not log_root.exists():
-        return {"deleted_files": 0, "deleted_dirs": 0, "log_root": str(log_root)}
+        return {"trashed_files": 0, "deleted_dirs": 0, "log_root": str(log_root)}
 
     cutoff = timezone.now() - timedelta(days=days)
-    deleted_files = 0
+    trash_root = log_root.parent / ".trash" / "logs" / timezone.localtime().strftime("%Y%m%d_%H%M%S")
+    trashed_files = 0
     deleted_dirs = 0
 
     for file_path in log_root.rglob("*.log"):
@@ -74,8 +76,14 @@ def purge_old_runtime_logs_task(days=30):
             continue
         if modified >= cutoff:
             continue
-        file_path.unlink(missing_ok=True)
-        deleted_files += 1
+        try:
+            relative_path = file_path.relative_to(log_root)
+        except ValueError:
+            continue
+        target_path = trash_root / relative_path
+        target_path.parent.mkdir(parents=True, exist_ok=True)
+        shutil.move(str(file_path), str(target_path))
+        trashed_files += 1
 
     month_dirs = sorted((path for path in log_root.rglob("*") if path.is_dir()), reverse=True)
     for directory in month_dirs:
@@ -88,9 +96,10 @@ def purge_old_runtime_logs_task(days=30):
             continue
 
     return {
-        "deleted_files": deleted_files,
+        "trashed_files": trashed_files,
         "deleted_dirs": deleted_dirs,
         "log_root": str(log_root),
+        "trash_root": str(trash_root),
     }
 
 

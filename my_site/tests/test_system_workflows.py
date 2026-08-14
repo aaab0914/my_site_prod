@@ -56,7 +56,7 @@ class LoggingSystemTests(SimpleTestCase):
         script = (BASE_DIR / "scripts" / "long_run_check.py").read_text(encoding="utf-8")
         self.assertIn("json.dumps(report", script)
 
-    def test_purge_old_runtime_logs_task_deletes_old_runtime_logs(self):
+    def test_purge_old_runtime_logs_task_trashes_old_runtime_logs(self):
         with tempfile.TemporaryDirectory(prefix="runtime-log-task-") as temp_dir:
             base_dir = Path(temp_dir)
             old_dir = base_dir / "logs" / "1999-01"
@@ -69,8 +69,9 @@ class LoggingSystemTests(SimpleTestCase):
                 result = purge_old_runtime_logs_task(days=1)
 
             self.assertFalse(old_file.exists())
-            self.assertGreaterEqual(result["deleted_files"], 1)
+            self.assertGreaterEqual(result["trashed_files"], 1)
             self.assertGreaterEqual(result["deleted_dirs"], 1)
+            self.assertIn(".trash", result["trash_root"])
 
     def test_runtime_log_purge_does_not_move_unmanaged_logs(self):
         with tempfile.TemporaryDirectory(prefix="runtime-log-scope-") as temp_dir:
@@ -110,7 +111,7 @@ class LoggingSystemTests(SimpleTestCase):
             with override_settings(BASE_DIR=Path(temp_dir)):
                 result = purge_old_runtime_logs_task(days=2)
 
-            self.assertIn("deleted_files", result)
+            self.assertIn("trashed_files", result)
             self.assertIn("deleted_dirs", result)
             self.assertNotIn("heartbeats", result)
 
