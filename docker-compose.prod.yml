@@ -162,7 +162,7 @@ services:
     restart: always
     env_file:
       - .env.prod
-    command: celery -A my_site flower --port=5555
+    command: celery -A my_site flower --port=5555 --basic_auth=${FLOWER_BASIC_AUTH:-admin:change-me}
     environment:
       DJANGO_SETTINGS_MODULE: my_site.settings.prod
       DB_NAME: ${DB_NAME}
@@ -178,6 +178,8 @@ services:
       SENTRY_TRACES_SAMPLE_RATE: ${SENTRY_TRACES_SAMPLE_RATE}
       SENTRY_PROFILES_SAMPLE_RATE: ${SENTRY_PROFILES_SAMPLE_RATE}
       RUNNING_IN_DOCKER: ${RUNNING_IN_DOCKER}
+    volumes:
+      - ./logs:/code/logs
     ports:
       - "127.0.0.1:15556:5555"
     depends_on:
@@ -210,6 +212,7 @@ services:
     environment:
       GF_SERVER_ROOT_URL: ${GRAFANA_ROOT_URL:-https://rgavanp.kdns.fr/grafana/}
       GF_SERVER_SERVE_FROM_SUB_PATH: "true"
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
     ports:
       - "127.0.0.1:13000:3000"
     volumes:
