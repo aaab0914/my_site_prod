@@ -51,9 +51,9 @@ class MediaCleanupContractTests(SimpleTestCase):
         self.assertIn("shutil.move", self.cleanup)
 
     def test_media_signals_only_move_files_for_browser_triggered_deletes(self):
-        self.assertIn("from .media_cleanup import cleanup_instance_media_files, prepare_instance_media_cleanup", self.signals)
-        self.assertIn("prepare_instance_media_cleanup(instance)", self.signals)
-        self.assertIn("cleanup_instance_media_files(instance)", self.signals)
+        self.assertIn("from .media_cleanup import handle_instance_post_delete, handle_instance_pre_delete", self.signals)
+        self.assertIn("handle_instance_pre_delete(instance)", self.signals)
+        self.assertIn("handle_instance_post_delete(instance)", self.signals)
 
     def test_media_sync_system_is_read_only_and_never_deletes_files_or_records(self):
         self.assertNotIn("instance.delete()", self.sync)
@@ -91,7 +91,8 @@ class SiteBootstrapContractTests(SimpleTestCase):
         self.site_bootstrap = (BASE_DIR / "my_site" / "site_bootstrap.py").read_text(encoding="utf-8")
 
     def test_startup_ensures_default_django_site_record_exists(self):
-        self.assertIn("ensure_default_site()", self.blog_app)
+        self.assertIn("connect_site_bootstrap()", self.blog_app)
+        self.assertIn("from my_site.site_bootstrap import connect_site_bootstrap", self.blog_app)
         self.assertIn("Site.objects.update_or_create", self.site_bootstrap)
         self.assertIn("settings.SITE_ID", self.site_bootstrap)
         self.assertIn("localhost:8000", self.site_bootstrap)

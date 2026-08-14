@@ -43,6 +43,9 @@ def authorized_media_delete():
 
 
 def move_media_file_to_trash(relative_name):
+    if not is_browser_delete_request():
+        return None
+
     normalized_relative_name = _normalize_relative_name(relative_name)
     if not normalized_relative_name:
         return None

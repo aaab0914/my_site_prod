@@ -12,6 +12,7 @@ urlpatterns = [
     path("profile/", views.profile, name="profile"),
     path("profile/<str:username>/", views.profile, name="profile_by_username"),
     path("api-token/", views.api_token_manage, name="api_token_manage"),
+    path("api-token/issue/", views.api_token_issue, name="api_token"),
     path("account/delete/", views.account_delete, name="account_delete"),
     path("username/change/", views.username_change, name="username_change"),
 ]

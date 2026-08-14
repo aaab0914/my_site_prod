@@ -57,7 +57,7 @@ class AudioRouteTests(TestCase):
         self.assertContains(response, 'class="audio-player-shell"')
         self.assertContains(response, 'playsinline')
         self.assertContains(response, 'webkit-playsinline')
-        self.assertContains(response, 'preload="metadata"')
+        self.assertContains(response, 'preload="none"')
         self.assertContains(response, '@supports (-webkit-touch-callout: none)')
 
     def test_audio_upload_post_submission(self):
@@ -75,7 +75,7 @@ class AudioRouteTests(TestCase):
         )
         self.assertEqual(response.status_code, 200)
         self.assertTrue(AudioPost.objects.filter(music_name="Uploaded Sample").exists())
-        self.assertContains(response, "Uploaded Sample")
+        self.assertContains(response, "1 audio file has been uploaded successfully.")
 
     def test_audio_upload_route_requires_login(self):
         response = self.client.post(

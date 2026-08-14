@@ -1,80 +1,42 @@
-{% extends "blog/base.html" %}
+{% extends "blog/hero_base.html" %}
 
 {% block title %}Edit Album{% endblock %}
-
-{% block content %}
-<style>
-    .album-edit {
-        max-width: 760px;
-        margin: 0 auto 32px;
-        padding: 24px;
-        border: 1px solid #dbe3eb;
-        border-radius: 20px;
-        background: #fff;
-        box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
-    }
-
-    .album-edit h1 {
-        margin-top: 0;
-    }
-
-    .album-edit label {
-        float: none;
-        display: block;
-        margin-bottom: 8px;
-        font-weight: 700;
-        color: #173042;
-    }
-
-    .album-edit input,
-    .album-edit textarea {
-        width: 100%;
-        float: none;
-        margin: 0 0 16px;
-        padding: 12px 14px;
-        border: 1px solid #cbd6e1;
-        border-radius: 14px;
-        background: #f8fbfd;
-        font-size: 14px;
-        box-sizing: border-box;
-    }
-
-    .album-edit-actions {
-        display: flex;
-        gap: 12px;
-        align-items: center;
-    }
-
-    .album-save,
-    .album-cancel {
-        display: inline-block;
-        padding: 10px 16px;
-        border-radius: 999px;
-        text-decoration: none;
-        font-weight: 700;
-        border: 0;
-        cursor: pointer;
-    }
-
-    .album-save {
-        background: #0f766e;
-        color: #fff;
-    }
-
-    .album-cancel {
-        background: #e9eff4;
-        color: #22384a;
-    }
-</style>
-<section class="album-edit">
-    <h1>Edit Album</h1>
+{% block hero_class %}hero-theme-gallery{% endblock %}
+{% block hero_page_title %}Edit Album{% endblock %}
+{% block hero_page_description %}Update the album title and description without changing its existing images.{% endblock %}
+{% block hero_body %}
+<section class="page-card album-edit-card">
     <form method="post">
         {% csrf_token %}
-        {{ form.as_p }}
+        {% if form.non_field_errors %}<div class="album-edit-errors">{{ form.non_field_errors }}</div>{% endif %}
+        <div class="album-edit-field">
+            {{ form.title.label_tag }}
+            {{ form.title }}
+            {% if form.title.errors %}<div class="album-edit-errors">{{ form.title.errors }}</div>{% endif %}
+        </div>
+        <div class="album-edit-field">
+            {{ form.description.label_tag }}
+            {{ form.description }}
+            {% if form.description.errors %}<div class="album-edit-errors">{{ form.description.errors }}</div>{% endif %}
+        </div>
         <div class="album-edit-actions">
-            <button class="album-save" type="submit">Save</button>
-            <a class="album-cancel" href="{% url 'blog:images:album_detail' album.id %}">Cancel</a>
+            <button class="album-edit-save" type="submit">Save Changes</button>
+            <a class="album-edit-cancel" href="{% url 'blog:images:album_detail' album.id %}">Cancel</a>
         </div>
     </form>
 </section>
+{% endblock %}
+{% block hero_base_css %}
+<style>
+    .album-edit-card { max-width: 760px; margin: 0 auto; padding: 28px; }
+    .album-edit-field { margin-bottom: 18px; }
+    .album-edit-field label { display: block; margin-bottom: 8px; color: #173042; font-weight: 700; }
+    .album-edit-field input, .album-edit-field textarea { width: 100%; box-sizing: border-box; padding: 12px 14px; border: 1px solid #cbd6e1; border-radius: 12px; background: #f8fbfd; font: inherit; }
+    .album-edit-field textarea { min-height: 150px; resize: vertical; }
+    .album-edit-actions { display: flex; gap: 12px; flex-wrap: wrap; }
+    .album-edit-save, .album-edit-cancel { display: inline-flex; align-items: center; justify-content: center; padding: 11px 18px; border: 0; border-radius: 999px; text-decoration: none; font-weight: 700; cursor: pointer; }
+    .album-edit-save { background: #0f766e; color: #fff; }
+    .album-edit-cancel { background: #e9eff4; color: #22384a; }
+    .album-edit-errors { margin: 0 0 12px; color: #b42318; }
+</style>
 {% endblock %}

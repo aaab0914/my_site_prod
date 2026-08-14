@@ -35,6 +35,9 @@ audio_urlpatterns = [
     path("audio/list/", views.audio_list, name="audio_list"),
     path("video/upload/", views.video_upload, name="video_upload"),
     path("video/list/", views.video_list, name="video_list"),
+    path("video/<int:pk>/", views.video_detail, name="video_detail"),
+    path("video/<int:pk>/edit/", views.video_edit, name="video_edit"),
+    path("video/<int:pk>/delete/", views.video_delete, name="video_delete"),
     path("audio/edit/<int:pk>/", AudioPostEditView.as_view(), name="audio_post_edit"),
     path("audio/delete/<int:pk>/", AudioPostDeleteView.as_view(), name="audio_post_delete"),
     path("audio/delete/success/", views.audio_post_delete_success, name="audio_post_delete_success"),
@@ -53,7 +56,7 @@ urlpatterns = [
     *post_urlpatterns,
     path("users/", include("users.urls")),
     path("", include(("images.urls", "images"), namespace="images")),
+    *audio_urlpatterns,
     *comment_urlpatterns,
     *api_urlpatterns,
-    *audio_urlpatterns,
 ]

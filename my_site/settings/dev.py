@@ -33,7 +33,7 @@ LOGGING["handlers"]["error_file"] = {
     "level": "WARNING",
     "class": "my_site.logging_utils.DailyMonthlyFileHandler",
     "log_dir": str(LOG_DIR),
-    "filename_prefix": "error",
+    "filename_prefix": "django-error",
     "formatter": "verbose",
 }
 if os.environ.get("RUNNING_IN_DOCKER", "").lower() == "true":

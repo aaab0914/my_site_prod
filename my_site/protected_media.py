@@ -5,21 +5,11 @@ import re
 from pathlib import Path
 from urllib.parse import quote
 
-from django.http import FileResponse, Http404, HttpResponse, HttpResponseNotModified, StreamingHttpResponse
+from django.conf import settings
+from django.http import Http404, HttpResponse, HttpResponseNotModified
 from django.utils.http import http_date, parse_http_date_safe, quote_etag
 
 _RANGE_RE = re.compile(r"bytes=(\d*)-(\d*)")
-
-
-def _range_stream(file_obj, start, end, chunk_size=8192):
-    file_obj.seek(start)
-    remaining = end - start + 1
-    while remaining > 0:
-        chunk = file_obj.read(min(chunk_size, remaining))
-        if not chunk:
-            break
-        remaining -= len(chunk)
-        yield chunk
 
 
 def _safe_etag(cache_prefix, file_path, last_modified, file_size):
@@ -41,6 +31,11 @@ def serve_protected_media(field_file, request=None, cache_prefix="media"):
     file_path = Path(field_file.path)
     if not file_path.is_file():
         raise Http404("File not found.")
+
+    try:
+        relative_media_path = file_path.resolve().relative_to(Path(settings.MEDIA_ROOT).resolve())
+    except ValueError as exc:
+        raise Http404("File not found.") from exc
 
     stat_result = os.stat(file_path)
     last_modified = stat_result.st_mtime
@@ -88,20 +83,17 @@ def serve_protected_media(field_file, request=None, cache_prefix="media"):
 
             end = min(end, file_size - 1)
             length = end - start + 1
-            file_handle = open(file_path, "rb")
-            response = StreamingHttpResponse(
-                _range_stream(file_handle, start, end),
-                status=206,
-                content_type=content_type,
-            )
+            response = HttpResponse(status=206, content_type=content_type)
             response["Content-Length"] = str(length)
             response["Content-Range"] = f"bytes {start}-{end}/{file_size}"
             response["Content-Disposition"] = content_disposition
+            response["X-Accel-Redirect"] = f"/_protected_media/{quote(str(relative_media_path).replace(os.sep, '/'))}"
 
     if response is None:
-        response = FileResponse(open(file_path, "rb"), content_type=content_type)
+        response = HttpResponse(content_type=content_type)
         response["Content-Disposition"] = content_disposition
         response["Content-Length"] = str(file_size)
+        response["X-Accel-Redirect"] = f"/_protected_media/{quote(str(relative_media_path).replace(os.sep, '/'))}"
 
     response["Accept-Ranges"] = "bytes"
     response["Cache-Control"] = "public, max-age=7776000, immutable"

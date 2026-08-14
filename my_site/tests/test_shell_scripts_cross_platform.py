@@ -83,10 +83,14 @@ class BackupDbScriptTests(ShellScriptTestCase):
         backups = list((self.temp_dir / "backups" / "db").glob("my_site_db_*.sql"))
         self.assertEqual(len(backups), 1)
         self.assertEqual(backups[0].read_text(encoding="utf-8"), "fake-sql;\n")
-        log_text = (self.temp_dir / "logs" / "backup.log").read_text(encoding="utf-8")
+        log_files = list((self.temp_dir / "logs" / "backup").rglob("backup-*.log"))
+        self.assertEqual(len(log_files), 1)
+        log_text = log_files[0].read_text(encoding="utf-8")
         self.assertIn("Starting database backup", log_text)
         self.assertIn("Backup succeeded", log_text)
-        self.assertIn("docker compose -f", log_file.read_text(encoding="utf-8"))
+        invocation = log_file.read_text(encoding="utf-8")
+        self.assertIn("docker compose", invocation)
+        self.assertIn("-f", invocation)
 
     def test_windows_mode_falls_back_to_docker_exe(self):
         bin_dir, log_file = self.create_fake_runtime("docker.exe", dump_output="windows-sql;\n")
@@ -99,7 +103,8 @@ class BackupDbScriptTests(ShellScriptTestCase):
         backups = list((self.temp_dir / "backups" / "db").glob("my_site_db_*.sql"))
         self.assertEqual(backups[0].read_text(encoding="utf-8"), "windows-sql;\n")
         invocation = log_file.read_text(encoding="utf-8")
-        self.assertIn("docker.exe compose -f", invocation)
+        self.assertIn("docker.exe compose", invocation)
+        self.assertIn("-f", invocation)
 
     def test_macos_mode_keeps_only_latest_seven_backups(self):
         bin_dir, _ = self.create_fake_runtime("docker", dump_output="macos-sql;\n")
@@ -124,7 +129,9 @@ class BackupDbScriptTests(ShellScriptTestCase):
         result = self.run_script(self.script_path, env=env)
 
         self.assertEqual(result.returncode, 1)
-        log_text = (self.temp_dir / "logs" / "backup.log").read_text(encoding="utf-8")
+        log_files = list((self.temp_dir / "logs" / "backup").rglob("backup-*.log"))
+        self.assertEqual(len(log_files), 1)
+        log_text = log_files[0].read_text(encoding="utf-8")
         self.assertIn("docker command not found", log_text)
 
 
@@ -138,6 +145,14 @@ class EntrypointScriptTests(ShellScriptTestCase):
         script_text = script_text.replace("/code", self.code_dir.as_posix())
         self.script_path.write_text(script_text, encoding="utf-8", newline="\n")
         self.make_executable(self.script_path)
+
+        # entrypoint.sh delegates to ensure_daily_logs.sh; mirror the real
+        # container layout by placing that dependency in the fake tree too.
+        self.daily_logs_path = self.code_dir / "ensure_daily_logs.sh"
+        daily_logs_text = (BASE_DIR / "ensure_daily_logs.sh").read_text(encoding="utf-8")
+        daily_logs_text = daily_logs_text.replace("/code", self.code_dir.as_posix())
+        self.daily_logs_path.write_text(daily_logs_text, encoding="utf-8", newline="\n")
+        self.make_executable(self.daily_logs_path)
 
     def tearDown(self):
         shutil.rmtree(self.temp_dir, ignore_errors=True)
@@ -224,7 +239,7 @@ class EntrypointScriptTests(ShellScriptTestCase):
         self.assertIn("python manage.py collectstatic --noinput", log_text)
         self.assertNotIn("validate_prod_env.py", log_text)
         self.assertIn("gunicorn --workers 2 --bind 0.0.0.0:8000", log_text)
-        self.assertTrue((self.code_dir / "logs" / "2026-07").exists())
+        self.assertTrue((self.code_dir / "logs" / "django" / "2026-07").exists())
 
     def test_macos_prod_mode_runs_prod_validation_before_start(self):
         bin_dir, call_log = self.create_fake_bin()

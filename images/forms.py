@@ -127,12 +127,19 @@ class GalleryUploadForm(forms.Form):
 class AlbumUploadForm(forms.Form):
     title = forms.CharField(max_length=200)
     description = forms.CharField(required=False, widget=forms.Textarea(attrs={"rows": 4}))
-    images = AlbumMultipleFileField(widget=AlbumMultipleFileInput(attrs={"accept": "image/*"}))
+    images = AlbumMultipleFileField(
+        required=False,
+        widget=AlbumMultipleFileInput(attrs={"accept": "image/*"}),
+    )
+    pasted_images_data = forms.CharField(required=False, widget=forms.HiddenInput())
 
     def clean_images(self):
-        files = self.files.getlist("images")
+        files = list(self.files.getlist("images"))
+        files.extend(GalleryUploadForm._decode_pasted_images(self))
         if not files:
             raise ValidationError("Please choose at least one image.")
+        if len(files) > 99:
+            raise ValidationError("You can upload at most 99 images at one time.")
         for image in files:
             content_type = getattr(image, "content_type", "")
             if content_type and not content_type.startswith("image/"):
@@ -140,6 +147,18 @@ class AlbumUploadForm(forms.Form):
             if image.size > 5 * 1024 * 1024:
                 raise ValidationError("Each image must be 5MB or smaller.")
         return files
+
+
+class AlbumEditForm(forms.ModelForm):
+    class Meta:
+        model = Album
+        fields = ["title", "description"]
+        widgets = {
+            "title": forms.TextInput(attrs={"class": "form-control"}),
+            "description": forms.Textarea(attrs={"class": "form-control", "rows": 6}),
+        }
+
+
 class GalleryImageEditForm(forms.ModelForm):
     class Meta:
         model = ImagePost

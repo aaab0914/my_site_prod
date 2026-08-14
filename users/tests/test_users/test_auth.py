@@ -24,7 +24,7 @@ class UserRegisterViewTests(TestCase):
         response = self.client.post(self.register_url, data)
         self.assertEqual(response.status_code, 302)
         self.assertTrue(User.objects.filter(username="newuser").exists())
-        self.assertEqual(response.url, reverse("blog:all_posts_list"))
+        self.assertEqual(response.url, reverse("operation_success"))
 
     def test_register_user_success_without_email(self):
         data = {
@@ -36,7 +36,7 @@ class UserRegisterViewTests(TestCase):
         response = self.client.post(self.register_url, data)
         self.assertEqual(response.status_code, 302)
         self.assertTrue(User.objects.filter(username="newuser_no_email", email="").exists())
-        self.assertEqual(response.url, reverse("blog:all_posts_list"))
+        self.assertEqual(response.url, reverse("operation_success"))
 
     def test_register_password_mismatch(self):
         data = {

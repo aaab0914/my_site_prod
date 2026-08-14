@@ -259,6 +259,8 @@ class VideoUploadForm(forms.ModelForm):
     def clean_video_file(self):
         video_file = self.cleaned_data.get("video_file")
         if not video_file:
+            if self.instance and self.instance.pk and self.instance.video_file:
+                return self.instance.video_file
             raise ValidationError("Please choose a video file.")
 
         allowed_types = {

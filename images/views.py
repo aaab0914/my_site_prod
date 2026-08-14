@@ -9,7 +9,7 @@ from django.urls import reverse_lazy
 
 from blog.models import Post
 
-from .forms import AlbumUploadForm, GalleryImageEditForm, GalleryUploadForm
+from .forms import AlbumEditForm, AlbumUploadForm, GalleryImageEditForm, GalleryUploadForm
 from .models import Album, AlbumImage, ImagePost
 from my_site.media_sync import maybe_sync_site_media
 from my_site.protected_media import serve_protected_media
@@ -308,8 +308,26 @@ def album_delete(request, image_id):
 
 @login_required
 def album_edit(request, image_id):
-    messages.info(request, "Album edit page is not fully restored yet.")
-    return redirect("blog:images:album_detail", image_id=image_id)
+    album = get_object_or_404(Album, pk=image_id)
+    if album.uploaded_by_id != request.user.id and not request.user.is_superuser:
+        messages.error(request, "You do not have permission to edit this album.")
+        return redirect("blog:images:album_detail", image_id=album.id)
+
+    form = AlbumEditForm(request.POST or None, instance=album)
+    if _is_post_request(request) and form.is_valid():
+        form.save()
+        return queue_operation_success(
+            request,
+            title="Album Updated",
+            message=f'"{album.title}" has been updated successfully.',
+            primary_label="View Album",
+            primary_url=reverse_lazy("blog:images:album_detail", kwargs={"image_id": album.id}),
+            secondary_label="Open Albums",
+            secondary_url=reverse_lazy("blog:images:album_list"),
+        )
+
+    response = render(request, "images/album_edit.html", {"form": form, "album": album})
+    return _disable_page_cache(response)
 
 
 def album_media(request, image_id):

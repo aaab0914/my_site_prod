@@ -278,3 +278,42 @@ class PostAdmin(admin.ModelAdmin):
     def save_related(self, request, form, formsets, change):
         super().save_related(request, form, formsets, change)
         normalize_post_tags(form.instance)
+
+
+@admin.register(AudioPost)
+class AudioPostAdmin(admin.ModelAdmin):
+    list_display = ["music_name", "uploaded_by", "created", "updated", "active"]
+    list_filter = ["active", "created", "updated", "uploaded_by"]
+    search_fields = ["music_name", "description", "uploaded_by__username"]
+    readonly_fields = ["audio_preview", "cover_preview", "created", "updated"]
+    raw_id_fields = ["uploaded_by"]
+    ordering = ["-created"]
+    actions = [make_active, make_inactive]
+
+    @admin.display(description="Audio Preview")
+    def audio_preview(self, obj):
+        if not obj.audio_file:
+            return "-"
+        return format_html('<audio controls preload="none" style="width:220px;"><source src="{}"></audio>', obj.get_audio_proxy_url())
+
+    @admin.display(description="Cover Preview")
+    def cover_preview(self, obj):
+        if not obj.cover_image:
+            return "-"
+        return format_html('<img src="{}" alt="cover" style="width:56px;height:56px;object-fit:cover;border-radius:6px;">', obj.get_cover_image_proxy_url())
+
+
+@admin.register(VideoPost)
+class VideoPostAdmin(admin.ModelAdmin):
+    list_display = ["title", "uploaded_by", "created", "updated"]
+    list_filter = ["created", "updated", "uploaded_by"]
+    search_fields = ["title", "description", "uploaded_by__username"]
+    readonly_fields = ["video_preview", "created", "updated"]
+    raw_id_fields = ["uploaded_by"]
+    ordering = ["-created"]
+
+    @admin.display(description="Preview")
+    def video_preview(self, obj):
+        if not obj.video_file:
+            return "-"
+        return format_html('<video controls preload="none" style="width:180px;max-height:110px;"><source src="{}"></video>', obj.get_video_proxy_url())

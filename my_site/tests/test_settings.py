@@ -17,9 +17,11 @@ class SettingsSplitTests(SimpleTestCase):
         dockerfile = (self._base_dir() / "Dockerfile.prod").read_text(encoding="utf-8")
         self.assertIn("DJANGO_SETTINGS_MODULE=my_site.settings.prod", dockerfile)
 
-    def test_compose_explicitly_sets_prod_settings_module(self):
+    def test_dev_settings_module_is_set_by_dockerfile_not_dev_compose(self):
         compose = (self._base_dir() / "docker-compose.dev.yml").read_text(encoding="utf-8")
-        self.assertIn("DJANGO_SETTINGS_MODULE: my_site.settings.dev", compose)
+        self.assertNotIn("DJANGO_SETTINGS_MODULE", compose)
+        dockerfile = (self._base_dir() / "Dockerfile.dev").read_text(encoding="utf-8")
+        self.assertIn("DJANGO_SETTINGS_MODULE=my_site.settings.dev", dockerfile)
 
     def test_prod_compose_explicitly_sets_prod_settings_module(self):
         compose = (self._base_dir() / "docker-compose.prod.yml").read_text(encoding="utf-8")
@@ -58,6 +60,10 @@ class LoggingPolicyTests(SimpleTestCase):
         self.assertEqual(
             dev_settings.LOGGING["handlers"]["error_file"]["class"],
             "my_site.logging_utils.DailyMonthlyFileHandler",
+        )
+        self.assertEqual(
+            dev_settings.LOGGING["handlers"]["error_file"]["filename_prefix"],
+            "django-error",
         )
         self.assertEqual(dev_settings.LOGGING["handlers"]["error_file"]["level"], "WARNING")
 

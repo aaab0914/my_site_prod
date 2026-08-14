@@ -76,7 +76,7 @@ class ImageAdminTests(TestCase):
         self.client.force_login(self.superuser)
         response = self.client.get(reverse("admin:images_imagepost_changelist"))
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Image posts")
+        self.assertContains(response, "Select Gallery to change")
 
     def test_image_admin_change_page_is_available_for_superuser(self):
         image = ImagePost.objects.create(

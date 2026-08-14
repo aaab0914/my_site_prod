@@ -25,9 +25,10 @@ class DatabaseBackupSystemTests(SimpleTestCase):
         script = (BASE_DIR / "backup_db.sh").read_text(encoding="utf-8")
 
         self.assertIn('COMPOSE_FILE="$PROJECT_DIR/docker-compose.prod.yml"', script)
-        self.assertIn('LOG_FILE="$PROJECT_DIR/logs/backup.log"', script)
+        self.assertIn('LOG_DIR="$PROJECT_DIR/logs/backup/$MONTH_DIR"', script)
+        self.assertIn('LOG_FILE="$LOG_DIR/backup-$DAY.log"', script)
         self.assertIn('BACKUP_DIR="$PROJECT_DIR/backups/db"', script)
-        self.assertIn('docker || command -v docker.exe', script)
+        self.assertIn('command -v docker || command -v docker.exe', script)
         self.assertNotIn("backup_loop.sh", script)
 
 
@@ -36,7 +37,8 @@ class LoggingSystemTests(SimpleTestCase):
         handler = DailyMonthlyFileHandler(log_dir=BASE_DIR / "logs", filename_prefix="django", delay=True)
         target_path = Path(handler.baseFilename)
 
-        self.assertEqual(target_path.parents[1], BASE_DIR / "logs")
+        self.assertEqual(target_path.parents[2], BASE_DIR / "logs")
+        self.assertEqual(target_path.parent.parent.name, "django")
         self.assertRegex(target_path.parent.name, r"^\d{4}-\d{2}$")
         self.assertTrue(target_path.name.startswith("django-"))
         self.assertTrue(target_path.name.endswith(".log"))
@@ -54,30 +56,29 @@ class LoggingSystemTests(SimpleTestCase):
         script = (BASE_DIR / "scripts" / "long_run_check.py").read_text(encoding="utf-8")
         self.assertIn("json.dumps(report", script)
 
-    @override_settings(BASE_DIR=BASE_DIR)
-    def test_purge_old_runtime_logs_task_moves_old_logs_to_trash(self):
-        old_dir = BASE_DIR / "logs" / "1999-01"
-        old_dir.mkdir(parents=True, exist_ok=True)
-        old_file = old_dir / "django-1999-01-01.log"
-        old_file.write_text("old", encoding="utf-8")
-        old_timestamp = 946684800
-        os.utime(old_file, (old_timestamp, old_timestamp))
+    def test_purge_old_runtime_logs_task_deletes_old_runtime_logs(self):
+        with tempfile.TemporaryDirectory(prefix="runtime-log-task-") as temp_dir:
+            base_dir = Path(temp_dir)
+            old_dir = base_dir / "logs" / "1999-01"
+            old_dir.mkdir(parents=True, exist_ok=True)
+            old_file = old_dir / "django-1999-01-01.log"
+            old_file.write_text("old", encoding="utf-8")
+            os.utime(old_file, (946684800, 946684800))
 
-        result = purge_old_runtime_logs_task(days=1)
+            with override_settings(BASE_DIR=base_dir):
+                result = purge_old_runtime_logs_task(days=1)
 
-        self.assertFalse(old_file.exists())
-        self.assertGreaterEqual(result["trashed_files"], 1)
-        self.assertTrue(any((BASE_DIR / ".trash" / "logs").rglob("django-1999-01-01.log")))
+            self.assertFalse(old_file.exists())
+            self.assertGreaterEqual(result["deleted_files"], 1)
+            self.assertGreaterEqual(result["deleted_dirs"], 1)
 
     def test_runtime_log_purge_does_not_move_unmanaged_logs(self):
         with tempfile.TemporaryDirectory(prefix="runtime-log-scope-") as temp_dir:
             log_root = Path(temp_dir) / "logs"
-            old_dir = log_root / "1999-01"
-            old_dir.mkdir(parents=True, exist_ok=True)
-            managed_log = old_dir / "django-1999-01-01.log"
+            managed_log = log_root / "django" / "1999-01" / "django-1999-01-01.log"
             backup_log = log_root / "backup.log"
-            nginx_access_log = log_root / "nginx" / "access.log"
-            unmanaged_error_log = old_dir / "error-custom.log"
+            nginx_access_log = log_root / "nginx-access" / "access.log"
+            unmanaged_error_log = log_root / "django-error" / "1999-01" / "django-error-custom.log"
 
             for path in [managed_log, backup_log, nginx_access_log, unmanaged_error_log]:
                 path.parent.mkdir(parents=True, exist_ok=True)
@@ -100,14 +101,18 @@ class LoggingSystemTests(SimpleTestCase):
             for item in result:
                 path = Path(item["path"])
                 self.assertTrue(path.exists())
+                self.assertEqual(path.parents[2], Path(temp_dir))
+                self.assertRegex(path.parent.name, r"^\d{4}-\d{2}$")
                 self.assertIn("heartbeat: no new", path.read_text(encoding="utf-8"))
 
-    @override_settings(BASE_DIR=BASE_DIR)
-    def test_purge_old_runtime_logs_task_uses_heartbeat_policy(self):
-        result = purge_old_runtime_logs_task(days=2)
+    def test_purge_old_runtime_logs_task_reports_deletion_summary_without_heartbeats(self):
+        with tempfile.TemporaryDirectory(prefix="runtime-log-task-") as temp_dir:
+            with override_settings(BASE_DIR=Path(temp_dir)):
+                result = purge_old_runtime_logs_task(days=2)
 
-        self.assertIn("heartbeats", result)
-        self.assertEqual(len(result["heartbeats"]), len(RUNTIME_LOG_TARGETS))
+            self.assertIn("deleted_files", result)
+            self.assertIn("deleted_dirs", result)
+            self.assertNotIn("heartbeats", result)
 
 
 @override_settings(MEDIA_SYNC_ENABLED=False)

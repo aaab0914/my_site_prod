@@ -17,11 +17,12 @@ class RuntimeLogTarget:
 RUNTIME_LOG_RETENTION_DAYS = 120
 RUNTIME_LOG_TARGETS = (
     RuntimeLogTarget("celery", "Celery", "celery"),
-    RuntimeLogTarget("nginx", "Nginx", "nginx"),
+    RuntimeLogTarget("nginx_access", "Nginx Access", "nginx-access"),
+    RuntimeLogTarget("nginx_error", "Nginx Error", "nginx-error"),
     RuntimeLogTarget("gunicorn_access", "Gunicorn Access", "gunicorn-access"),
     RuntimeLogTarget("gunicorn_error", "Gunicorn Error", "gunicorn-error"),
     RuntimeLogTarget("django", "Django", "django"),
-    RuntimeLogTarget("django_error", "Django Error", "error"),
+    RuntimeLogTarget("django_error", "Django Error", "django-error"),
 )
 MANAGED_MONTH_DIR_RE = re.compile(r"^\d{4}-\d{2}$")
 MANAGED_DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
@@ -30,7 +31,7 @@ MANAGED_DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 def runtime_log_path(log_root, target, when=None):
     current = when or timezone.localtime()
     log_root = Path(log_root)
-    month_dir = log_root / current.strftime("%Y-%m")
+    month_dir = log_root / target.prefix / current.strftime("%Y-%m")
     return month_dir / f"{target.prefix}-{current.strftime('%Y-%m-%d')}.log"
 
 
@@ -42,9 +43,9 @@ def is_managed_runtime_log(file_path, log_root):
     except ValueError:
         return False
 
-    if len(relative_path.parts) != 2:
+    if len(relative_path.parts) != 3:
         return False
-    month_dir, filename = relative_path.parts
+    category, month_dir, filename = relative_path.parts
     if not MANAGED_MONTH_DIR_RE.fullmatch(month_dir):
         return False
     if file_path.suffix != ".log":
@@ -52,6 +53,8 @@ def is_managed_runtime_log(file_path, log_root):
 
     stem = file_path.stem
     for target in RUNTIME_LOG_TARGETS:
+        if category != target.prefix:
+            continue
         prefix = f"{target.prefix}-"
         if not stem.startswith(prefix):
             continue
@@ -103,7 +106,7 @@ def purge_runtime_logs(log_root, retention_days=RUNTIME_LOG_RETENTION_DAYS, when
         shutil.move(str(file_path), str(target_path))
         trashed_files += 1
 
-    for directory in sorted((path for path in log_root.iterdir() if path.is_dir()), reverse=True):
+    for directory in sorted((path for path in log_root.rglob("*") if path.is_dir()), reverse=True):
         try:
             next(directory.iterdir())
         except StopIteration:

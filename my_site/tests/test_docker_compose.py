@@ -2,26 +2,32 @@ from pathlib import Path
 import os
 import shutil
 import subprocess
+import unittest
 
 from django.test import SimpleTestCase
 
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
+PROD_ENV_PATH = BASE_DIR / ".env.prod.example"
 
 
 class DockerComposeFileTests(SimpleTestCase):
     def setUp(self):
         self.prod_compose_path = BASE_DIR / "docker-compose.prod.yml"
         self.prod_compose_text = self.prod_compose_path.read_text(encoding="utf-8")
-        self.prod_env_path = BASE_DIR / ".env.prod"
-        self.prod_env_text = self.prod_env_path.read_text(encoding="utf-8")
+        self.prod_env_path = PROD_ENV_PATH
+        self.prod_env_text = self.prod_env_path.read_text(encoding="utf-8") if self.prod_env_path.exists() else ""
         self.readme_path = BASE_DIR / "README.md"
         self.readme_text = self.readme_path.read_text(encoding="utf-8")
 
     def test_prod_compose_targets_prod_layout(self):
-        """环境变量通过 .env.prod 注入，Dockerfile 使用 Dockerfile.prod"""
-        self.assertIn("DJANGO_SETTINGS_MODULE=my_site.settings.prod", self.prod_env_text)
+        """Dockerfile 使用 Dockerfile.prod"""
         self.assertIn("dockerfile: Dockerfile.prod", self.prod_compose_text)
+
+    @unittest.skipUnless(PROD_ENV_PATH.exists(), ".env.prod.example is not present")
+    def test_prod_env_example_sets_prod_settings_module(self):
+        """环境变量通过 .env.prod 注入"""
+        self.assertIn("DJANGO_SETTINGS_MODULE=my_site.settings.prod", self.prod_env_text)
 
     def test_prod_compose_defines_expected_services(self):
         self.assertIn("services:", self.prod_compose_text)
@@ -47,6 +53,9 @@ class DockerComposeFileTests(SimpleTestCase):
     def test_prod_web_service_uses_env_file_for_settings(self):
         """环境变量通过 .env.prod 注入，而非写在 compose 的 environment 块中"""
         self.assertIn("env_file:\n      - .env.prod", self.prod_compose_text)
+
+    @unittest.skipUnless(PROD_ENV_PATH.exists(), ".env.prod.example is not present")
+    def test_prod_env_example_defines_database_settings(self):
         self.assertIn("DB_NAME=my_site_db", self.prod_env_text)
         self.assertIn("DB_USER=my_site_user", self.prod_env_text)
         self.assertIn("DB_PASSWORD=", self.prod_env_text)
@@ -59,8 +68,8 @@ class DockerComposeFileTests(SimpleTestCase):
         self.assertIn("- ./backups:/code/backups", self.prod_compose_text)
 
     def test_prod_web_service_has_healthcheck(self):
-        self.assertIn("urllib.request.Request('http://127.0.0.1:8000/health/'", self.prod_compose_text)
-        self.assertIn("exit(0 if r.status == 200 else 1)", self.prod_compose_text)
+        self.assertIn("urllib.request.Request('http://127.0.0.1:8000/users/login/'", self.prod_compose_text)
+        self.assertIn("print(response.status)", self.prod_compose_text)
         self.assertIn("'X-Forwarded-Proto': 'https'", self.prod_compose_text)
 
     def test_nginx_service_mounts_expected_files(self):

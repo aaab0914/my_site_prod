@@ -65,13 +65,13 @@ class ProdStackSimulationTests(unittest.TestCase):
         self.assertIn("python /code/validate_prod_env.py", self.entrypoint)
         self.assertIn("python manage.py check --deploy", self.entrypoint)
         self.assertIn("python manage.py collectstatic --noinput", self.entrypoint)
-        self.assertIn("exec gosu app gunicorn", self.entrypoint)
+        self.assertIn("exec gunicorn", self.entrypoint)
         self.assertIn("--bind 0.0.0.0:8000", self.entrypoint)
         self.assertNotIn("runserver", self.entrypoint)
 
     def test_prod_nginx_routes_static_media_and_django_upstream(self):
         self.assertIn("listen 80;", self.nginx)
-        self.assertIn("listen 443 ssl;", self.nginx)
+        self.assertIn("listen 443 ssl http2;", self.nginx)
         self.assertIn("set $django_upstream http://web:8000;", self.nginx)
         self.assertIn("location /static/", self.nginx)
         self.assertIn("alias /static/;", self.nginx)

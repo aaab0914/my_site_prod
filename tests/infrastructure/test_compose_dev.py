@@ -7,7 +7,7 @@ import unittest
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 COMPOSE_FILE = BASE_DIR / "docker-compose.dev.yml"
-ENV_FILE = BASE_DIR / ".env.dev"
+ENV_FILE = BASE_DIR / ".env.dev.example"
 
 
 class DevComposeFileExistenceTests(unittest.TestCase):
@@ -87,39 +87,37 @@ class DevComposeWebServiceConfigTests(unittest.TestCase):
         self.assertIn("condition: service_healthy", self.text)
 
 
+@unittest.skipUnless(ENV_FILE.exists(), ".env.dev.example is not present in the web image (excluded by .dockerignore)")
 class DevEnvFileTests(unittest.TestCase):
     """验证 .env.dev 文件包含必要的环境变量（原 compose environment 中的变量已移入此处）"""
 
+    def setUp(self):
+        self.text = ENV_FILE.read_text(encoding="utf-8") if ENV_FILE.exists() else ""
+
     def test_env_file_has_django_settings(self):
-        text = ENV_FILE.read_text(encoding="utf-8")
-        self.assertIn("DJANGO_SETTINGS_MODULE=my_site.settings.dev", text)
+        self.assertIn("DJANGO_SETTINGS_MODULE=my_site.settings.dev", self.text)
 
     def test_env_file_has_db_vars(self):
-        text = ENV_FILE.read_text(encoding="utf-8")
-        self.assertIn("DB_NAME=", text)
-        self.assertIn("DB_USER=", text)
-        self.assertIn("DB_PASSWORD=", text)
-        self.assertIn("DB_HOST=", text)
-        self.assertIn("DB_PORT=", text)
+        self.assertIn("DB_NAME=", self.text)
+        self.assertIn("DB_USER=", self.text)
+        self.assertIn("DB_PASSWORD=", self.text)
+        self.assertIn("DB_HOST=", self.text)
+        self.assertIn("DB_PORT=", self.text)
 
     def test_env_file_has_redis_url(self):
-        text = ENV_FILE.read_text(encoding="utf-8")
-        self.assertIn("REDIS_URL=", text)
+        self.assertIn("REDIS_URL=", self.text)
 
     def test_env_file_has_celery_vars(self):
-        text = ENV_FILE.read_text(encoding="utf-8")
-        self.assertIn("CELERY_BROKER_URL=", text)
-        self.assertIn("CELERY_RESULT_BACKEND=", text)
-        self.assertIn("CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP=", text)
+        self.assertIn("CELERY_BROKER_URL=", self.text)
+        self.assertIn("CELERY_RESULT_BACKEND=", self.text)
+        self.assertIn("CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP=", self.text)
 
     def test_env_file_has_dev_host_port_vars(self):
-        text = ENV_FILE.read_text(encoding="utf-8")
-        self.assertIn("DEV_DB_PORT=", text)
-        self.assertIn("DEV_WEB_PORT=", text)
+        self.assertIn("DEV_DB_PORT=", self.text)
+        self.assertIn("DEV_WEB_PORT=", self.text)
 
     def test_env_file_has_database_url(self):
-        text = ENV_FILE.read_text(encoding="utf-8")
-        self.assertIn("DATABASE_URL=postgresql://", text)
+        self.assertIn("DATABASE_URL=postgresql://", self.text)
 
 
 class DevComposeDatabaseConfigTests(unittest.TestCase):

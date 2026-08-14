@@ -5,6 +5,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.postgres.search import SearchQuery, SearchRank, SearchVector, TrigramSimilarity
+from django.core.cache import cache
 from django.core.exceptions import PermissionDenied
 from django.http import FileResponse, Http404
 from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
@@ -59,6 +60,41 @@ def _build_sort_options(current_sort):
         ("updated", "Updated"),
         ("author", "Author"),
     ]
+
+
+def _prime_video_list_cache(items=None):
+    """Rebuild the legacy video cache used by older integrations."""
+    if items is None or cache.get("video_list:items") is None:
+        videos = VideoPost.objects.select_related("uploaded_by").order_by("-created", "-id")
+    else:
+        videos = items
+    payload = [
+        {
+            "id": video.id,
+            "title": video.title or video.get_video_filename(),
+            "description": video.description,
+            "uploaded_by": video.uploaded_by.username,
+            "created": video.created,
+            "video_url": video.get_video_proxy_url(),
+        }
+        for video in videos
+    ]
+    cache.set("video_list:items", payload)
+    cache.set("video_list:ids", [item["id"] for item in payload])
+    return payload
+
+
+def _cached_post_list_page(page_number=1):
+    posts = list(Post.published.order_by("-publish", "-id")[(page_number - 1) * 10 : page_number * 10])
+    payload = {"post_ids": [post.id for post in posts]}
+    cache.set(f"post_list:page:{page_number}:tag:all", payload)
+    return payload
+
+
+def _cached_search_result_ids(query):
+    ids = list(Post.published.filter(title__icontains=query).values_list("id", flat=True))
+    cache.set(f"post_search:query:{query.strip().lower()}", ids)
+    return ids
     return [
         {
             "label": label,
@@ -405,8 +441,11 @@ def audio_upload(request):
 
     return render(request, "blog/audio/upload_audio.html", {"form": form})
 
-@login_required
 def video_upload(request):
+    if not request.user.is_authenticated:
+        response = redirect("blog:all_posts_list")
+        response["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0, private"
+        return response
     form = VideoUploadForm(request.POST or None, request.FILES or None)
     if not request.user.is_superuser:
         messages.error(request, "Only superusers can upload videos.")
@@ -427,6 +466,60 @@ def video_upload(request):
         )
 
     return render(request, "blog/video/upload_video.html", {"form": form})
+
+
+def video_detail(request, pk):
+    if not request.user.is_superuser:
+        return redirect("blog:all_posts_list")
+    video = get_object_or_404(VideoPost.objects.select_related("uploaded_by"), pk=pk)
+    return render(request, "blog/video/video_detail.html", {
+        "video": video,
+        "filename": video.get_video_filename(),
+        "video_url": video.get_video_proxy_url(),
+    })
+
+
+def video_edit(request, pk):
+    if not request.user.is_superuser:
+        return redirect("blog:all_posts_list")
+    video = get_object_or_404(VideoPost, pk=pk)
+    form = VideoUploadForm(request.POST or None, request.FILES or None, instance=video)
+    if _is_post_request(request) and form.is_valid():
+        video = form.save()
+        cache.delete("video_list:items")
+        cache.delete("video_list:ids")
+        _prime_video_list_cache()
+        return queue_operation_success(
+            request,
+            title="Video Updated",
+            message=f'"{video.title or video.get_video_filename()}" has been updated successfully.',
+            primary_label="View Video",
+            primary_url=reverse_lazy("blog:video_detail", kwargs={"pk": video.pk}),
+            secondary_label="Open Video Library",
+            secondary_url=reverse_lazy("blog:video_list"),
+        )
+    return render(request, "blog/video/video_edit.html", {"form": form, "videopost": video})
+
+
+def video_delete(request, pk):
+    if not request.user.is_superuser:
+        return redirect("blog:all_posts_list")
+    video = get_object_or_404(VideoPost, pk=pk)
+    if _is_post_request(request):
+        title = video.title or video.get_video_filename()
+        video.delete()
+        cache.set("video_list:items", [])
+        cache.set("video_list:ids", [])
+        return queue_operation_success(
+            request,
+            title="Video Deleted",
+            message=f'"{title}" has been deleted successfully.',
+            primary_label="Open Video Library",
+            primary_url=reverse_lazy("blog:video_list"),
+            secondary_label="Upload Video",
+            secondary_url=reverse_lazy("blog:video_upload"),
+        )
+    return render(request, "blog/video/video_delete.html", {"videopost": video})
 
 
 def video_list(request):

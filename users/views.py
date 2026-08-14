@@ -1,10 +1,11 @@
 from django.contrib import messages
-from django.contrib.auth import login, logout
+from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.core.cache import cache
+from django.core.files.storage import default_storage
 from django.core.paginator import Paginator
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse_lazy
 from django.utils import timezone
@@ -25,6 +26,83 @@ from .models import Profile
 LOGIN_RATE_LIMIT_WINDOW = 900
 LOGIN_RATE_LIMIT_MAX_FAILURES = 5
 TOKEN_REGENERATE_COOLDOWN_SECONDS = 60
+
+PYTHON_API_EXAMPLES = [
+    {
+        "title": 'List published posts',
+        "description": 'Fetch the first page of published posts.',
+        "dom_id": 'example-1',
+        "code": 'import requests\nTOKEN = "your-token-here"\nheaders = {"Authorization": f"Token {TOKEN}"}\nr = requests.get("https://rgavanp.kdns.fr/blog/api/posts/", headers=headers)\nprint(r.status_code)\nprint(r.json())',
+    },
+    {
+        "title": 'Get a single post',
+        "description": 'Retrieve one post by its numeric id.',
+        "dom_id": 'example-2',
+        "code": 'import requests\nTOKEN = "your-token-here"\nheaders = {"Authorization": f"Token {TOKEN}"}\nr = requests.get("https://rgavanp.kdns.fr/blog/api/posts/1/", headers=headers)\nprint(r.status_code)\nprint(r.json()["title"])',
+    },
+    {
+        "title": 'Create a post',
+        "description": 'Publish a new post with tags.',
+        "dom_id": 'example-3',
+        "code": 'import requests\nTOKEN = "your-token-here"\nheaders = {"Authorization": f"Token {TOKEN}"}\npayload = {"title": "My new post", "body": "Hello **world**.", "tags": ["python", "django"]}\nr = requests.post("https://rgavanp.kdns.fr/blog/api/posts/", headers=headers, json=payload)\nprint(r.status_code)\nprint(r.json())',
+    },
+    {
+        "title": 'Search posts',
+        "description": 'Search posts by a keyword.',
+        "dom_id": 'example-4',
+        "code": 'import requests\nTOKEN = "your-token-here"\nheaders = {"Authorization": f"Token {TOKEN}"}\nr = requests.get("https://rgavanp.kdns.fr/blog/api/posts/?search=python", headers=headers)\nprint(r.status_code)\nprint(r.json())',
+    },
+    {
+        "title": 'Filter posts by tag',
+        "description": 'Filter posts using a tag name.',
+        "dom_id": 'example-5',
+        "code": 'import requests\nTOKEN = "your-token-here"\nheaders = {"Authorization": f"Token {TOKEN}"}\nr = requests.get("https://rgavanp.kdns.fr/blog/api/posts/?tags__name=django", headers=headers)\nprint(r.status_code)\nprint(r.json())',
+    },
+    {
+        "title": 'List comments',
+        "description": 'Fetch the first page of comments.',
+        "dom_id": 'example-6',
+        "code": 'import requests\nTOKEN = "your-token-here"\nheaders = {"Authorization": f"Token {TOKEN}"}\nr = requests.get("https://rgavanp.kdns.fr/blog/api/comments/", headers=headers)\nprint(r.status_code)\nprint(r.json())',
+    },
+    {
+        "title": 'Add a comment',
+        "description": 'Post a comment on a post.',
+        "dom_id": 'example-7',
+        "code": 'import requests\nTOKEN = "your-token-here"\nheaders = {"Authorization": f"Token {TOKEN}"}\npayload = {"post": 1, "body": "Great post!"}\nr = requests.post("https://rgavanp.kdns.fr/blog/api/comments/", headers=headers, json=payload)\nprint(r.status_code)\nprint(r.json())',
+    },
+    {
+        "title": 'List tags',
+        "description": 'Fetch all available tags.',
+        "dom_id": 'example-8',
+        "code": 'import requests\nTOKEN = "your-token-here"\nheaders = {"Authorization": f"Token {TOKEN}"}\nr = requests.get("https://rgavanp.kdns.fr/blog/api/tags/", headers=headers)\nprint(r.status_code)\nprint(r.json())',
+    },
+    {
+        "title": 'Get a tag',
+        "description": 'Retrieve one tag by its slug.',
+        "dom_id": 'example-9',
+        "code": 'import requests\nTOKEN = "your-token-here"\nheaders = {"Authorization": f"Token {TOKEN}"}\nr = requests.get("https://rgavanp.kdns.fr/blog/api/tags/python/", headers=headers)\nprint(r.status_code)\nprint(r.json())',
+    },
+    {
+        "title": 'Paginate results',
+        "description": 'Browse a specific page of results.',
+        "dom_id": 'example-10',
+        "code": 'import requests\nTOKEN = "your-token-here"\nheaders = {"Authorization": f"Token {TOKEN}"}\nr = requests.get("https://rgavanp.kdns.fr/blog/api/posts/?page=2", headers=headers)\nprint(r.status_code)\ndata = r.json()\nprint("count:", data.get("count"), "next:", data.get("next"))',
+    },
+]
+
+
+def api_token_issue(request):
+    if request.method != "POST":
+        return HttpResponse("POST required", status=405)
+    user = authenticate(
+        request,
+        username=request.POST.get("username", ""),
+        password=request.POST.get("password", ""),
+    )
+    if user is None:
+        return JsonResponse({"detail": "Invalid credentials."}, status=400)
+    token, _created = Token.objects.get_or_create(user=user)
+    return JsonResponse({"user_id": user.id, "username": user.username, "token": token.key})
 
 
 def _is_post_request(request):
@@ -138,6 +216,10 @@ def profile(request, username=None):
     albums = Album.objects.select_related("uploaded_by").prefetch_related("images").filter(uploaded_by=profile_user).order_by("-created", "-id")[:10]
     audio_posts = AudioPost.objects.select_related("uploaded_by").filter(uploaded_by=profile_user, active=True).order_by("-created", "-id")[:10]
     video_posts = VideoPost.objects.select_related("uploaded_by").filter(uploaded_by=profile_user).order_by("-created", "-id")[:10]
+    gallery_images = [item for item in gallery_images if item.image and default_storage.exists(item.image.name)]
+    albums = [album for album in albums if any(image.image and default_storage.exists(image.image.name) for image in album.images.all())]
+    audio_posts = [item for item in audio_posts if item.audio_file and default_storage.exists(item.audio_file.name)]
+    video_posts = [item for item in video_posts if item.video_file and default_storage.exists(item.video_file.name)]
 
     return render(
         request,
@@ -160,7 +242,9 @@ def profile(request, username=None):
 def account_delete(request):
     if _is_post_request(request) and request.POST.get("confirm_delete"):
         username = request.user.username
-        request.user.delete()
+        user = request.user
+        logout(request)
+        user.delete()
         return queue_operation_success(
             request,
             title="Account Deleted",
@@ -223,6 +307,7 @@ def api_token_manage(request):
     now = timezone.now().timestamp()
     can_regenerate_token = not cooldown_until or now >= float(cooldown_until)
     seconds_until_regenerate = max(0, int(float(cooldown_until) - now)) if cooldown_until else 0
+    profile = getattr(request.user, "profile", None)
     return render(
         request,
         "users/api_token.html",
@@ -230,5 +315,10 @@ def api_token_manage(request):
             "token": token,
             "can_regenerate_token": can_regenerate_token,
             "seconds_until_regenerate": seconds_until_regenerate,
+            "generated_now": False,
+            "is_admin_token": request.user.is_staff or request.user.is_superuser,
+            "token_regeneration_remaining_days": profile.get_token_regeneration_remaining_days() if profile else 0,
+            "token_regeneration_cooldown_days": Profile.TOKEN_REGEN_COOLDOWN_DAYS,
+            "python_examples": PYTHON_API_EXAMPLES,
         },
     )

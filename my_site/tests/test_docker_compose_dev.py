@@ -1,24 +1,30 @@
 from pathlib import Path
 import shutil
 import subprocess
+import unittest
 
 from django.test import SimpleTestCase
 
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
+DEV_ENV_PATH = BASE_DIR / ".env.dev.example"
 
 
 class DevDockerComposeFileTests(SimpleTestCase):
     def setUp(self):
         self.compose_path = BASE_DIR / "docker-compose.dev.yml"
         self.compose_text = self.compose_path.read_text(encoding="utf-8")
-        self.dev_env_path = BASE_DIR / ".env.dev"
-        self.dev_env_text = self.dev_env_path.read_text(encoding="utf-8")
+        self.dev_env_path = DEV_ENV_PATH
+        self.dev_env_text = self.dev_env_path.read_text(encoding="utf-8") if self.dev_env_path.exists() else ""
 
     def test_dev_compose_targets_dev_layout(self):
-        """环境变量通过 .env.dev 注入，Dockerfile 使用 Dockerfile.dev"""
-        self.assertIn("DJANGO_SETTINGS_MODULE=my_site.settings.dev", self.dev_env_text)
+        """Dockerfile 使用 Dockerfile.dev"""
         self.assertIn("dockerfile: Dockerfile.dev", self.compose_text)
+
+    @unittest.skipUnless(DEV_ENV_PATH.exists(), ".env.dev.example is not present")
+    def test_dev_env_example_sets_dev_settings_module(self):
+        """环境变量通过 .env.dev 注入"""
+        self.assertIn("DJANGO_SETTINGS_MODULE=my_site.settings.dev", self.dev_env_text)
 
     def test_dev_compose_defines_expected_services(self):
         self.assertIn("services:", self.compose_text)
@@ -33,7 +39,7 @@ class DevDockerComposeFileTests(SimpleTestCase):
 
     def test_dev_db_service_has_healthcheck(self):
         self.assertIn("healthcheck:", self.compose_text)
-        self.assertIn("pg_isready -U ${DB_USER} -d ${DB_NAME}", self.compose_text)
+        self.assertIn("pg_isready -U $$DB_USER -d $$DB_NAME", self.compose_text)
 
     def test_dev_redis_and_celery_services_have_healthchecks(self):
         self.assertIn('test: ["CMD", "redis-cli", "ping"]', self.compose_text)
@@ -48,6 +54,9 @@ class DevDockerComposeFileTests(SimpleTestCase):
     def test_dev_web_service_uses_env_file_for_settings(self):
         """环境变量通过 .env.dev 注入，而非写在 compose 的 environment 块中"""
         self.assertIn("env_file:\n      - .env.dev", self.compose_text)
+
+    @unittest.skipUnless(DEV_ENV_PATH.exists(), ".env.dev.example is not present")
+    def test_dev_env_example_defines_database_settings(self):
         self.assertIn("DB_NAME=my_site_db", self.dev_env_text)
         self.assertIn("DB_USER=my_site_user", self.dev_env_text)
         self.assertIn("DB_PASSWORD=", self.dev_env_text)

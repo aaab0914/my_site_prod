@@ -1,4 +1,5 @@
 import base64
+import json
 import shutil
 import tempfile
 from io import BytesIO
@@ -12,9 +13,9 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase, override_settings
 from django.urls import reverse
 
-from images.forms import GallerySingleUploadForm
+from images.forms import AlbumEditForm, GalleryUploadForm
 from images.admin import ImageAdmin
-from images.models import ImagePost
+from images.models import Album, AlbumImage, ImagePost
 from blog.models import Post
 from images.sync import sync_gallery_media
 
@@ -55,7 +56,7 @@ class GalleryUploadTests(TestCase):
         upload = make_test_image()
         data_url = "data:image/png;base64," + base64.b64encode(upload.read()).decode("ascii")
 
-        form = GallerySingleUploadForm(
+        form = GalleryUploadForm(
             data={
                 "description": "pasted",
                 "pasted_images_data": f'[{{"name":"clip.png","data_url":"{data_url}"}}]',
@@ -92,6 +93,57 @@ class GalleryUploadTests(TestCase):
 
         self.assertEqual(response.status_code, 302)
         self.assertEqual(ImagePost.objects.count(), 1)
+
+    def test_album_view_accepts_pasted_images_only(self):
+        first = make_test_image(name="first.png")
+        second = make_test_image(name="second.png", color=(0, 255, 0))
+        pasted_images_data = []
+        for upload in (first, second):
+            pasted_images_data.append({
+                "name": upload.name,
+                "data_url": "data:image/png;base64," + base64.b64encode(upload.read()).decode("ascii"),
+            })
+
+        response = self.client.post(
+            reverse("blog:images:album_upload"),
+            data={
+                "title": "Pasted Album",
+                "description": "clipboard images",
+                "pasted_images_data": json.dumps(pasted_images_data),
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+        album = Album.objects.get(title="Pasted Album")
+        self.assertEqual(AlbumImage.objects.filter(album=album).count(), 2)
+
+    def test_album_owner_can_edit_title_and_description(self):
+        album = Album.objects.create(title="Before", description="Old", uploaded_by=self.user)
+
+        response = self.client.post(
+            reverse("blog:images:album_edit", args=[album.id]),
+            data={"title": "After", "description": "New description"},
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, reverse("operation_success"))
+        album.refresh_from_db()
+        self.assertEqual(album.title, "After")
+        self.assertEqual(album.description, "New description")
+
+    def test_non_owner_cannot_edit_album(self):
+        owner = User.objects.create_user(username="album-owner", password="secret123")
+        album = Album.objects.create(title="Protected", uploaded_by=owner)
+        self.client.force_login(self.other_user)
+
+        response = self.client.post(
+            reverse("blog:images:album_edit", args=[album.id]),
+            data={"title": "Changed", "description": "Changed"},
+        )
+
+        self.assertEqual(response.status_code, 302)
+        album.refresh_from_db()
+        self.assertEqual(album.title, "Protected")
 
 
     def test_post_create_with_cover_image_creates_matching_gallery_image(self):
@@ -263,7 +315,7 @@ class GalleryUploadTests(TestCase):
         data_url = "data:image/png;base64," + base64.b64encode(upload.read()).decode("ascii")
         broken_data_url = data_url.replace("+", " ")
 
-        form = GallerySingleUploadForm(
+        form = GalleryUploadForm(
             data={
                 "description": "pasted",
                 "pasted_images_data": f'[{{"name":"clip.png","data_url":"{broken_data_url}"}}]',

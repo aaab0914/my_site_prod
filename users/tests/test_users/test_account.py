@@ -35,7 +35,7 @@ class UserAccountDeleteTests(TestCase):
         response = self.client.post(self.delete_url, {"confirm_delete": True}, follow=True)
         self.assertEqual(response.status_code, 200)
         self.assertFalse(response.wsgi_request.user.is_authenticated)
-        self.assertContains(response, "Blog Home")
+        self.assertContains(response, "Back to Blog")
 
     def test_delete_requires_login(self):
         self.client.logout()
@@ -109,31 +109,20 @@ class LogoutViewTests(TestCase):
 
 
 class ApiTokenViewTests(TestCase):
-    def test_admin_can_get_api_token(self):
-        admin = User.objects.create_superuser(
-            username="adminuser",
-            email="admin@example.com",
-            password="StrongPass123!",
-        )
-        response = self.client.post(
-            reverse("users:api_token"),
-            {"username": "adminuser", "password": "StrongPass123!"},
-        )
+    def setUp(self):
+        self.client = Client()
+        self.user = User.objects.create_user(username="tokenuser", password="tokenpass123")
+        self.url = reverse("users:api_token_manage")
 
+    def test_api_token_manage_requires_login(self):
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 302)
+        self.assertIn(reverse("users:login"), response.url)
+
+    def test_api_token_manage_shows_token_for_logged_in_user(self):
+        self.client.login(username="tokenuser", password="tokenpass123")
+        response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json()["user_id"], admin.id)
-        self.assertEqual(response.json()["username"], "adminuser")
-        self.assertEqual(response.json()["token"], Token.objects.get(user=admin).key)
-
-    def test_api_token_rejects_invalid_password(self):
-        User.objects.create_superuser(
-            username="adminuser",
-            email="admin@example.com",
-            password="StrongPass123!",
-        )
-        response = self.client.post(
-            reverse("users:api_token"),
-            {"username": "adminuser", "password": "wrong-password"},
-        )
-
-        self.assertEqual(response.status_code, 400)
+        self.assertTemplateUsed(response, "users/api_token.html")
+        token = Token.objects.get(user=self.user)
+        self.assertContains(response, token.key)

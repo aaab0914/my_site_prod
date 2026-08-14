@@ -10,6 +10,8 @@ __pycache__/
 *.pyd
 .env
 .env.*
+!.env.dev.example
+!.env.prod.example
 data/
 logs/
 media/

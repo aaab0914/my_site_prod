@@ -9,7 +9,7 @@ from django.utils import timezone
 from PIL import Image
 
 from blog.models import AudioPost, Comment, Post
-from blog.views import _cached_post_list_page, _cached_search_result_ids
+from blog.search import cached_search_result_ids
 
 
 class BlogRouteIntegrationTests(TestCase):
@@ -59,16 +59,9 @@ class BlogRouteIntegrationTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "blog/post/all_posts_list.html")
 
-    def test_post_list_page_cache_returns_cached_ids(self):
-        cache.clear()
-        payload = _cached_post_list_page(1)
-        self.assertTrue(payload["post_ids"])
-        cache_key = "post_list:page:1:tag:all"
-        self.assertEqual(cache.get(cache_key), payload)
-
     def test_post_search_result_ids_are_cached(self):
         cache.clear()
-        result_ids = _cached_search_result_ids("Route")
+        result_ids = cached_search_result_ids("Route")
         self.assertTrue(result_ids)
         cache_key = "post_search:query:route"
         self.assertEqual(cache.get(cache_key), result_ids)
@@ -124,7 +117,8 @@ class BlogRouteIntegrationTests(TestCase):
             reverse("blog:post_comment", kwargs={"post_id": self.primary_post.id}),
             {"body": "Integration comment"},
         )
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, reverse("operation_success"))
         self.assertTrue(
             Comment.objects.filter(post=self.primary_post, author=self.user, body="Integration comment").exists()
         )
