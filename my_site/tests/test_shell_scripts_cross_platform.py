@@ -210,6 +210,16 @@ class EntrypointScriptTests(ShellScriptTestCase):
             ),
         )
         self.write_file(
+            bin_dir / "gosu",
+            dedent(
+                """\
+                #!/bin/sh
+                shift
+                exec "$@"
+                """
+            ),
+        )
+        self.write_file(
             bin_dir / "gunicorn",
             dedent(
                 f"""\

@@ -36,7 +36,7 @@ from ..models import Post
 # Relative import of Post model (two levels up)
 # .. means go up one directory (from templatetags/ to blog/)
 
-import markdown
+from my_site.markdown_utils import render_markdown
 
 # markdown: Library for converting Markdown syntax to HTML
 # Converts Markdown text like "# Heading" to "<h1>Heading</h1>"
@@ -215,7 +215,7 @@ def markdown_format(text):
     cache_key = "blog_tags:markdown:%s" % hashlib.sha256(raw_text.encode("utf-8")).hexdigest()
     rendered = cache.get(cache_key)
     if rendered is None:
-        rendered = markdown.markdown(raw_text)
+        rendered = render_markdown(raw_text)
         cache.set(cache_key, rendered, MARKDOWN_CACHE_TIMEOUT)
     return mark_safe(rendered)
 

@@ -10,6 +10,7 @@ or validating user input before save.
 # IMPORTS (All imports moved to the top)
 # =============================================================================
 
+import logging
 import re
 # re: Regular expression module, used to match and validate string patterns.
 
@@ -28,6 +29,7 @@ from django.contrib.auth.models import User
 # User: Django's built-in user model.
 
 from .models import Post, Comment
+from .search import invalidate_search_caches
 
 
 # Post: The main blog post model.
@@ -49,13 +51,12 @@ def post_saved_handler(sender, instance, created, **kwargs):
         created: Boolean indicating whether this is a new instance.
         **kwargs: Additional keyword arguments.
     """
+    logger = logging.getLogger(__name__)
+    invalidate_search_caches()
     if created:
-        # Log a message when a new post is created.
-        print(f"New post '{instance.title}' created by {instance.author.username}")
-        # You can add custom logic here: send notification, update cache, etc.
+        logger.info("New post '%s' created by %s", instance.title, instance.author.username)
     else:
-        # Log a message when an existing post is updated.
-        print(f"Post '{instance.title}' updated. Status: {instance.status}")
+        logger.info("Post '%s' updated. Status: %s", instance.title, instance.status)
 
 
 # =============================================================================
@@ -72,9 +73,9 @@ def post_deleted_handler(sender, instance, **kwargs):
         instance: The Post instance about to be deleted.
         **kwargs: Additional keyword arguments.
     """
-    # Log a message before the post is deleted.
-    print(f"Post '{instance.title}' is being deleted by {instance.author.username}")
-    # You can add clean-up logic here: delete images, log action, etc.
+    logger = logging.getLogger(__name__)
+    invalidate_search_caches()
+    logger.info("Post '%s' is being deleted by %s", instance.title, instance.author.username)
 
 
 # =============================================================================

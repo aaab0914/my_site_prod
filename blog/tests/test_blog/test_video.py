@@ -39,7 +39,7 @@ class VideoRouteTests(TestCase):
     def test_video_upload_redirects_anonymous_user_to_login(self):
         response = self.client.get(reverse("blog:video_upload"))
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response.url, reverse("users:login") + "?next=" + reverse("blog:video_upload"))
+        self.assertEqual(response.url, reverse("blog:all_posts_list"))
 
     def test_video_file_proxy_is_public(self):
         video = self.create_video(title="Love")

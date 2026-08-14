@@ -171,8 +171,7 @@ class CommentListAPIView(RedirectAnonymousUsersToBlogMixin, generics.ListCreateA
     pagination_class = StandardResultsSetPagination
     queryset = Comment.objects.filter(active=True).select_related('post', 'author')
     serializer_class = CommentSerializer
-    permission_classes = [permissions.IsAuthenticated]
-    authentication_classes = []
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
     filterset_fields = ["post", "author__username", "active"]
     ordering_fields = ["created"]
@@ -209,15 +208,12 @@ class CommentListAPIView(RedirectAnonymousUsersToBlogMixin, generics.ListCreateA
 class CommentDetailAPIView(RedirectAnonymousUsersToBlogMixin, generics.RetrieveUpdateDestroyAPIView):
     queryset = Comment.objects.filter(active=True).select_related('post', 'author')
     serializer_class = CommentSerializer
-    permission_classes = [permissions.IsAuthenticated]
-    authentication_classes = []
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsAuthorOrAdminOrReadOnly]
 
     def get_serializer_class(self):
         if self.request.method in {"PUT", "PATCH"}:
             return CommentWriteSerializer
         return CommentSerializer
-
-    http_method_names = ["get", "head", "options"]
 
 
 @api_view(["GET"])

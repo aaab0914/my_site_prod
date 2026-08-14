@@ -155,6 +155,10 @@ def ordered_posts_from_ids(post_ids, queryset=None):
 
 def invalidate_search_caches():
     cache.delete("search:elasticsearch:available")
+    try:
+        cache.delete_pattern("post_search:*")
+    except AttributeError:
+        pass
 
 
 def comment_search_result_ids(query, limit=SEARCH_RESULT_LIMIT):

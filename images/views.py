@@ -67,18 +67,15 @@ def gallery_list(request):
         "author": ["uploaded_by__username", "title", "id"],
     }
     current_sort = sort if sort in sort_map else "newest"
-    images = [
-        image
-        for image in ImagePost.objects.select_related("uploaded_by").order_by(*sort_map[current_sort])
-        if _has_image_file(image.image)
-    ]
-    paginator = Paginator(images, 20)
+    queryset = ImagePost.objects.select_related("uploaded_by").order_by(*sort_map[current_sort])
+    paginator = Paginator(queryset, 20)
     page_obj = paginator.get_page(request.GET.get("page"))
+    images = [image for image in page_obj.object_list if _has_image_file(image.image)]
     response = render(
         request,
         "images/gallery_list.html",
         {
-            "images": page_obj.object_list,
+            "images": images,
             "page_obj": page_obj,
             "current_sort": current_sort,
             "sort_options": _build_sort_options(current_sort),

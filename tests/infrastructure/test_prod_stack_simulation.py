@@ -65,7 +65,7 @@ class ProdStackSimulationTests(unittest.TestCase):
         self.assertIn("python /code/validate_prod_env.py", self.entrypoint)
         self.assertIn("python manage.py check --deploy", self.entrypoint)
         self.assertIn("python manage.py collectstatic --noinput", self.entrypoint)
-        self.assertIn("exec gunicorn", self.entrypoint)
+        self.assertIn("exec gosu app gunicorn", self.entrypoint)
         self.assertIn("--bind 0.0.0.0:8000", self.entrypoint)
         self.assertNotIn("runserver", self.entrypoint)
 

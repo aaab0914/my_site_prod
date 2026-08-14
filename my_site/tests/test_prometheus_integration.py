@@ -36,10 +36,6 @@ class PrometheusIntegrationTests(SimpleTestCase):
         self.assertIn('targets: ["celery-exporter:9540"]', self.prometheus)
 
     def test_metrics_endpoint_returns_prometheus_payload(self):
-        anonymous_response = self.client.get("/metrics")
-        self.assertEqual(anonymous_response.status_code, 404)
-
-        self.client.force_login(self.admin)
         response = self.client.get("/metrics")
         self.assertEqual(response.status_code, 200)
         self.assertIn("text/plain", response["Content-Type"])

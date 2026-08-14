@@ -41,6 +41,7 @@ from markdownx.models import MarkdownxField
 
 from taggit.managers import TaggableManager
 
+from my_site.markdown_utils import render_markdown
 from my_site.media_naming import dated_media_upload_to, media_display_name
 # TaggableManager: Manages many-to-many relationships with tags.
 
@@ -148,7 +149,7 @@ class Post(models.Model):
         super().save(*args, **kwargs)
 
     def get_markdown_body(self):
-        return markdown.markdown(self.body)
+        return render_markdown(self.body)
 
     def get_cover_image_proxy_url(self):
         if not self.cover_image:

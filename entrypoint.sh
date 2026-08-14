@@ -20,10 +20,10 @@ mkdir -p "/code/logs/django/${MONTH_DIR}" "/code/logs/django-error/${MONTH_DIR}"
 /bin/sh /code/ensure_daily_logs.sh
 
 if [ "$#" -gt 0 ]; then
-  exec "$@"
+  exec gosu app "$@"
 fi
 
-exec gunicorn \
+exec gosu app gunicorn \
   --workers 2 \
   --bind 0.0.0.0:8000 \
   --pid /tmp/gunicorn.pid \

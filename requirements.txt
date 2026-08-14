@@ -23,6 +23,7 @@ ipython_pygments_lexers==1.1.1
 jedi==0.20.0
 jinxed==2.0.0
 Markdown==3.10.1
+bleach==6.1.0
 matplotlib-inline==0.2.1
 packaging==26.2
 parso==0.8.7

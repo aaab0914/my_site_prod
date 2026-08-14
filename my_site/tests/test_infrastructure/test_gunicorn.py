@@ -15,7 +15,7 @@ class GunicornContainerConfigTests(SimpleTestCase):
         self.assertIn("EXPOSE 8000", self.dockerfile)
 
     def test_entrypoint_starts_gunicorn(self):
-        self.assertIn("exec gunicorn", self.entrypoint)
+        self.assertIn("exec gosu app gunicorn", self.entrypoint)
         self.assertIn("--bind 0.0.0.0:8000", self.entrypoint)
         self.assertIn("my_site.wsgi:application", self.entrypoint)
 

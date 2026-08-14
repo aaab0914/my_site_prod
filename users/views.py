@@ -111,7 +111,8 @@ def _is_post_request(request):
 
 def _login_rate_limit_key(request):
     username = request.POST.get("username", "").strip().lower() or "anonymous"
-    ip = request.META.get("REMOTE_ADDR", "unknown")
+    xff = request.META.get("HTTP_X_FORWARDED_FOR", "")
+    ip = xff.split(",")[0].strip() if xff else request.META.get("REMOTE_ADDR", "unknown")
     return f"login-failures:{ip}:{username}"
 
 
@@ -281,16 +282,16 @@ def username_change(request):
 @login_required
 def api_token_manage(request):
     token, _created = Token.objects.get_or_create(user=request.user)
-    cooldown_key = f"api-token-regenerated:{request.user.pk}"
-    cooldown_until = cache.get(cooldown_key)
-    now = timezone.now().timestamp()
-    can_regenerate_token = not cooldown_until or now >= float(cooldown_until)
+    profile = getattr(request.user, "profile", None)
+    can_regenerate_token = profile.can_regenerate_token() if profile else True
 
     if _is_post_request(request) and request.POST.get("action") == "regenerate":
         if can_regenerate_token:
             token.delete()
             token = Token.objects.create(user=request.user)
-            cache.set(cooldown_key, now + TOKEN_REGENERATE_COOLDOWN_SECONDS, timeout=TOKEN_REGENERATE_COOLDOWN_SECONDS)
+            if profile:
+                profile.last_token_generated_at = timezone.now()
+                profile.save(update_fields=["last_token_generated_at"])
             return queue_operation_success(
                 request,
                 title="API Token Regenerated",
@@ -303,18 +304,14 @@ def api_token_manage(request):
         messages.error(request, "Please wait before regenerating your API token again.")
         return redirect("users:api_token_manage")
 
-    cooldown_until = cache.get(cooldown_key)
-    now = timezone.now().timestamp()
-    can_regenerate_token = not cooldown_until or now >= float(cooldown_until)
-    seconds_until_regenerate = max(0, int(float(cooldown_until) - now)) if cooldown_until else 0
     profile = getattr(request.user, "profile", None)
+    can_regenerate_token = profile.can_regenerate_token() if profile else True
     return render(
         request,
         "users/api_token.html",
         {
             "token": token,
             "can_regenerate_token": can_regenerate_token,
-            "seconds_until_regenerate": seconds_until_regenerate,
             "generated_now": False,
             "is_admin_token": request.user.is_staff or request.user.is_superuser,
             "token_regeneration_remaining_days": profile.get_token_regeneration_remaining_days() if profile else 0,
