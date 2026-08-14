@@ -98,7 +98,6 @@ def _template_inventory():
         "blog/templates/admin/blog/post/change_form.html": "/secure-console-7f9a2c-admin/blog/post/",
         "blog/templates/admin/custom_index.html": "/secure-console-7f9a2c-admin/",
         "blog/templates/admin/index.html": "/secure-console-7f9a2c-admin/",
-        "blog/templates/admin/sites/site/change_list.html": "/secure-console-7f9a2c-admin/sites/site/",
         "blog/templates/admin/system_status.html": "/secure-console-7f9a2c-admin/system-status/",
     }
     items = []

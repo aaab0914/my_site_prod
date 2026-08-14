@@ -1,5 +1,4 @@
 from django.conf import settings
-from django.core.cache import cache
 from django.core.management import BaseCommand, call_command
 
 from elasticsearch import Elasticsearch
@@ -25,7 +24,6 @@ class Command(BaseCommand):
         if action == "rebuild":
             call_command("search_index", "--rebuild", "-f")
             invalidate_search_caches()
-            cache.clear()
             self.stdout.write(self.style.SUCCESS("Elasticsearch index rebuilt and caches cleared."))
             self.print_status()
             return
@@ -37,7 +35,6 @@ class Command(BaseCommand):
             return
         if action == "clear-cache":
             invalidate_search_caches()
-            cache.clear()
             self.stdout.write(self.style.SUCCESS("Search caches cleared."))
             return
         if action == "sync-post":

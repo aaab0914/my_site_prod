@@ -123,6 +123,19 @@ def sync_site_media():
         "missing_actions": missing_actions,
         "trashed_files": [],
         "blocked_files": blocked_files,
+        "deleted_records": 0,
+        "cleared_fields": 0,
+        "orphaned_files": [],
+        "gallery_sync": {
+            "missing_records": 0,
+            "created_records": 0,
+            "missing_record_ids": [],
+            "deleted_records": 0,
+            "cleared_fields": 0,
+            "trashed_files": [],
+            "missing_actions": [],
+            "orphaned_files": [],
+        },
     }
 
 

@@ -34,7 +34,12 @@ def main() -> int:
         "SECURE_HSTS_INCLUDE_SUBDOMAINS",
         "SECURE_HSTS_PRELOAD",
     ]
-    missing_keys = [key for key in required_keys if not os.environ.get(key) and not env_path.exists()]
+    missing_keys = []
+    for key in required_keys:
+        try:
+            config(key)
+        except Exception:
+            missing_keys.append(key)
     if missing_keys:
         fail(f"Missing required production environment variables: {', '.join(missing_keys)}")
 
