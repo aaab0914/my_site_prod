@@ -79,6 +79,20 @@ class PostCreateForm(forms.ModelForm):
             "tags": TagWidget(attrs={"class": "form-control"}),
         }
 
+    def clean_tags(self):
+        """Require every submitted tag name to use the site's # prefix."""
+        tags = self.cleaned_data.get("tags")
+        if not tags:
+            return tags
+        normalized = []
+        for tag in tags:
+            name = getattr(tag, "name", str(tag)).strip()
+            if name and not name.startswith("#"):
+                name = f"#{name}"
+            if name:
+                normalized.append(name)
+        return normalized
+
     def clean_cover_image(self):
         image = self.cleaned_data.get("cover_image")
         if image:
