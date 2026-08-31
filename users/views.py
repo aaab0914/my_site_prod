@@ -11,7 +11,7 @@ from django.urls import reverse_lazy
 from django.utils import timezone
 from rest_framework.authtoken.models import Token
 
-from blog.models import AudioPost, Comment, Post, VideoPost
+from blog.models import AudioPost, Comment, Note, Post, VideoPost
 from images.models import Album, ImagePost
 from my_site.site_views import queue_operation_success
 
@@ -208,9 +208,11 @@ def profile(request, username=None):
     if viewing_own_profile:
         posts_queryset = Post.objects.filter(author=profile_user).order_by("-publish", "-id")
         comments_queryset = Comment.objects.filter(author=profile_user).order_by("-created", "-id")
+        notes_queryset = Note.objects.filter(user=profile_user).order_by("-updated", "-id")
     else:
         posts_queryset = Post.published.filter(author=profile_user).order_by("-publish", "-id")
         comments_queryset = Comment.objects.filter(author=profile_user, active=True).order_by("-created", "-id")
+        notes_queryset = Note.objects.none()
 
     posts_page_obj = Paginator(posts_queryset, 10).get_page(request.GET.get("posts_page"))
     gallery_images = ImagePost.objects.select_related("uploaded_by").filter(uploaded_by=profile_user).order_by("-created", "-id")[:10]
@@ -231,6 +233,8 @@ def profile(request, username=None):
             "posts_page_obj": posts_page_obj,
             "posts_total_count": posts_queryset.count(),
             "comments": comments_queryset,
+            "notes": notes_queryset[:10],
+            "notes_total_count": notes_queryset.count(),
             "gallery_images": gallery_images,
             "albums": albums,
             "audio_posts": audio_posts,

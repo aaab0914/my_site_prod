@@ -133,6 +133,26 @@
                     <p class="profile-empty">{% if profile_user == request.user %}You have not written any comments yet.{% else %}{{ profile_user.username }} has not written any comments yet.{% endif %}</p>
                 {% endif %}
             </aside>
+            {% if profile_user == request.user %}
+            <aside class="profile-panel">
+                <h3>My Notes ({{ notes_total_count }})</h3>
+                {% if notes %}
+                    <ul class="profile-list">
+                        {% for note in notes %}
+                            <li><a href="{% url 'blog:note_edit' note.pk %}">{{ note.title }}</a><div>{{ note.updated|date:"F j, Y" }}</div></li>
+                        {% endfor %}
+                    </ul>
+                    <div class="profile-actions">
+                        <a href="{% url 'blog:note_list' %}" class="profile-link">Open My Notes</a>
+                    </div>
+                {% else %}
+                    <p class="profile-empty">You have not created any notes yet.</p>
+                    <div class="profile-actions">
+                        <a href="{% url 'blog:note_create' %}" class="profile-button">Create a Note</a>
+                    </div>
+                {% endif %}
+            </aside>
+            {% endif %}
         </div>
     </div>
 
