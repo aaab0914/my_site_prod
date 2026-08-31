@@ -27,7 +27,7 @@ from .forms import (
 )
 
 from images.models import ImagePost
-from .models import Post, Comment, AudioPost, VideoPost
+from .models import Note,  Post, Comment, AudioPost, VideoPost
 from my_site.protected_media import serve_protected_media
 from my_site.site_views import queue_operation_success
 
@@ -681,3 +681,58 @@ class AudioPostDeleteView(LoginRequiredMixin, DeleteView):
             secondary_label="Upload Audio",
             secondary_url=reverse_lazy("blog:audio_upload"),
         )
+
+
+# =============================================================================
+# NOTES VIEWS
+# =============================================================================
+
+@login_required
+def note_list(request):
+    """Display user's notes"""
+    notes = Note.objects.filter(user=request.user)
+    return render(request, "blog/notes/note_list.html", {"notes": notes})
+
+
+@login_required
+def note_create(request):
+    """Create a new note"""
+    if request.method == "POST":
+        title = request.POST.get("title", "").strip()
+        content = request.POST.get("content", "").strip()
+        
+        if title and content:
+            Note.objects.create(user=request.user, title=title, content=content)
+            return redirect("blog:note_list")
+    
+    return render(request, "blog/notes/note_form.html", {"action": "create"})
+
+
+@login_required
+def note_edit(request, pk):
+    """Edit an existing note"""
+    note = get_object_or_404(Note, pk=pk, user=request.user)
+    
+    if request.method == "POST":
+        title = request.POST.get("title", "").strip()
+        content = request.POST.get("content", "").strip()
+        
+        if title and content:
+            note.title = title
+            note.content = content
+            note.save()
+            return redirect("blog:note_list")
+    
+    return render(request, "blog/notes/note_form.html", {
+        "action": "edit",
+        "note": note
+    })
+
+
+@login_required
+@require_POST
+def note_delete(request, pk):
+    """Delete a note"""
+    note = get_object_or_404(Note, pk=pk, user=request.user)
+    note.delete()
+    return redirect("blog:note_list")

@@ -400,3 +400,25 @@ class AuditLog(models.Model):
 # │   save() auto-       │  │                      │  │                      │
 # │   generate music_name│  │                      │  │                      │
 # └──────────────────────┘  └──────────────────────┘  └──────────────────────┘
+
+
+
+
+class Note(models.Model):
+    """
+    Personal note model - each user has their own private notes.
+    """
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="notes")
+    title = models.CharField(max_length=200)
+    content = models.TextField()
+    created = models.DateTimeField(auto_now_add=True)
+    updated = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ["-updated"]
+        indexes = [
+            models.Index(fields=["user", "-updated"]),
+        ]
+    
+    def __str__(self):
+        return f"{self.user.username} - {self.title}"

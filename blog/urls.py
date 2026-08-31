@@ -8,6 +8,11 @@ app_name = "blog"
 
 post_urlpatterns = [
     path("<int:year>/<int:month>/<int:day>/<slug:post_slug>/", views.post_detail, name="post_detail"),
+    # Notes
+    path("notes/", views.note_list, name="note_list"),
+    path("notes/create/", views.note_create, name="note_create"),
+    path("notes/<int:pk>/edit/", views.note_edit, name="note_edit"),
+    path("notes/<int:pk>/delete/", views.note_delete, name="note_delete"),
     path("tag/<slug:tag_slug>/", views.post_list, name="post_list_by_tag"),
     path("", views.post_list, name="all_posts_list"),
     path("feed/", LatestPostsFeed(), name="post_feed"),
