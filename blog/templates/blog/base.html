@@ -198,13 +198,13 @@
             <a href="{% url 'blog:audio_upload' %}"><span class="sidebar-inline-icon">🎵</span>Upload Audio</a> |
             
         <a href="{% url 'blog:video_list' %}" class="d-flex align-items-center gap-2 text-decoration-none p-2 rounded sidebar-link">
-            <i class="bi bi-film"></i>
-            <span>Video</span>
+            <i class="bi bi-collection-play"></i>
+            <span>Video List</span>
         </a>
             {% if request.user.is_superuser %}| <a href="{% url 'blog:video_upload' %}"><span class="sidebar-inline-icon">🎬</span>Upload Video</a>{% endif %} |
             
         <a href="{% url 'blog:note_list' %}" class="d-flex align-items-center gap-2 text-decoration-none p-2 rounded sidebar-link">
-            <i class="bi bi-journal-text"></i>
+            <i class="bi bi-sticky"></i>
             <span>Notes</span>
         </a>
         </p>
@@ -267,12 +267,12 @@
         <p>
             
         <a href="{% url 'blog:video_list' %}" class="d-flex align-items-center gap-2 text-decoration-none p-2 rounded sidebar-link">
-            <i class="bi bi-film"></i>
-            <span>Video</span>
+            <i class="bi bi-collection-play"></i>
+            <span>Video List</span>
         </a> |
             
         <a href="{% url 'blog:note_list' %}" class="d-flex align-items-center gap-2 text-decoration-none p-2 rounded sidebar-link">
-            <i class="bi bi-journal-text"></i>
+            <i class="bi bi-sticky"></i>
             <span>Notes</span>
         </a>
         </p>
