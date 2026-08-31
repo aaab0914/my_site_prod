@@ -147,6 +147,7 @@
     <a href="{% url 'blog:note_create' %}" class="btn-create-note"><i class="bi bi-plus-circle"></i> New Note</a>
 </div>
 <p class="notes-private-description">Only you can see, edit, and delete your notes.</p>
+{% include "includes/sort_controls.html" %}
 
 {% if notes %}
     <div class="notes-grid">

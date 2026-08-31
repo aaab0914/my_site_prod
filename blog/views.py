@@ -699,8 +699,21 @@ class AudioPostDeleteView(LoginRequiredMixin, DeleteView):
 @login_required
 def note_list(request):
     """Display user's notes"""
-    notes = Note.objects.filter(user=request.user)
-    response = render(request, "blog/notes/note_list.html", {"notes": notes})
+    sort_options = {
+        "title_asc": "A-Z",
+        "title_desc": "Z-A",
+        "updated": "Updated",
+        "author": "Author",
+    }
+    sort_context = build_sort_context(request, sort_options, default_sort="updated")
+    ordering = {
+        "title_asc": "title",
+        "title_desc": "-title",
+        "updated": "-updated",
+        "author": "user__username",
+    }[sort_context["selected_sort"]]
+    notes = Note.objects.filter(user=request.user).order_by(ordering)
+    response = render(request, "blog/notes/note_list.html", {"notes": notes, **sort_context})
     response["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0, private"
     response["Pragma"] = "no-cache"
     return response
