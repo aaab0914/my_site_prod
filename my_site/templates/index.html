@@ -1,9 +1,11 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>my_site Portal</title>
+  <link rel="icon" type="image/png" href="{% static 'favicon.png' %}?v=1">
   <style>
     :root {
       --bg: #f4efe6;
@@ -168,6 +170,7 @@
           <a class="button" href="/users/login/">Login</a>
           <a class="button alt" href="/users/register/">Register</a>
           <a class="button alt" href="/users/profile/">Profile</a>
+          <a class="button alt" href="/blog/notes/">My Notes</a>
           <a class="button alt" href="/users/api-token/">API Token</a>
         </div>
       </article>
