@@ -1,0 +1,116 @@
+{% extends "blog/hero_base.html" %}
+
+{% block title %}{% if action == "create" %}New Note{% else %}Edit Note{% endif %}{% endblock %}
+
+{% block hero_base_css %}
+<style>
+    .form-header {
+        margin-bottom: 32px;
+    }
+    .form-header h1 {
+        margin: 0;
+        color: #16283a;
+        font-size: 32px;
+        font-weight: 700;
+    }
+    .note-form-container {
+        max-width: 800px;
+    }
+    .form-group {
+        margin-bottom: 24px;
+    }
+    .form-label {
+        display: block;
+        margin-bottom: 8px;
+        color: #16283a;
+        font-size: 15px;
+        font-weight: 600;
+    }
+    .form-control {
+        width: 100%;
+        padding: 12px 16px;
+        border: 1px solid #d7e1ea;
+        border-radius: 12px;
+        background: #fff;
+        color: #16283a;
+        font-size: 15px;
+        transition: all 0.2s;
+    }
+    .form-control:focus {
+        outline: none;
+        border-color: #2563eb;
+        box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+    }
+    textarea.form-control {
+        min-height: 400px;
+        resize: vertical;
+        font-family: inherit;
+        line-height: 1.6;
+    }
+    .form-actions {
+        display: flex;
+        gap: 12px;
+        margin-top: 32px;
+    }
+    .btn {
+        padding: 12px 24px;
+        border: none;
+        border-radius: 12px;
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        text-decoration: none;
+        display: inline-block;
+    }
+    .btn-primary {
+        background: #2563eb;
+        color: #fff;
+    }
+    .btn-primary:hover {
+        background: #1d4ed8;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(37,99,235,0.3);
+    }
+    .btn-secondary {
+        background: #f1f5f9;
+        color: #44586c;
+    }
+    .btn-secondary:hover {
+        background: #e2e8f0;
+        color: #16283a;
+    }
+</style>
+{% endblock %}
+
+{% block hero_base_content %}
+<div class="form-header">
+    <h1>{% if action == "create" %}Create New Note{% else %}Edit Note{% endif %}</h1>
+</div>
+
+<div class="note-form-container">
+    <form method="post">
+        {% csrf_token %}
+        
+        <div class="form-group">
+            <label for="title" class="form-label">Title</label>
+            <input type="text" class="form-control" id="title" name="title" 
+                   value="{% if note %}{{ note.title }}{% endif %}" required maxlength="200"
+                   placeholder="Enter note title...">
+        </div>
+        
+        <div class="form-group">
+            <label for="content" class="form-label">Content</label>
+            <textarea class="form-control" id="content" name="content" required
+                      placeholder="Write your note here...">{% if note %}{{ note.content }}{% endif %}</textarea>
+        </div>
+        
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">
+                {% if action == "create" %}Create Note{% else %}Save Changes{% endif %}
+            </button>
+            <a href="{% url 'blog:note_list' %}" class="btn btn-secondary">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}
