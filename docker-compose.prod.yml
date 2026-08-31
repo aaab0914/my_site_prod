@@ -30,7 +30,6 @@ services:
       retries: 5
 
   elasticsearch:
-    profiles: ["search"]
     image: docker.elastic.co/elasticsearch/elasticsearch:8.14.3
     restart: always
     environment:
@@ -74,6 +73,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      elasticsearch:
+        condition: service_started
     healthcheck:
       test: ["CMD-SHELL", "python - <<'PY'\nimport urllib.request\nclass NoRedirect(urllib.request.HTTPRedirectHandler):\n    def redirect_request(self, req, fp, code, msg, headers, newurl):\n        return None\nopener = urllib.request.build_opener(NoRedirect)\nreq = urllib.request.Request('http://127.0.0.1:8000/users/login/', headers={'X-Forwarded-Proto': 'https', 'Host': 'localhost'})\nresponse = opener.open(req, timeout=15)\nprint(response.status)\nPY"]
       interval: 15s
