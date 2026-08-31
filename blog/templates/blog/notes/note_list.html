@@ -16,6 +16,24 @@
         font-size: 32px;
         font-weight: 700;
     }
+    .notes-private-label {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        margin-left: 10px;
+        padding: 5px 10px;
+        border-radius: 999px;
+        background: #ecfdf5;
+        color: #047857;
+        font-size: 12px;
+        font-weight: 700;
+        vertical-align: middle;
+    }
+    .notes-private-description {
+        margin: -14px 0 22px;
+        color: #607284;
+        font-size: 14px;
+    }
     .btn-create-note {
         display: inline-flex;
         align-items: center;
@@ -125,12 +143,13 @@
 
 {% block hero_base_content %}
 <div class="notes-header">
-    <h1>My Notes</h1>
+    <h1>My Notes <span class="notes-private-label"><i class="bi bi-lock-fill"></i> Private</span></h1>
     <a href="{% url 'blog:note_create' %}" class="btn-create-note">
         <i class="bi bi-plus-circle"></i>
         New Note
     </a>
 </div>
+<p class="notes-private-description">Only you can see, edit, and delete your notes.</p>
 
 {% if notes %}
     <div class="notes-grid">
