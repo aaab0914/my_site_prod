@@ -126,8 +126,14 @@
         font-size: 0.95em;
         vertical-align: -0.05em;
     }
-    .sidebar-nav-row { display: flex; align-items: center; gap: 4px; flex-wrap: nowrap; }
-    .sidebar-nav-row .sidebar-separator { display: inline-block; width: 10px; text-align: center; }
+    .sidebar-nav-row {
+        display: grid;
+        grid-template-columns: 110px 14px 100px 14px 110px 14px 110px;
+        align-items: center;
+        column-gap: 0;
+        white-space: nowrap;
+    }
+    .sidebar-nav-row .sidebar-separator { width: 14px; text-align: center; }
     .sidebar-nav-row a { white-space: nowrap; }
 
     #sidebar {
@@ -204,16 +210,16 @@
             <a href="{% url 'blog:note_list' %}">My Notes</a>
         </p>
 
-        <p>
-            <a href="{% url 'blog:images:gallery_list' %}"><span class="sidebar-inline-icon">🖼️</span>Gallery</a> |
-            <a href="{% url 'blog:images:album_list' %}"><span class="sidebar-inline-icon">🗂️</span>Album</a> |
-            <a href="{% url 'blog:images:gallery_upload' %}"><span class="sidebar-inline-icon">📷</span>Upload Images</a> |
+        <p class="sidebar-nav-row">
+            <a href="{% url 'blog:images:gallery_list' %}"><span class="sidebar-inline-icon">🖼️</span>Gallery</a><span class="sidebar-separator">|</span>
+            <a href="{% url 'blog:images:album_list' %}"><span class="sidebar-inline-icon">🗂️</span>Album</a><span class="sidebar-separator">|</span>
+            <a href="{% url 'blog:images:gallery_upload' %}"><span class="sidebar-inline-icon">📷</span>Upload Images</a><span class="sidebar-separator">|</span>
             <a href="{% url 'blog:images:album_upload' %}"><span class="sidebar-inline-icon">🧾</span>Upload Album</a>
         </p>
 
-                <p>
-            <a href="{% url 'users:profile' %}"><span class="sidebar-inline-icon">👤</span>My Profile</a> |
-            <a href="/api/endpoints/"><span class="sidebar-inline-icon">🧭</span>API Endpoints</a> |
+        <p class="sidebar-nav-row">
+            <a href="{% url 'users:profile' %}"><span class="sidebar-inline-icon">👤</span>My Profile</a><span class="sidebar-separator">|</span>
+            <a href="/api/endpoints/"><span class="sidebar-inline-icon">🧭</span>API Endpoints</a><span class="sidebar-separator">|</span>
             <a href="{% url 'users:logout' %}"><span class="sidebar-inline-icon">↩️</span>Logout</a>
         </p>
         <p>
