@@ -83,7 +83,10 @@
 </style>
 {% endblock %}
 
-{% block hero_base_content %}
+{% block hero_class %}hero-theme-teal{% endblock %}
+{% block hero_page_title %}{% if action == "create" %}Create New Note{% else %}Edit Note{% endif %}{% endblock %}
+{% block hero_page_description %}Create and manage your private notes. Only you can view, edit, or delete them.{% endblock %}
+{% block content_body %}
 <div class="form-header">
     <h1>{% if action == "create" %}Create New Note{% else %}Edit Note{% endif %}</h1>
 </div>
