@@ -51,7 +51,7 @@
                         </div>
                     </div>
                     <div class="video-frame">
-                        <video controls preload="none" class="video-player">
+                        <video {% if video.cover_image %}poster="{{ video.get_cover_proxy_url }}" {% endif %}controls preload="none" class="video-player">
                             <source src="{{ video.get_video_proxy_url }}">
                             Your browser does not support video playback.
                         </video>

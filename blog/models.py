@@ -263,6 +263,7 @@ class AudioPost(models.Model):
 
 class VideoPost(models.Model):
     video_file = models.FileField(upload_to=dated_media_upload_to("videos"))
+    cover_image = models.ImageField(upload_to=dated_media_upload_to("videos"), blank=True, null=True)
     title = models.CharField(max_length=200, blank=True)
     description = models.TextField(blank=True)
     uploaded_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="video_posts")
@@ -285,6 +286,12 @@ class VideoPost(models.Model):
         if not self.video_file:
             return ""
         return media_display_name(self.video_file)
+
+    def get_cover_proxy_url(self):
+        if not self.cover_image:
+            return 
+        version = int((self.updated or self.created).timestamp()) if (self.updated or self.created) else self.pk
+        return f'{reverse("blog:video_cover_image_proxy", args=[self.pk])}?v={version}'
 
     def get_video_proxy_url(self):
         if not self.video_file:
