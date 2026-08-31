@@ -715,7 +715,7 @@ def note_create(request):
         
         if title and content:
             Note.objects.create(user=request.user, title=title, content=content)
-            return redirect("blog:note_list")
+            return queue_operation_success(request, title="Note Created", message=f'"{title}" has been created successfully.', primary_label="Open My Notes", primary_url=reverse_lazy("blog:note_list"), secondary_label="Create Another Note", secondary_url=reverse_lazy("blog:note_create"))
     
     response = render(request, "blog/notes/note_form.html", {"action": "create"})
     response["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0, private"
@@ -736,7 +736,7 @@ def note_edit(request, pk):
             note.title = title
             note.content = content
             note.save()
-            return redirect("blog:note_list")
+            return queue_operation_success(request, title="Note Updated", message=f'"{title}" has been updated successfully.', primary_label="Open My Notes", primary_url=reverse_lazy("blog:note_list"), secondary_label="Create New Note", secondary_url=reverse_lazy("blog:note_create"))
     
     response = render(request, "blog/notes/note_form.html", {
         "action": "edit",
@@ -752,5 +752,6 @@ def note_edit(request, pk):
 def note_delete(request, pk):
     """Delete a note"""
     note = get_object_or_404(Note, pk=pk, user=request.user)
+    title = note.title
     note.delete()
-    return redirect("blog:note_list")
+    return queue_operation_success(request, title="Note Deleted", message=f'"{title}" has been deleted successfully.', primary_label="Open My Notes", primary_url=reverse_lazy("blog:note_list"), secondary_label="Create New Note", secondary_url=reverse_lazy("blog:note_create"))
