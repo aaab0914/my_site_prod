@@ -13,6 +13,7 @@ from django.db.models import Count, Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse_lazy
 from django.views.decorators.http import require_POST
+from my_site.sorting import build_sort_context
 from django.views.generic.edit import DeleteView, UpdateView
 from taggit.models import Tag
 
@@ -49,17 +50,6 @@ def _redirect_to_comment_post(comment):
         post_slug=comment.post.slug,
     )
 
-
-
-def _build_sort_options(current_sort):
-    options = [
-        ("newest", "Newest"),
-        ("oldest", "Oldest"),
-        ("title_asc", "A-Z"),
-        ("title_desc", "Z-A"),
-        ("updated", "Updated"),
-        ("author", "Author"),
-    ]
 
 
 def _prime_video_list_cache(items=None):
@@ -116,7 +106,15 @@ def post_share(request, post_id):
     return render(request, "blog/post/share.html", {"post": post, "form": form})
 
 def post_list(request, tag_slug=None):
-    sort = request.GET.get("sort", "newest")
+    # Sorting options
+    sort_options = {
+        "newest": "Newest",
+        "oldest": "Oldest",
+        "title_asc": "A-Z",
+        "title_desc": "Z-A",
+        "updated": "Updated",
+        "author": "Author",
+    }
     sort_map = {
         "newest": ["-publish", "-id"],
         "oldest": ["publish", "id"],
@@ -125,9 +123,10 @@ def post_list(request, tag_slug=None):
         "updated": ["-updated", "-id"],
         "author": ["author__username", "title", "id"],
     }
-    current_sort = sort if sort in sort_map else "newest"
+    sort_context = build_sort_context(request, sort_options, default_sort="newest")
+    selected_sort = sort_context["selected_sort"]
 
-    post_queryset = Post.published.select_related("author").prefetch_related("tags").order_by(*sort_map[current_sort])
+    post_queryset = Post.published.select_related("author").prefetch_related("tags").order_by(*sort_map[selected_sort])
     tag = None
     if tag_slug:
         tag = get_object_or_404(Tag, slug=tag_slug)
@@ -148,11 +147,10 @@ def post_list(request, tag_slug=None):
         {
             "posts": posts,
             "tag": tag,
-            "current_sort": current_sort,
-            "sort_options": _build_sort_options(current_sort),
-            "pagination_suffix": f"?sort={current_sort}",
+            **sort_context,
         },
     )
+
 
 def post_detail(request, year, month, day, post_slug):
     post = Post.published.filter(
@@ -527,7 +525,14 @@ def video_delete(request, pk):
 
 
 def video_list(request):
-    sort = request.GET.get("sort", "newest")
+    sort_options = {
+        "newest": "Newest",
+        "oldest": "Oldest",
+        "title_asc": "A-Z",
+        "title_desc": "Z-A",
+        "updated": "Updated",
+        "author": "Author",
+    }
     sort_map = {
         "newest": ["-created", "-id"],
         "oldest": ["created", "id"],
@@ -536,24 +541,33 @@ def video_list(request):
         "updated": ["-updated", "-id"],
         "author": ["uploaded_by__username", "title", "id"],
     }
-    current_sort = sort if sort in sort_map else "newest"
-    videos_queryset = VideoPost.objects.select_related("uploaded_by").order_by(*sort_map[current_sort])
+    sort_context = build_sort_context(request, sort_options, default_sort="newest")
+    selected_sort = sort_context["selected_sort"]
+    
+    videos_queryset = VideoPost.objects.select_related("uploaded_by").order_by(*sort_map[selected_sort])
     page_obj = Paginator(videos_queryset, 10).get_page(request.GET.get("page"))
+    
     return render(
         request,
         "blog/video/video_list.html",
         {
             "videos": page_obj.object_list,
             "page_obj": page_obj,
-            "current_sort": current_sort,
-            "sort_options": _build_sort_options(current_sort),
-            "pagination_suffix": f"?sort={current_sort}",
+            **sort_context,
         },
     )
 
 
+
 def audio_list(request):
-    sort = request.GET.get("sort", "newest")
+    sort_options = {
+        "newest": "Newest",
+        "oldest": "Oldest",
+        "title_asc": "A-Z",
+        "title_desc": "Z-A",
+        "updated": "Updated",
+        "author": "Author",
+    }
     sort_map = {
         "newest": ["-created", "-id"],
         "oldest": ["created", "id"],
@@ -562,20 +576,23 @@ def audio_list(request):
         "updated": ["-updated", "-id"],
         "author": ["uploaded_by__username", "music_name", "id"],
     }
-    current_sort = sort if sort in sort_map else "newest"
-    audios_queryset = AudioPost.objects.select_related("uploaded_by").order_by(*sort_map[current_sort])
+    sort_context = build_sort_context(request, sort_options, default_sort="newest")
+    selected_sort = sort_context["selected_sort"]
+    
+    audios_queryset = AudioPost.objects.select_related("uploaded_by").order_by(*sort_map[selected_sort])
     page_obj = Paginator(audios_queryset, 10).get_page(request.GET.get("page"))
+    
     return render(
         request,
         "blog/audio/audio_list.html",
         {
             "audios": page_obj.object_list,
             "page_obj": page_obj,
-            "current_sort": current_sort,
-            "sort_options": _build_sort_options(current_sort),
-            "pagination_suffix": f"?sort={current_sort}",
+            **sort_context,
         },
     )
+
+
 
 class PostEditView(LoginRequiredMixin, UpdateView):
     model = Post
