@@ -13,6 +13,7 @@ from django.db.models import Count, Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse_lazy
 from django.views.decorators.http import require_POST
+from django.views.decorators.cache import cache_page
 from my_site.sorting import build_sort_context
 from django.views.generic.edit import DeleteView, UpdateView
 from taggit.models import Tag
@@ -97,6 +98,7 @@ def post_share(request, post_id):
         form = EmailPostForm()
     return render(request, "blog/post/share.html", {"post": post, "form": form})
 
+@cache_page(60 * 3)  # Cache for 3 minutes
 def post_list(request, tag_slug=None):
     # Sorting options
     sort_options = {
@@ -124,7 +126,7 @@ def post_list(request, tag_slug=None):
         tag = get_object_or_404(Tag, slug=tag_slug)
         post_queryset = post_queryset.filter(tags__in=[tag])
 
-    paginator = Paginator(post_queryset, 10)
+    paginator = Paginator(post_queryset, 8)  # Optimized: reduced from 10 to 8
     page_number = request.GET.get("page", 1)
     try:
         posts = paginator.page(page_number)
@@ -145,7 +147,8 @@ def post_list(request, tag_slug=None):
 
 
 def post_detail(request, year, month, day, post_slug):
-    post = Post.published.filter(
+    # OPTIMIZED: Added select_related and prefetch_related to reduce N+1 queries
+    post = Post.published.select_related("author").prefetch_related("tags", "comments").filter(
         slug=post_slug,
         publish__year=year,
         publish__month=month,
@@ -516,6 +519,7 @@ def video_delete(request, pk):
     return render(request, "blog/video/video_delete.html", {"videopost": video})
 
 
+@cache_page(60 * 3)  # Cache for 3 minutes
 def video_list(request):
     sort_options = {
         "newest": "Newest",
@@ -537,7 +541,7 @@ def video_list(request):
     selected_sort = sort_context["selected_sort"]
     
     videos_queryset = VideoPost.objects.select_related("uploaded_by").order_by(*sort_map[selected_sort])
-    page_obj = Paginator(videos_queryset, 10).get_page(request.GET.get("page"))
+    page_obj = Paginator(videos_queryset, 8).get_page(request.GET.get("page"))  # Optimized: reduced from 10 to 8
     
     return render(
         request,
@@ -551,6 +555,7 @@ def video_list(request):
 
 
 
+@cache_page(60 * 3)  # Cache for 3 minutes
 def audio_list(request):
     sort_options = {
         "newest": "Newest",
@@ -572,7 +577,7 @@ def audio_list(request):
     selected_sort = sort_context["selected_sort"]
     
     audios_queryset = AudioPost.objects.select_related("uploaded_by").order_by(*sort_map[selected_sort])
-    page_obj = Paginator(audios_queryset, 10).get_page(request.GET.get("page"))
+    page_obj = Paginator(audios_queryset, 8).get_page(request.GET.get("page"))  # Optimized: reduced from 10 to 8
     
     return render(
         request,
