@@ -70,8 +70,8 @@ class GalleryUploadForm(forms.Form):
 
         if not all_uploads:
             raise ValidationError("Please upload at least one image.")
-        if len(all_uploads) > 99:
-            raise ValidationError("You can upload at most 99 images at one time.")
+        if len(all_uploads) > 1:
+            raise ValidationError("You can upload exactly 1 image per submission.")
 
         optimized_uploads = []
         for image in all_uploads:

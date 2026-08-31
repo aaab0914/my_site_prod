@@ -256,7 +256,8 @@
                     <li>Supported image formats: JPG, JPEG, PNG, WebP, GIF.</li>
                     <li>Browser and edge cache for media files is 90 days.</li>
                     <li>The media cache policy covers 15 formats in total: 5 image, 5 audio, and 5 video formats.</li>
-                    <li>You can submit up to 99 images at one time.</li>
+                    <li>You can submit exactly 1 image per submission.</li>
+                    <li>Each image must be 10 MB or smaller.</li>
                     <li>Large images are optimized before saving.</li>
                 </ul>
             </section>
@@ -275,7 +276,7 @@
     let localFiles = [];
 
     function getAllFiles() {
-        return localFiles.concat(pastedFiles).slice(0, 99);
+        return localFiles.concat(pastedFiles).slice(0, 1);
     }
 
     function syncPastedImagesField() {
@@ -321,7 +322,7 @@
     }
 
     fileInput.addEventListener("change", () => {
-        localFiles = Array.from(fileInput.files || []).slice(0, 99 - pastedFiles.length);
+        localFiles = Array.from(fileInput.files || []).slice(0, 1 - pastedFiles.length);
         renderPreview();
     });
 
@@ -346,7 +347,7 @@
             pastedFiles.push(wrapped);
         });
 
-        pastedFiles = pastedFiles.slice(0, 99 - localFiles.length);
+        pastedFiles = pastedFiles.slice(0, 1 - localFiles.length);
         renderPreview();
         syncPastedImagesField();
     });
