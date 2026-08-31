@@ -85,11 +85,11 @@ class LoggingPolicyTests(SimpleTestCase):
 
 
 class UploadLimitTests(SimpleTestCase):
-    def test_default_upload_limits_are_more_realistic_for_media_workflows(self):
+    def test_request_limit_supports_media_without_buffering_large_files_in_memory(self):
         from django.conf import settings
 
         self.assertGreaterEqual(settings.DATA_UPLOAD_MAX_MEMORY_SIZE, 25 * 1024 * 1024)
-        self.assertGreaterEqual(settings.FILE_UPLOAD_MAX_MEMORY_SIZE, 25 * 1024 * 1024)
+        self.assertLessEqual(settings.FILE_UPLOAD_MAX_MEMORY_SIZE, 2.5 * 1024 * 1024)
 
     def test_media_sync_defaults_are_configured(self):
         from django.conf import settings

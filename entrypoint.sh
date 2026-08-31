@@ -24,7 +24,7 @@ if [ "$#" -gt 0 ]; then
 fi
 
 exec gosu app gunicorn \
-  --workers 2 \
+  --workers 4 \
   --bind 0.0.0.0:8000 \
   --pid /tmp/gunicorn.pid \
   --access-logfile "/code/logs/gunicorn-access/access.log" \

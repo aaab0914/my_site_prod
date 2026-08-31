@@ -400,10 +400,10 @@ DATA_UPLOAD_MAX_MEMORY_SIZE = config(
     cast=int,
 )
 
-# FILE_UPLOAD_MAX_MEMORY_SIZE: Maximum size of file uploads (in bytes)
+# FILE_UPLOAD_MAX_MEMORY_SIZE: Keep large media uploads out of worker memory.
 FILE_UPLOAD_MAX_MEMORY_SIZE = config(
     "FILE_UPLOAD_MAX_MEMORY_SIZE",
-    default=UPLOAD_MAX_MEMORY_SIZE,
+    default=2_621_440,  # Django's standard 2.5MB in-memory threshold.
     cast=int,
 )
 
