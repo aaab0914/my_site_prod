@@ -85,14 +85,6 @@ def _cached_search_result_ids(query):
     ids = list(Post.published.filter(title__icontains=query).values_list("id", flat=True))
     cache.set(f"post_search:query:{query.strip().lower()}", ids)
     return ids
-    return [
-        {
-            "label": label,
-            "url": f"?sort={value}",
-            "active": current_sort == value,
-        }
-        for value, label in options
-    ]
 
 
 def post_share(request, post_id):
