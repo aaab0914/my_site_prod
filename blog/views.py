@@ -700,7 +700,10 @@ class AudioPostDeleteView(LoginRequiredMixin, DeleteView):
 def note_list(request):
     """Display user's notes"""
     notes = Note.objects.filter(user=request.user)
-    return render(request, "blog/notes/note_list.html", {"notes": notes})
+    response = render(request, "blog/notes/note_list.html", {"notes": notes})
+    response["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0, private"
+    response["Pragma"] = "no-cache"
+    return response
 
 
 @login_required
@@ -714,7 +717,10 @@ def note_create(request):
             Note.objects.create(user=request.user, title=title, content=content)
             return redirect("blog:note_list")
     
-    return render(request, "blog/notes/note_form.html", {"action": "create"})
+    response = render(request, "blog/notes/note_form.html", {"action": "create"})
+    response["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0, private"
+    response["Pragma"] = "no-cache"
+    return response
 
 
 @login_required
@@ -732,10 +738,13 @@ def note_edit(request, pk):
             note.save()
             return redirect("blog:note_list")
     
-    return render(request, "blog/notes/note_form.html", {
+    response = render(request, "blog/notes/note_form.html", {
         "action": "edit",
         "note": note
     })
+    response["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0, private"
+    response["Pragma"] = "no-cache"
+    return response
 
 
 @login_required
