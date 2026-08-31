@@ -15,6 +15,15 @@
 .video-item a { color:#15283a; font-weight:700; text-decoration:none; }
 .video-item-meta { margin-top:8px; color:#66768a; font-size:14px; }
 .video-errors { margin-bottom:16px; padding:14px 16px; border-radius:14px; background:#fff1f1; color:#a61b1b; }
+.video-requirements { align-self:start; }
+.video-requirements h2 { margin-bottom:8px; }
+.video-requirements-intro { margin:0 0 20px; color:#66768a; line-height:1.6; }
+.video-requirements-list { display:grid; gap:0; margin:0; }
+.video-requirement { padding:16px 0; border-top:1px solid #e2e8f0; }
+.video-requirement dt { margin:0 0 5px; color:#173042; font-weight:700; }
+.video-requirement dd { margin:0; color:#66768a; line-height:1.55; }
+.video-format-list { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
+.video-format { padding:5px 9px; border:1px solid #b9d8d0; border-radius:6px; background:#edf8f4; color:#145c4d; font-size:13px; font-weight:700; }
 @media screen and (max-width: 900px) { .video-upload-grid { grid-template-columns:1fr; } }
 </style>
 {% endblock %}
@@ -30,4 +39,35 @@
             {{ form.as_p }}
             <button class="video-submit" type="submit">Upload Video</button>
         </form>
+        <aside class="video-card video-requirements" aria-labelledby="video-requirements-title">
+            <h2 id="video-requirements-title">Upload Requirements</h2>
+            <p class="video-requirements-intro">Check your video before uploading to avoid validation errors.</p>
+            <dl class="video-requirements-list">
+                <div class="video-requirement">
+                    <dt>Supported formats</dt>
+                    <dd>
+                        Upload a video in one of these formats:
+                        <span class="video-format-list">
+                            <span class="video-format">MP4</span>
+                            <span class="video-format">WebM</span>
+                            <span class="video-format">OGG</span>
+                            <span class="video-format">MOV</span>
+                            <span class="video-format">M4V</span>
+                        </span>
+                    </dd>
+                </div>
+                <div class="video-requirement">
+                    <dt>Maximum file size</dt>
+                    <dd>Video files must be 100 MB or smaller.</dd>
+                </div>
+                <div class="video-requirement">
+                    <dt>Video details</dt>
+                    <dd>Add a clear title. The description is optional and can provide context for viewers.</dd>
+                </div>
+                <div class="video-requirement">
+                    <dt>Upload time</dt>
+                    <dd>Large files may take longer to upload depending on your internet connection. Keep this page open until the upload completes.</dd>
+                </div>
+            </dl>
+        </aside>
 {% endblock %}

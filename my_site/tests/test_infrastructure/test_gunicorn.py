@@ -28,7 +28,9 @@ class GunicornContainerConfigTests(SimpleTestCase):
         self.assertIn('ENTRYPOINT ["sh", "/usr/local/bin/entrypoint.sh"]', self.dockerfile)
 
     def test_gunicorn_command_uses_expected_worker_and_bind_settings(self):
-        self.assertIn("--workers 2", self.entrypoint)
+        self.assertIn("--workers 4", self.entrypoint)
+        self.assertIn("--timeout 300", self.entrypoint)
+        self.assertIn("--graceful-timeout 30", self.entrypoint)
         self.assertIn("--bind 0.0.0.0:8000", self.entrypoint)
 
     def test_gunicorn_configuration_is_valid_when_gunicorn_is_installed(self):
@@ -36,7 +38,7 @@ class GunicornContainerConfigTests(SimpleTestCase):
         if gunicorn is None:
             self.skipTest("gunicorn is not installed in this environment")
         result = subprocess.run(
-            [gunicorn, "--check-config", "--workers", "2", "--bind", "0.0.0.0:8000", "my_site.wsgi:application"],
+            [gunicorn, "--check-config", "--workers", "4", "--timeout", "300", "--bind", "0.0.0.0:8000", "my_site.wsgi:application"],
             cwd=BASE_DIR,
             capture_output=True,
             text=True,

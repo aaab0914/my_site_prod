@@ -24,9 +24,9 @@ class ImagePost(models.Model):
 
     def clean(self):
         super().clean()
-        if self.image and self.image.size > 5 * 1024 * 1024:
+        if self.image and self.image.size > 10 * 1024 * 1024:
             raise ValidationError({
-                "image": f"图片文件大小不能超过 5MB。当前文件大小: {self.image.size / (1024 * 1024):.2f}MB"
+                "image": f"图片文件大小不能超过 10MB。当前文件大小: {self.image.size / (1024 * 1024):.2f}MB"
             })
 
     def save(self, *args, **kwargs):

@@ -25,6 +25,8 @@ fi
 
 exec gosu app gunicorn \
   --workers 4 \
+  --timeout 300 \
+  --graceful-timeout 30 \
   --bind 0.0.0.0:8000 \
   --pid /tmp/gunicorn.pid \
   --access-logfile "/code/logs/gunicorn-access/access.log" \

@@ -3,9 +3,9 @@ from django.core.exceptions import ValidationError
 
 MB = 1024 * 1024
 
-IMAGE_MAX_SIZE = 5 * MB
-AUDIO_MAX_SIZE = 10 * MB
-VIDEO_MAX_SIZE = 50 * MB
+IMAGE_MAX_SIZE = 10 * MB
+AUDIO_MAX_SIZE = 30 * MB
+VIDEO_MAX_SIZE = 100 * MB
 
 IMAGE_CONTENT_TYPES = {"image/jpeg", "image/png", "image/webp"}
 IMAGE_EXTENSIONS = (".jpg", ".jpeg", ".png", ".webp")

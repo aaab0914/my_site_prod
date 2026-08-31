@@ -144,8 +144,8 @@ class AlbumUploadForm(forms.Form):
             content_type = getattr(image, "content_type", "")
             if content_type and not content_type.startswith("image/"):
                 raise ValidationError("All album uploads must be image files.")
-            if image.size > 5 * 1024 * 1024:
-                raise ValidationError("Each image must be 5MB or smaller.")
+            if image.size > 10 * 1024 * 1024:
+                raise ValidationError("Each image must be 10MB or smaller.")
         return files
 
 
@@ -174,8 +174,8 @@ def optimize_uploaded_image(image):
     if getattr(image, "content_type", "") not in allowed_types:
         raise ValidationError("Image must be a JPEG, PNG, or WebP file.")
 
-    if image.size > 5 * 1024 * 1024:
-        raise ValidationError("Image must be 5MB or smaller before optimization.")
+    if image.size > 10 * 1024 * 1024:
+        raise ValidationError("Image must be 10MB or smaller before optimization.")
 
     try:
         if hasattr(image, "seek"):
