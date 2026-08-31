@@ -748,10 +748,14 @@ def note_edit(request, pk):
 
 
 @login_required
-@require_POST
 def note_delete(request, pk):
     """Delete a note"""
     note = get_object_or_404(Note, pk=pk, user=request.user)
-    title = note.title
-    note.delete()
-    return queue_operation_success(request, title="Note Deleted", message=f'"{title}" has been deleted successfully.', primary_label="Open My Notes", primary_url=reverse_lazy("blog:note_list"), secondary_label="Create New Note", secondary_url=reverse_lazy("blog:note_create"))
+    if request.method == "POST":
+        title = note.title
+        note.delete()
+        return queue_operation_success(request, title="Note Deleted", message=f'"{title}" has been deleted successfully.', primary_label="Open My Notes", primary_url=reverse_lazy("blog:note_list"), secondary_label="Create New Note", secondary_url=reverse_lazy("blog:note_create"))
+    response = render(request, "blog/notes/note_delete.html", {"note": note})
+    response["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0, private"
+    response["Pragma"] = "no-cache"
+    return response
