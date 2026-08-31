@@ -21,13 +21,38 @@
     margin-left: 0;
     margin-right: auto;
   }
+  .tag-context {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 0 0 16px;
+    padding: 14px 18px;
+    border: 1px solid #d7e1ea;
+    border-radius: 16px;
+    background: #f8fafc;
+    color: #526677;
+  }
+  .tag-context-label { font-size: 13px; font-weight: 700; }
+  .tag-context-name {
+    display: inline-flex;
+    align-items: center;
+    min-height: 30px;
+    padding: 0 12px;
+    border-radius: 999px;
+    background: #0f766e;
+    color: #fff;
+    font-weight: 800;
+  }
 </style>
 {% endblock %}
 
 {% block hero_body %}
     <div class="blog-home-body">
         {% if tag %}
-            <h2>Posts tagged with "{{ tag.name }}"</h2>
+            <div class="tag-context" aria-label="Active tag filter">
+                <span class="tag-context-label">Showing posts tagged with</span>
+                <span class="tag-context-name"><i class="bi bi-tag-fill" aria-hidden="true"></i>&nbsp;{{ tag.name }}</span>
+            </div>
         {% endif %}
 
         {% include "includes/sort_controls.html" %}
