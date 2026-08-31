@@ -206,9 +206,9 @@
 
         <p class="sidebar-nav-row">
             <a href="{% url 'blog:audio_upload' %}"><span class="sidebar-inline-icon">🎵</span>Upload Audio</a><span class="sidebar-separator">|</span>
-            <a href="{% url 'blog:video_list' %}">Video List</a>
+            <a href="{% url 'blog:video_list' %}"><span class="sidebar-nav-icon" aria-hidden="true">▶</span>Video List</a>
             {% if request.user.is_superuser %}<span class="sidebar-separator">|</span><a href="{% url 'blog:video_upload' %}"><span class="sidebar-inline-icon">🎬</span>Upload Video</a>{% endif %}<span class="sidebar-separator">|</span>
-            <a href="{% url 'blog:note_list' %}">My Notes</a>
+            <a href="{% url 'blog:note_list' %}"><span class="sidebar-nav-icon" aria-hidden="true">▤</span>My Notes</a>
         </p>
 
         <p class="sidebar-nav-row">
@@ -267,8 +267,8 @@
         </p>
 
         <p class="sidebar-nav-row">
-        <a href="{% url 'blog:video_list' %}">Video List</a><span class="sidebar-separator">|</span>
-        <a href="{% url 'blog:note_list' %}">My Notes</a>
+        <a href="{% url 'blog:video_list' %}"><span class="sidebar-nav-icon" aria-hidden="true">▶</span>Video List</a><span class="sidebar-separator">|</span>
+        <a href="{% url 'blog:note_list' %}"><span class="sidebar-nav-icon" aria-hidden="true">▤</span>My Notes</a>
         </p>
 
         <p>
