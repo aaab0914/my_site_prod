@@ -13,7 +13,7 @@ from django.db.models import Count, Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse_lazy
 from django.views.decorators.http import require_POST
-from django.views.decorators.cache import cache_page
+from django.views.decorators.cache import cache_page, never_cache
 from my_site.sorting import build_sort_context
 from django.views.generic.edit import DeleteView, UpdateView
 from taggit.models import Tag
@@ -32,6 +32,7 @@ from images.models import ImagePost
 from .models import Note,  Post, Comment, AudioPost, VideoPost
 from my_site.protected_media import serve_protected_media
 from my_site.site_views import queue_operation_success
+from .video_utils import extract_video_thumbnail, generate_thumbnail_filename
 
 
 def _is_post_request(request):
@@ -452,6 +453,14 @@ def video_upload(request):
         video = form.save(commit=False)
         video.uploaded_by = request.user
         video.save()
+
+        # Auto-generate thumbnail from first frame if no cover image exists
+        if video.video_file and not video.cover_image:
+            thumbnail = extract_video_thumbnail(video.video_file)
+            if thumbnail:
+                thumbnail_filename = generate_thumbnail_filename(video.video_file.name)
+                video.cover_image.save(thumbnail_filename, thumbnail, save=True)
+
         return queue_operation_success(
             request,
             title="Video Upload Complete",
@@ -462,7 +471,10 @@ def video_upload(request):
             secondary_url=reverse_lazy("blog:video_upload"),
         )
 
-    return render(request, "blog/video/upload_video.html", {"form": form})
+    response = render(request, "blog/video/upload_video.html", {"form": form})
+    response["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0, private"
+    response["Pragma"] = "no-cache"
+    return response
 
 
 def video_detail(request, pk):
@@ -482,7 +494,22 @@ def video_edit(request, pk):
     video = get_object_or_404(VideoPost, pk=pk)
     form = VideoUploadForm(request.POST or None, request.FILES or None, instance=video)
     if _is_post_request(request) and form.is_valid():
+        # Check if video file was changed
+        video_file_changed = 'video_file' in request.FILES
+
         video = form.save()
+
+        # Auto-generate thumbnail if video file was replaced
+        if video_file_changed and video.video_file:
+            thumbnail = extract_video_thumbnail(video.video_file)
+            if thumbnail:
+                # Delete old cover image if exists
+                if video.cover_image:
+                    video.cover_image.delete(save=False)
+
+                thumbnail_filename = generate_thumbnail_filename(video.video_file.name)
+                video.cover_image.save(thumbnail_filename, thumbnail, save=True)
+
         cache.delete("video_list:items")
         cache.delete("video_list:ids")
         _prime_video_list_cache()
@@ -519,7 +546,7 @@ def video_delete(request, pk):
     return render(request, "blog/video/video_delete.html", {"videopost": video})
 
 
-@cache_page(60 * 3)  # Cache for 3 minutes
+@never_cache
 def video_list(request):
     sort_options = {
         "newest": "Newest",
@@ -543,7 +570,7 @@ def video_list(request):
     videos_queryset = VideoPost.objects.select_related("uploaded_by").order_by(*sort_map[selected_sort])
     page_obj = Paginator(videos_queryset, 8).get_page(request.GET.get("page"))  # Optimized: reduced from 10 to 8
     
-    return render(
+    response = render(
         request,
         "blog/video/video_list.html",
         {
@@ -552,7 +579,9 @@ def video_list(request):
             **sort_context,
         },
     )
-
+    response["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0, private"
+    response["Pragma"] = "no-cache"
+    return response
 
 
 @cache_page(60 * 3)  # Cache for 3 minutes
@@ -717,7 +746,7 @@ def note_list(request):
         "updated": "-updated",
         "author": "user__username",
     }[sort_context["selected_sort"]]
-    notes = Note.objects.filter(user=request.user).order_by(ordering)
+    notes = Note.objects.filter(user=request.user).select_related('user').order_by(ordering)
     response = render(request, "blog/notes/note_list.html", {"notes": notes, **sort_context})
     response["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0, private"
     response["Pragma"] = "no-cache"

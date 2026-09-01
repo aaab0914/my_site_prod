@@ -234,7 +234,7 @@ class AudioEditForm(forms.ModelForm):
         model = AudioPost
         fields = ["music_name", "audio_file", "cover_image", "description"]
         widgets = {
-            "audio_file": forms.ClearableFileInput(attrs={"accept": ".mp3,.wav,.ogg,audio/*"}),
+            "audio_file": forms.FileInput(attrs={"accept": ".mp3,.wav,.ogg,audio/*"}),
             "cover_image": forms.ClearableFileInput(attrs={"accept": ".jpg,.jpeg,.png,.webp,image/*"}),
             "description": forms.Textarea(attrs={"row": 3}),
         }
@@ -268,7 +268,8 @@ class VideoUploadForm(forms.ModelForm):
         model = VideoPost
         fields = ["title", "video_file", "description"]
         widgets = {
-            "description": forms.Textarea(attrs={"row": 3}),
+            "video_file": forms.FileInput(),
+            "description": forms.Textarea(attrs={"rows": 3}),
         }
 
     def clean_video_file(self):

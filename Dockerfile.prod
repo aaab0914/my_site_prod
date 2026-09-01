@@ -26,6 +26,7 @@ RUN addgroup --system app \
     && apt-get install -y --no-install-recommends \
         gosu \
         libpq-dev \
+        ffmpeg \
     && rm -rf /var/lib/apt/lists/*
 
 # =============================================

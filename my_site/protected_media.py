@@ -87,13 +87,13 @@ def serve_protected_media(field_file, request=None, cache_prefix="media"):
             response["Content-Length"] = str(length)
             response["Content-Range"] = f"bytes {start}-{end}/{file_size}"
             response["Content-Disposition"] = content_disposition
-            response["X-Accel-Redirect"] = f"/_protected_media/{quote(str(relative_media_path).replace(os.sep, '/'))}"
+            response["X-Accel-Redirect"] = f"/_protected_media/{quote(str(relative_media_path).replace(os.sep, '/'), safe='/')}"
 
     if response is None:
         response = HttpResponse(content_type=content_type)
         response["Content-Disposition"] = content_disposition
         response["Content-Length"] = str(file_size)
-        response["X-Accel-Redirect"] = f"/_protected_media/{quote(str(relative_media_path).replace(os.sep, '/'))}"
+        response["X-Accel-Redirect"] = f"/_protected_media/{quote(str(relative_media_path).replace(os.sep, '/'), safe='/')}"
 
     response["Accept-Ranges"] = "bytes"
     response["Cache-Control"] = "public, max-age=7776000, immutable"

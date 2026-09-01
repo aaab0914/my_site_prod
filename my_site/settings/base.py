@@ -193,6 +193,29 @@ DATABASES = {
 
 REDIS_URL = config("REDIS_URL", default="redis://redis:6379/0")
 
+# Cache Configuration
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.redis.RedisCache",
+        "LOCATION": REDIS_URL,
+        "TIMEOUT": 300,
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            "CONNECTION_POOL_CLASS": "redis.BlockingConnectionPool",
+            "CONNECTION_POOL_CLASS_KWARGS": {
+                "max_connections": 50,
+                "timeout": 20,
+            },
+            "SOCKET_CONNECT_TIMEOUT": 5,
+            "SOCKET_TIMEOUT": 5,
+            "COMPRESSOR": "django_redis.compressors.zlib.ZlibCompressor",
+            "IGNORE_EXCEPTIONS": True,
+        },
+        "KEY_PREFIX": "mysite",
+        "VERSION": 1,
+    }
+}
+
 CELERY_BROKER_URL = config("CELERY_BROKER_URL", default=REDIS_URL)
 CELERY_RESULT_BACKEND = config("CELERY_RESULT_BACKEND", default=REDIS_URL)
 CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = config(

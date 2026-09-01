@@ -184,8 +184,8 @@ class ProdComposeNginxConfigTests(unittest.TestCase):
         self.assertIn("./ssl:/etc/nginx/ssl:ro", self.text)
 
     def test_nginx_exposes_80_and_443(self):
-        self.assertIn('"8080:80"', self.text)
-        self.assertIn('"8443:443"', self.text)
+        self.assertIn('"80:80"', self.text)
+        self.assertIn('"443:443"', self.text)
 
     def test_nginx_depends_on_web_healthy(self):
         self.assertIn("condition: service_healthy", self.text)

@@ -204,8 +204,12 @@
             <a href="{% url 'blog:post_create' %}"><span class="sidebar-inline-icon">✏️</span>Create New Post</a>
         </p>
 
-        <p class="sidebar-nav-row">
+        <p class="sidebar-nav-row sidebar-media-row">
             <a href="{% url 'blog:audio_upload' %}"><span class="sidebar-inline-icon">🎵</span>Upload Audio</a><span class="sidebar-separator">|</span>
+            <a href="{% url 'blog:audio_list' %}"><span class="sidebar-nav-icon" aria-hidden="true">♫</span>Audio List</a>
+        </p>
+
+        <p class="sidebar-nav-row sidebar-media-row">
             <a href="{% url 'blog:video_list' %}"><span class="sidebar-nav-icon" aria-hidden="true">▶</span>Video List</a>
             {% if request.user.is_superuser %}<span class="sidebar-separator">|</span><a href="{% url 'blog:video_upload' %}"><span class="sidebar-inline-icon">🎬</span>Upload Video</a>{% endif %}<span class="sidebar-separator">|</span>
             <a href="{% url 'blog:note_list' %}"><span class="sidebar-nav-icon" aria-hidden="true">▤</span>My Notes</a>

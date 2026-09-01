@@ -248,7 +248,7 @@ class EntrypointScriptTests(ShellScriptTestCase):
         self.assertIn("python manage.py check", log_text)
         self.assertIn("python manage.py collectstatic --noinput", log_text)
         self.assertNotIn("validate_prod_env.py", log_text)
-        self.assertIn("gunicorn --workers 2 --bind 0.0.0.0:8000", log_text)
+        self.assertIn("gunicorn --workers 4 --timeout 300 --graceful-timeout 30 --bind 0.0.0.0:8000", log_text)
         self.assertTrue((self.code_dir / "logs" / "django" / "2026-07").exists())
 
     def test_macos_prod_mode_runs_prod_validation_before_start(self):
@@ -282,4 +282,4 @@ class EntrypointScriptTests(ShellScriptTestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         log_text = call_log.read_text(encoding="utf-8")
         self.assertIn("echo hello-from-windows", log_text)
-        self.assertNotIn("gunicorn --workers 2", log_text)
+        self.assertNotIn("gunicorn --workers 4", log_text)

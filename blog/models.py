@@ -109,7 +109,13 @@ class Post(models.Model):
 
     class Meta:
         ordering = ["-publish"]
-        indexes = [models.Index(fields=["-publish"])]
+        indexes = [
+            models.Index(fields=["-publish"]),
+            models.Index(fields=["-publish", "-id"]),  # For list view sorting
+            models.Index(fields=["slug", "publish"]),  # For detail view lookup
+            models.Index(fields=["author", "-publish"]),  # For author filtering
+            models.Index(fields=["status", "-publish"]),  # For published posts
+        ]
         constraints = [models.UniqueConstraint(fields=["slug", "publish"], name="unique_slug_per_date")]
 
     def __str__(self):
@@ -227,7 +233,11 @@ class AudioPost(models.Model):
 
     class Meta:
         ordering = ["-created"]
-        indexes = [models.Index(fields=["created"])]
+        indexes = [
+            models.Index(fields=["created"]),
+            models.Index(fields=["-created", "-id"]),  # For list view sorting
+            models.Index(fields=["uploaded_by", "-created"]),  # For user filtering
+        ]
 
     def __str__(self):
         return self.music_name or media_display_name(self.audio_file)
@@ -272,7 +282,11 @@ class VideoPost(models.Model):
 
     class Meta:
         ordering = ["-created"]
-        indexes = [models.Index(fields=["created"])]
+        indexes = [
+            models.Index(fields=["created"]),
+            models.Index(fields=["-created", "-id"]),  # For list view sorting
+            models.Index(fields=["uploaded_by", "-created"]),  # For user filtering
+        ]
 
     def __str__(self):
         return self.title or self.get_video_filename()

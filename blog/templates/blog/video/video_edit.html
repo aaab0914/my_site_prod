@@ -11,7 +11,14 @@
 .video-edit-card label { display: block; margin-bottom: 8px; font-weight: 700; color: #173042; }
 .video-edit-card input[type="text"], .video-edit-card input[type="file"], .video-edit-card textarea { width: 100%; margin: 0 0 16px; padding: 12px 14px; border: 1px solid #c6d3df; border-radius: 14px; background: #f8fbfd; }
 .video-edit-card textarea { min-height: 140px; resize: vertical; }
-.video-current-file { margin: 0 0 18px; padding: 14px 16px; border-radius: 16px; background: #f8fafc; color: #526476; }
+.video-current-file { display:flex; align-items:center; gap:10px; margin:0 0 18px; padding:15px 17px; border:1px solid #dce6ee; border-radius:16px; background:#f8fafc; color:#526476; }
+.video-current-file-icon { display:inline-flex; align-items:center; justify-content:center; width:32px; height:32px; border-radius:10px; background:#ede9fe; color:#6d28d9; font-weight:800; }
+.video-current-file-name { color:#173042; font-weight:700; overflow-wrap:anywhere; }
+.video-replace-section { margin: 0 0 18px; }
+.video-replace-info { margin: 0 0 10px; padding: 12px 14px; border-radius: 14px; background: #fef3f2; border: 1px solid #fecdca; }
+.video-replace-info strong { display: block; margin-bottom: 6px; color: #991b1b; font-size: 14px; }
+.video-replace-current { display: block; color: #7c2d12; font-size: 13px; font-family: monospace; word-break: break-all; }
+.video-replace-change { display: block; margin-top: 4px; color: #92400e; font-size: 13px; font-style: italic; }
 .video-errors { margin-bottom: 16px; padding: 14px 16px; border-radius: 14px; background: #fff1f1; color: #a61b1b; }
 .video-actions { display: flex; gap: 10px; flex-wrap: wrap; }
 .video-button-primary, .video-button-secondary { display: inline-flex; align-items: center; justify-content: center; min-width: 112px; border-radius: 999px; padding: 10px 16px; font-size: 13px; font-weight: 700; text-decoration: none; border: 0; cursor: pointer; }
@@ -26,13 +33,20 @@
     <form method="post" enctype="multipart/form-data" class="video-edit-card">
         {% csrf_token %}
         {% if form.errors %}<div class="video-errors">{{ form.errors }}</div>{% endif %}
-        <div class="video-current-file"><strong>Current video file:</strong> {{ videopost.get_video_filename }}</div>
+        <div class="video-current-file"><span class="video-current-file-icon" aria-hidden="true">VIDEO</span><span><strong>Current video</strong><br><span class="video-current-file-name">{{ videopost.get_video_filename }}</span></span></div>
 
         <label for="{{ form.title.id_for_label }}">Title:</label>
         {{ form.title }}
 
-        <label for="{{ form.video_file.id_for_label }}">Replace video file:</label>
-        {{ form.video_file }}
+        <div class="video-replace-section">
+            <label for="{{ form.video_file.id_for_label }}">Replace video file <span aria-hidden="true">(optional)</span>:</label>
+            <div class="video-replace-info">
+                <strong>Current file path:</strong>
+                <span class="video-replace-current">{{ videopost.video_file.name }}</span>
+                <span class="video-replace-change">Select a new file below to replace it</span>
+            </div>
+            {{ form.video_file }}
+        </div>
 
         <label for="{{ form.description.id_for_label }}">Description:</label>
         {{ form.description }}

@@ -10,6 +10,7 @@
 .video-card label { display:block; margin-bottom:8px; font-weight:700; color:#173042; }
 .video-card input[type="text"], .video-card input[type="file"], .video-card textarea { width:100%; margin:0 0 16px; padding:12px 14px; border:1px solid #c6d3df; border-radius:14px; background:#f8fbfd; }
 .video-submit { border:0; border-radius:999px; padding:12px 18px; background:#6b21a8; color:#fff; font-weight:700; cursor:pointer; }
+.video-clear { border:0; border-radius:999px; padding:12px 18px; background:#e8eef3; color:#22384a; font-weight:700; cursor:pointer; margin-left:12px; }
 .video-list { display:grid; gap:14px; }
 .video-item { padding:16px; border:1px solid #dbe4ec; border-radius:18px; background:#f8fafc; }
 .video-item a { color:#15283a; font-weight:700; text-decoration:none; }
@@ -24,20 +25,30 @@
 .video-requirement dd { margin:0; color:#66768a; line-height:1.55; }
 .video-format-list { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
 .video-format { padding:5px 9px; border:1px solid #b9d8d0; border-radius:6px; background:#edf8f4; color:#145c4d; font-size:13px; font-weight:700; }
+.paste-zone { margin-bottom:18px; padding:24px; border:2px dashed #7da5b2; border-radius:18px; background:linear-gradient(180deg, #f7fbfd, #eef5f8); transition:border-color 0.2s ease, background 0.2s ease; outline:none; }
+.paste-zone:focus, .paste-zone.is-active { border-color:#6b21a8; background:linear-gradient(180deg, #f5f0ff, #ede8ff); }
+.paste-zone strong { display:block; font-size:18px; color:#173042; }
+.paste-zone p { margin:8px 0 0; color:#4e6373; line-height:1.6; }
+.upload-preview { margin:0 0 16px; padding:0; list-style:none; display:grid; gap:10px; }
+.upload-preview li { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:12px 14px; border-radius:14px; background:#f5f8fb; border:1px solid #dce6ee; color:#243848; font-size:14px; }
+.upload-preview-empty { color:#6b7b8b; }
+.upload-counter { display:inline-flex; align-items:center; justify-content:center; min-width:32px; height:32px; border-radius:999px; background:#e9d5ff; color:#6b21a8; font-weight:700; }
 @media screen and (max-width: 900px) { .video-upload-grid { grid-template-columns:1fr; } }
 </style>
 {% endblock %}
 {% block hero_class %}hero-theme-gallery{% endblock %}
 {% block hero_page_title %}Upload Video{% endblock %}
-{% block hero_page_description %}This page is available to superusers only. Other users are redirected to the blog home automatically.{% endblock %}
+{% block hero_page_description %}This page is available to superusers only. Choose a local video file, or click the paste area to paste video files from your clipboard.{% endblock %}
 {% block hero_grid_class %}video-upload-grid{% endblock %}
 {% block content_body %}
-        <form method="post" enctype="multipart/form-data" class="video-card">
+        <form method="post" enctype="multipart/form-data" class="video-card" id="videoUploadForm">
             {% csrf_token %}
             <h2>New Video</h2>
             {% if form.errors %}<div class="video-errors">{{ form.errors }}</div>{% endif %}
+
             {{ form.as_p }}
             <button class="video-submit" type="submit">Upload Video</button>
+            <button class="video-clear" type="button" id="clear-selection">Clear Selection</button>
         </form>
         <aside class="video-card video-requirements" aria-labelledby="video-requirements-title">
             <h2 id="video-requirements-title">Upload Requirements</h2>
@@ -69,5 +80,107 @@
                     <dd>Large files may take longer to upload depending on your internet connection. Keep this page open until the upload completes.</dd>
                 </div>
             </dl>
+            <div id="paste-zone" class="paste-zone" tabindex="0">
+                <strong>Paste video files here</strong>
+                <p>Click this area first, then press Ctrl+V to paste video files from your clipboard.</p>
+            </div>
+            <ul id="paste-preview" class="upload-preview">
+                <li class="upload-preview-empty">No video selected yet.</li>
+            </ul>
         </aside>
+{% endblock %}
+{% block extra_scripts %}
+<script>
+(() => {
+    const form = document.getElementById("videoUploadForm");
+    const fileInput = document.querySelector('input[type="file"]');
+    const pasteZone = document.getElementById("paste-zone");
+    const pastePreview = document.getElementById("paste-preview");
+    const clearSelection = document.getElementById("clear-selection");
+    let pastedFiles = [];
+    let localFiles = [];
+
+    function getAllFiles() {
+        return localFiles.concat(pastedFiles).slice(0, 1);
+    }
+
+    function renderPreview() {
+        pastePreview.innerHTML = "";
+        const allFiles = getAllFiles();
+        if (!allFiles.length) {
+            const empty = document.createElement("li");
+            empty.className = "upload-preview-empty";
+            empty.textContent = "No video selected yet.";
+            pastePreview.appendChild(empty);
+            return;
+        }
+
+        allFiles.forEach((file, index) => {
+            const item = document.createElement("li");
+            const count = document.createElement("span");
+            count.className = "upload-counter";
+            count.textContent = index + 1;
+
+            const name = document.createElement("span");
+            const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
+            name.textContent = file.name + " (" + sizeMB + " MB)";
+
+            item.appendChild(count);
+            item.appendChild(name);
+            pastePreview.appendChild(item);
+        });
+    }
+
+    function updateFileInput() {
+        const allFiles = getAllFiles();
+        if (allFiles.length > 0) {
+            const dataTransfer = new DataTransfer();
+            allFiles.forEach(file => dataTransfer.items.add(file));
+            fileInput.files = dataTransfer.files;
+        } else {
+            fileInput.value = "";
+        }
+    }
+
+    fileInput.addEventListener("change", () => {
+        localFiles = Array.from(fileInput.files || []).slice(0, 1 - pastedFiles.length);
+        renderPreview();
+    });
+
+    pasteZone.addEventListener("focus", () => pasteZone.classList.add("is-active"));
+    pasteZone.addEventListener("blur", () => pasteZone.classList.remove("is-active"));
+
+    pasteZone.addEventListener("paste", (event) => {
+        const items = Array.from(event.clipboardData?.items || []);
+        const videoItems = items.filter(item => item.type.startsWith("video/"));
+
+        if (!videoItems.length) {
+            return;
+        }
+
+        event.preventDefault();
+        videoItems.forEach((item, index) => {
+            const file = item.getAsFile();
+            if (!file) {
+                return;
+            }
+            const extension = file.type.split("/")[1] || "mp4";
+            const wrapped = new File([file], `pasted-video-${Date.now()}-${index}.${extension}`, { type: file.type });
+            pastedFiles.push(wrapped);
+        });
+
+        pastedFiles = pastedFiles.slice(0, 1 - localFiles.length);
+        updateFileInput();
+        renderPreview();
+    });
+
+    clearSelection.addEventListener("click", () => {
+        pastedFiles = [];
+        localFiles = [];
+        fileInput.value = "";
+        renderPreview();
+        pasteZone.focus();
+    });
+})();
+</script>
 {% endblock %}
