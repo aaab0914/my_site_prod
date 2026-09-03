@@ -8,10 +8,12 @@
     <title>{% block title %}{% endblock %}</title>
     <link rel="icon" type="image/png" href="{% static "favicon.png" %}?v=1">
     <link href="{% static "css/blog.css" %}?v=ba4f076aaf0d" rel="stylesheet">
+    <link href="{% static "css/anthropic-font.css" %}" rel="stylesheet">
     {% block extra_head %}{% endblock %}
 </head>
 <body>
 <style>
+    textarea { resize: none !important; }
     .messages { display: grid; gap: 12px; width: min(100%, 1020px); max-width: 1020px; margin: 0 auto 20px; }
     .message { padding: 14px 16px; border-radius: 16px; border: 1px solid transparent; line-height: 1.6; box-shadow: 0 10px 24px rgba(15,23,42,.06); }
     .message-success { background: #edf9f2; color: #14532d; border-color: #b7e4c7; }
