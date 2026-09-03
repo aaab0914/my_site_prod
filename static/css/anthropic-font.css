@@ -1,0 +1,32 @@
+/* AnthropicSerif Display Light Italic Font */
+@font-face {
+    font-family: 'Anthropic Serif Display';
+    src: url('/static/fonts/AnthropicSerif-Display-LightItalic-Static.otf') format('opentype');
+    font-weight: 300;
+    font-style: italic;
+    font-display: swap;
+}
+
+/* Apply to body text */
+body {
+    font-family: 'Anthropic Serif Display', Georgia, 'Times New Roman', serif;
+}
+
+/* Apply to headings */
+h1, h2, h3, h4, h5, h6 {
+    font-family: 'Anthropic Serif Display', Georgia, serif;
+}
+
+/* Apply to hero sections */
+.page-hero-title,
+.video-edit-hero h1,
+.hero-title {
+    font-family: 'Anthropic Serif Display', Georgia, serif;
+}
+
+/* Apply to post content */
+.post-body,
+.post-content,
+article {
+    font-family: 'Anthropic Serif Display', Georgia, serif;
+}
