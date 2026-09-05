@@ -50,7 +50,7 @@
 
     .upload-field textarea {
         min-height: 120px;
-        resize: vertical;
+        resize: none;
     }
 
     .upload-error {
@@ -215,6 +215,7 @@
             <div class="upload-field">
                 <label for="{{ form.title.id_for_label }}">Album title</label>
                 {{ form.title }}
+                <div class="upload-help">Maximum 50 characters.</div>
                 {% if form.title.errors %}
                     <div class="upload-error">{{ form.title.errors }}</div>
                 {% endif %}
@@ -236,6 +237,7 @@
             <div class="upload-field">
                 <label for="{{ form.description.id_for_label }}">Description</label>
                 {{ form.description }}
+                <div class="upload-help">Maximum 500 characters.</div>
                 {% if form.description.errors %}
                     <div class="upload-error">{{ form.description.errors }}</div>
                 {% endif %}

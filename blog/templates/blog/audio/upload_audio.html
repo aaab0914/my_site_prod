@@ -233,6 +233,7 @@
             <div class="audio-upload-field">
                 <label for="{{ form.music_name.id_for_label }}">Track title</label>
                 {{ form.music_name }}
+                <div class="audio-upload-help">Maximum 50 characters.</div>
                 {% if form.music_name.errors %}
                     <div class="audio-upload-error">{{ form.music_name.errors }}</div>
                 {% endif %}
@@ -264,6 +265,7 @@
             <div class="audio-upload-field">
                 <label for="{{ form.description.id_for_label }}">Description</label>
                 {{ form.description }}
+                <div class="audio-upload-help">Maximum 500 characters.</div>
                 <div class="audio-upload-help">Add context, mood, source notes, or anything listeners should know before pressing play.</div>
                 {% if form.description.errors %}
                     <div class="audio-upload-error">{{ form.description.errors }}</div>

@@ -140,7 +140,7 @@ class CommentForm(forms.ModelForm):
         model = Comment
         fields = ["body"]
         widgets = {
-            "body": forms.Textarea(attrs={"class": "form-control", "rows": 4}),
+            "body": forms.Textarea(attrs={"class": "form-control", "rows": 4, "style": "resize: none;"}),
         }
 
 
@@ -263,6 +263,11 @@ class AudioEditForm(forms.ModelForm):
 
 class VideoUploadForm(forms.ModelForm):
     """Form for uploading a single video file."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["title"].help_text = "Maximum 50 characters."
+        self.fields["description"].help_text = "Maximum 500 characters."
 
     class Meta:
         model = VideoPost

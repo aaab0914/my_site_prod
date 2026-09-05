@@ -88,11 +88,11 @@ class Post(models.Model):
         PUBLISHED = "PB", "Published"
 
     # Core fields
-    title = models.CharField(max_length=250)
+    title = models.CharField(max_length=50)
     cover_image = models.ImageField(upload_to=dated_media_upload_to("posts"), blank=True, null=True)
     slug = models.SlugField(max_length=250, unique_for_date="publish")
     author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="blog_posts")
-    body = MarkdownxField()
+    body = MarkdownxField(max_length=500)
 
     # Time fields
     publish = models.DateTimeField(default=timezone.now)
@@ -180,7 +180,7 @@ class Comment(models.Model):
     post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name="comments")
     author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="blog_comments")
     email = models.EmailField()
-    body = models.CharField(max_length=1000)
+    body = models.CharField(max_length=500)
     image = models.ImageField(upload_to=dated_media_upload_to("comments"), blank=True, null=True)
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
@@ -224,7 +224,7 @@ class AudioPost(models.Model):
     """
     audio_file = models.FileField(upload_to=dated_media_upload_to("audio"))
     cover_image = models.ImageField(upload_to=dated_media_upload_to("audio/covers"), blank=True, null=True)
-    description = models.TextField(blank=True)
+    description = models.TextField(max_length=500, blank=True)
     uploaded_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="audio_posts")
     music_name = models.CharField(max_length=200, blank=True)
     active = models.BooleanField(default=True)
@@ -274,8 +274,8 @@ class AudioPost(models.Model):
 class VideoPost(models.Model):
     video_file = models.FileField(upload_to=dated_media_upload_to("videos"))
     cover_image = models.ImageField(upload_to=dated_media_upload_to("videos"), blank=True, null=True)
-    title = models.CharField(max_length=200, blank=True)
-    description = models.TextField(blank=True)
+    title = models.CharField(max_length=50, blank=True)
+    description = models.TextField(max_length=500, blank=True)
     uploaded_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="video_posts")
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
@@ -423,7 +423,7 @@ class Note(models.Model):
     Personal note model - each user has their own private notes.
     """
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="notes")
-    title = models.CharField(max_length=200)
+    title = models.CharField(max_length=50)
     content = models.TextField()
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)

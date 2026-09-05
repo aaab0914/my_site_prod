@@ -140,6 +140,7 @@ def register(request):
     return render(request, "users/register.html", {"form": form})
 
 
+@never_cache
 def login_view(request):
     if request.user.is_authenticated:
         return _redirect_to_post_list()
@@ -165,32 +166,18 @@ def login_view(request):
 
 @never_cache
 def logout_view(request):
-    # Clear server-side session first
-    if request.session.session_key:
-        request.session.flush()
-
-    # Django logout
-    logout(request)
-
-    # Redirect to login page
-    response = redirect("users:login")
-
-    # Delete all possible session cookies (with and without domain)
-    cookie_names = ["sessionid", "__Secure-sessionid", "csrftoken", "__Secure-csrftoken"]
-    for cookie_name in cookie_names:
-        # Delete without domain
-        response.delete_cookie(cookie_name)
-        # Delete with domain
-        response.delete_cookie(cookie_name, domain=".kdns.fr")
-        response.delete_cookie(cookie_name, domain="rgavanp.kdns.fr")
-
-    # Aggressive cache control headers to prevent browser caching
-    response["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0, private"
-    response["Pragma"] = "no-cache"
-    response["Expires"] = "0"
-    response["Clear-Site-Data"] = '"cache", "cookies", "storage"'
-
-    return response
+    if request.method == "POST":
+        logout(request)
+        response = render(request, "users/logout.html", {"logged_out": True})
+        for cookie_name in ["sessionid", "__Secure-sessionid", "csrftoken", "__Secure-csrftoken"]:
+            response.delete_cookie(cookie_name)
+            response.delete_cookie(cookie_name, domain=".kdns.fr")
+            response.delete_cookie(cookie_name, domain="rgavanp.kdns.fr")
+        response["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0, private"
+        response["Pragma"] = "no-cache"
+        response["Clear-Site-Data"] = '"cache", "cookies", "storage"'
+        return response
+    return render(request, "users/logout.html", {"logged_out": False})
 
 
 @login_required

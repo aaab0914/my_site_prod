@@ -1,8 +1,12 @@
-<h2>Add a New Comment</h2>
+<style>
+.comment-limit-help { margin: 8px 0 14px; color: #66768a; font-size: 14px; }
+.left textarea { width: 763px; height: 200px; max-width: 100%; box-sizing: border-box; resize: none !important; }
+</style><h2>Add a New Comment</h2>
 {% if user.is_authenticated %}
     <form action="{% url "blog:post_comment" post.id %}" method="post" enctype="multipart/form-data">
         <div class="left">
             {{ form.body.as_field_group }}
+            <div class="comment-limit-help">Body: Maximum 500 characters.</div>
         </div>
         <div class="left">
             {{ form.image.as_field_group }}

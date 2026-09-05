@@ -125,7 +125,7 @@ class GalleryUploadForm(forms.Form):
 
 
 class AlbumUploadForm(forms.Form):
-    title = forms.CharField(max_length=200)
+    title = forms.CharField(max_length=50)
     description = forms.CharField(required=False, widget=forms.Textarea(attrs={"rows": 4}))
     images = AlbumMultipleFileField(
         required=False,

@@ -176,7 +176,7 @@
             <a class="blog-home-link home-link" href="{% url 'blog:all_posts_list' %}">🏠 Blog Home</a>
         </p>
         {% endif %}
-    {% elif request.path|slice:":6" == "/blog/" or request.path == "/blog/" %}
+    {% elif request.path|slice:":6" == "/blog/" or request.path == "/blog/" or request.path|slice:":7" == "/users/" %}
         <p class="blog-home">
             <a class="blog-home-link home-link" href="{% url 'blog:all_posts_list' %}">🏠 Blog Home</a>
         </p>

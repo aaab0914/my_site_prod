@@ -2,14 +2,14 @@
 @font-face {
     font-family: 'Anthropic Serif Display';
     src: url('/static/fonts/AnthropicSerif-Display-LightItalic-Static.otf') format('opentype');
-    font-weight: 300;
-    font-style: italic;
+    font-weight: 300 700;
+    font-style: normal italic;
     font-display: swap;
 }
 
 /* Apply to body text */
-body {
-    font-family: 'Anthropic Serif Display', Georgia, 'Times New Roman', serif;
+html, body, body * {
+    font-family: 'Anthropic Serif Display', Georgia, 'Times New Roman', serif !important;
 }
 
 /* Apply to headings */

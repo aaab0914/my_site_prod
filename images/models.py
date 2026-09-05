@@ -8,9 +8,9 @@ from my_site.media_naming import dated_media_upload_to
 
 
 class ImagePost(models.Model):
-    title = models.CharField(max_length=200)
+    title = models.CharField(max_length=50)
     image = models.ImageField(upload_to=dated_media_upload_to("gallery"))
-    description = models.TextField(blank=True)
+    description = models.TextField(max_length=500, blank=True)
     uploaded_by = models.ForeignKey(User, on_delete=models.CASCADE)
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
@@ -39,8 +39,8 @@ class ImagePost(models.Model):
 
 
 class Album(models.Model):
-    title = models.CharField(max_length=200)
-    description = models.TextField(blank=True)
+    title = models.CharField(max_length=50)
+    description = models.TextField(max_length=500, blank=True)
     uploaded_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="albums")
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
@@ -61,9 +61,9 @@ class Album(models.Model):
 
 class AlbumImage(models.Model):
     album = models.ForeignKey(Album, on_delete=models.CASCADE, related_name="images", null=True, blank=True)
-    title = models.CharField(max_length=200)
+    title = models.CharField(max_length=50)
     image = models.ImageField(upload_to=dated_media_upload_to("albums"))
-    description = models.TextField(blank=True)
+    description = models.TextField(max_length=500, blank=True)
     uploaded_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="album_images")
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)

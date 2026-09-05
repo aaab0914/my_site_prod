@@ -255,6 +255,7 @@
             <div class="post-create-field">
                 <label for="{{ form.title.id_for_label }}">Title</label>
                 {{ form.title }}
+                <div class="post-create-help">Maximum 50 characters.</div>
                 {% if form.title.errors %}
                     <div class="post-create-error">{{ form.title.errors }}</div>
                 {% endif %}
@@ -263,6 +264,7 @@
             <div class="post-create-field">
                 <label for="{{ form.body.id_for_label }}">Body</label>
                 {{ form.body }}
+                <div class="post-create-help">Maximum 500 characters.</div>
                 <div class="post-create-help">Use clear paragraphs. The editor keeps the structure simple and close to the final post output.</div>
                 {% if form.body.errors %}
                     <div class="post-create-error">{{ form.body.errors }}</div>

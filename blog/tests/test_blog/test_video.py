@@ -36,6 +36,23 @@ class VideoRouteTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "blog/video/video_list.html")
 
+    def test_video_upload_accepts_multipart_submission(self):
+        self.client.force_login(self.superuser)
+        video_file = SimpleUploadedFile(
+            "uploaded-clip.mp4", b"video-bytes", content_type="video/mp4"
+        )
+        response = self.client.post(
+            reverse("blog:video_upload"),
+            {
+                "title": "Multipart Video",
+                "description": "Video upload test",
+                "video_file": video_file,
+            },
+            follow=True,
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(VideoPost.objects.filter(title="Multipart Video").exists())
+
     def test_video_upload_redirects_anonymous_user_to_login(self):
         response = self.client.get(reverse("blog:video_upload"))
         self.assertEqual(response.status_code, 302)

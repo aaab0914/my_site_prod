@@ -126,3 +126,22 @@ class ApiTokenViewTests(TestCase):
         self.assertTemplateUsed(response, "users/api_token.html")
         token = Token.objects.get(user=self.user)
         self.assertContains(response, token.key)
+
+class LoginLogoutIntegrationTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(username='flowuser', password='flowpass123')
+        self.login_url = reverse('users:login')
+        self.logout_url = reverse('users:logout')
+
+    def test_login_creates_authenticated_session(self):
+        response = self.client.post(self.login_url, {'username':'flowuser','password':'flowpass123'}, follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.wsgi_request.user.is_authenticated)
+        self.assertTrue('_auth_user_id' in self.client.session)
+
+    def test_logout_clears_authenticated_session(self):
+        self.client.login(username='flowuser', password='flowpass123')
+        response = self.client.get(self.logout_url, follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(response.wsgi_request.user.is_authenticated)
+        self.assertNotIn('_auth_user_id', self.client.session)

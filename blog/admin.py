@@ -239,7 +239,7 @@ except admin.sites.NotRegistered:
 
 
 class PostAdminForm(forms.ModelForm):
-    body = forms.CharField(
+    body = forms.CharField(max_length=500, 
         widget=forms.Textarea(
             attrs={"rows": 16, "cols": 140, "style": "width: 100%; min-height: 24em; resize: vertical;"}
         )
