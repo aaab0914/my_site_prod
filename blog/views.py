@@ -14,6 +14,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse_lazy
 from django.views.decorators.http import require_POST
 from django.views.decorators.cache import cache_page, never_cache
+from django.utils.cache import patch_cache_control
 from my_site.sorting import build_sort_context
 from django.views.generic.edit import DeleteView, UpdateView
 from taggit.models import Tag
@@ -99,7 +100,9 @@ def post_share(request, post_id):
         form = EmailPostForm()
     return render(request, "blog/post/share.html", {"post": post, "form": form})
 
-@cache_page(60 * 3)  # Cache for 3 minutes
+from django.utils.cache import patch_cache_control
+from django.views.decorators.cache import cache_control
+
 def post_list(request, tag_slug=None):
     # Sorting options
     sort_options = {
@@ -136,7 +139,7 @@ def post_list(request, tag_slug=None):
     except EmptyPage:
         posts = paginator.page(paginator.num_pages)
 
-    return render(
+    response = render(
         request,
         "blog/post/all_posts_list.html",
         {
@@ -145,6 +148,14 @@ def post_list(request, tag_slug=None):
             **sort_context,
         },
     )
+
+    # Cache varies by authentication status - logged in users get private cache
+    if request.user.is_authenticated:
+        patch_cache_control(response, private=True, max_age=180)
+    else:
+        patch_cache_control(response, public=True, max_age=180)
+
+    return response
 
 
 def post_detail(request, year, month, day, post_slug):
