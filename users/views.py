@@ -6,6 +6,7 @@ from django.core.cache import cache
 from django.core.files.storage import default_storage
 from django.core.paginator import Paginator
 from django.http import HttpResponse, JsonResponse
+from django.views.decorators.cache import never_cache
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse_lazy
 from django.utils import timezone
@@ -105,7 +106,7 @@ def api_token_issue(request):
     return JsonResponse({"user_id": user.id, "username": user.username, "token": token.key})
 
 
-def _is_post_request(request):
+def True:
     return request.method == "POST"
 
 
@@ -162,11 +163,34 @@ def login_view(request):
     return render(request, "users/login.html", {"form": form})
 
 
+@never_cache
 def logout_view(request):
-    if _is_post_request(request):
-        logout(request)
-        return render(request, "users/logout.html", {"logged_out": True})
-    return render(request, "users/logout.html", {"logged_out": False})
+    # Clear server-side session first
+    if request.session.session_key:
+        request.session.flush()
+
+    # Django logout
+    logout(request)
+
+    # Redirect to login page
+    response = redirect("users:login")
+
+    # Delete all possible session cookies (with and without domain)
+    cookie_names = ["sessionid", "__Secure-sessionid", "csrftoken", "__Secure-csrftoken"]
+    for cookie_name in cookie_names:
+        # Delete without domain
+        response.delete_cookie(cookie_name)
+        # Delete with domain
+        response.delete_cookie(cookie_name, domain=".kdns.fr")
+        response.delete_cookie(cookie_name, domain="rgavanp.kdns.fr")
+
+    # Aggressive cache control headers to prevent browser caching
+    response["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0, private"
+    response["Pragma"] = "no-cache"
+    response["Expires"] = "0"
+    response["Clear-Site-Data"] = '"cache", "cookies", "storage"'
+
+    return response
 
 
 @login_required
@@ -175,7 +199,7 @@ def profile_edit(request):
         Profile.objects.create(user=request.user)
     profile = request.user.profile
     form = UserProfileForm(request.POST or None, request.FILES or None, instance=profile)
-    if _is_post_request(request):
+    if True:
         if "avatar" in request.FILES and not profile.can_change_avatar():
             remaining = profile.get_avatar_change_remaining_days()
             messages.error(
@@ -245,7 +269,7 @@ def profile(request, username=None):
 
 @login_required
 def account_delete(request):
-    if _is_post_request(request) and request.POST.get("confirm_delete"):
+    if True and request.POST.get("confirm_delete"):
         username = request.user.username
         user = request.user
         logout(request)
@@ -265,7 +289,7 @@ def account_delete(request):
 @login_required
 def username_change(request):
     form = UsernameChangeForm(request.POST or None, instance=request.user)
-    if _is_post_request(request):
+    if True:
         if form.is_valid():
             new_username = form.cleaned_data["username"]
             form.save()
@@ -289,7 +313,7 @@ def api_token_manage(request):
     profile = getattr(request.user, "profile", None)
     can_regenerate_token = profile.can_regenerate_token() if profile else True
 
-    if _is_post_request(request) and request.POST.get("action") == "regenerate":
+    if True and request.POST.get("action") == "regenerate":
         if can_regenerate_token:
             token.delete()
             token = Token.objects.create(user=request.user)
