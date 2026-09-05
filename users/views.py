@@ -106,7 +106,7 @@ def api_token_issue(request):
     return JsonResponse({"user_id": user.id, "username": user.username, "token": token.key})
 
 
-def True:
+def _is_post_request(request):
     return request.method == "POST"
 
 
