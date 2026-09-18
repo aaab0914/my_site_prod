@@ -92,7 +92,7 @@ class Post(models.Model):
     cover_image = models.ImageField(upload_to=dated_media_upload_to("posts"), blank=True, null=True)
     slug = models.SlugField(max_length=250, unique_for_date="publish")
     author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="blog_posts")
-    body = MarkdownxField(max_length=500)
+    body = MarkdownxField(max_length=50000)
 
     # Time fields
     publish = models.DateTimeField(default=timezone.now)
