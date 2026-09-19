@@ -1,109 +1,35 @@
-"""
-Data models for the blog application.
-
-This module defines all database models including Blog Posts, Comments,
-Audio Posts, and Audit Logs. It also includes custom model managers,
-validation logic, and relationship definitions.
-"""
-
-from itertools import count
-
-# =============================================================================
-# IMPORTS (All imports moved to the top)
-# =============================================================================
-
 import os
-# os: Provides operating system interfaces, used for file path manipulation.
-
-import markdown
-# markdown: Converts Markdown text to HTML for rendering post bodies.
-
+from itertools import count
 from django.conf import settings
-# settings: Accesses Django project settings, used for AUTH_USER_MODEL.
-
 from django.db import models
-# models: Django's ORM module. Provides Model, Manager, and field types.
-
 from django.urls import reverse
-# reverse: Generates URLs from named URL patterns.
-
 from django.utils import timezone
-# timezone: Timezone-aware datetime utilities.
-
 from django.utils.text import slugify
-# slugify: Converts a string to a URL-friendly slug.
-
 from django.core.exceptions import ValidationError
-# ValidationError: Exception for data validation failures.
-
 from markdownx.models import MarkdownxField
-# MarkdownxField: A custom model field that stores Markdown content.
-
 from taggit.managers import TaggableManager
-
 from my_site.markdown_utils import render_markdown
 from my_site.media_naming import dated_media_upload_to, media_display_name
-# TaggableManager: Manages many-to-many relationships with tags.
-
-
-# =============================================================================
-# CUSTOM MANAGER
-# =============================================================================
 
 class PublishedManager(models.Manager):
-    """
-    Custom model manager that filters querysets to return only published posts.
-    """
-
     def get_queryset(self):
-        """
-        Override the default queryset to filter by PUBLISHED status.
-
-        Returns:
-            QuerySet: A queryset containing only posts with status='PB'.
-        """
         return super().get_queryset().filter(status=Post.Status.PUBLISHED)
 
-
-# =============================================================================
-# POST MODEL
-# =============================================================================
-
 class Post(models.Model):
-    """
-    Blog post model representing articles written by users.
-
-    Features:
-        - Draft/Published status management
-        - Automatic slug generation
-        - Markdown content support
-        - Tagging via django-taggit
-        - Publication date hierarchy
-        - Custom manager for published posts only
-    """
-
     class Status(models.TextChoices):
-        """Enum defining possible post statuses."""
         DRAFT = "DF", "Draft"
         PUBLISHED = "PB", "Published"
 
-    # Core fields
     title = models.CharField(max_length=50)
     cover_image = models.ImageField(upload_to=dated_media_upload_to("posts"), blank=True, null=True)
     slug = models.SlugField(max_length=250, unique_for_date="publish")
     author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="blog_posts")
     body = MarkdownxField(max_length=50000)
-
-    # Time fields
     publish = models.DateTimeField(default=timezone.now)
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
-
-    # Status and tags
     status = models.CharField(max_length=10, choices=Status, default=Status.DRAFT)
     tags = TaggableManager()
-
-    # Managers
     objects = models.Manager()
     published = PublishedManager()
 
@@ -111,10 +37,10 @@ class Post(models.Model):
         ordering = ["-publish"]
         indexes = [
             models.Index(fields=["-publish"]),
-            models.Index(fields=["-publish", "-id"]),  # For list view sorting
-            models.Index(fields=["slug", "publish"]),  # For detail view lookup
-            models.Index(fields=["author", "-publish"]),  # For author filtering
-            models.Index(fields=["status", "-publish"]),  # For published posts
+            models.Index(fields=["-publish", "-id"]),
+            models.Index(fields=["slug", "publish"]),
+            models.Index(fields=["author", "-publish"]),
+            models.Index(fields=["status", "-publish"]),
         ]
         constraints = [models.UniqueConstraint(fields=["slug", "publish"], name="unique_slug_per_date")]
 
@@ -129,19 +55,16 @@ class Post(models.Model):
         if not base_slug:
             timestamp = timezone.localtime(self.publish or timezone.now()).strftime('%Y%m%d%H%M%S')
             base_slug = f'post-{timestamp}'
-
         base_slug = base_slug[:250]
         publish_date = timezone.localtime(self.publish or timezone.now()).date()
         existing = Post.objects.filter(publish__date=publish_date)
         if self.pk:
             existing = existing.exclude(pk=self.pk)
-
         for index in count(1):
             suffix = '' if index == 1 else f'-{index}'
             candidate = f'{base_slug[:250 - len(suffix)]}{suffix}'
             if candidate and not existing.filter(slug=candidate).exists():
                 return candidate
-
         raise ValueError('Unable to generate a unique slug for the post.')
 
     def clean(self):
@@ -162,21 +85,7 @@ class Post(models.Model):
             return ""
         return reverse("blog:post_cover_image", args=[self.pk])
 
-
-# =============================================================================
-# COMMENT MODEL
-# =============================================================================
-
 class Comment(models.Model):
-    """
-    Comment model representing user comments on blog posts.
-
-    Features:
-        - Links to parent Post and author User
-        - Email storage for Gravatar or notifications
-        - Active flag for moderation
-        - Optional image upload
-    """
     post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name="comments")
     author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="blog_comments")
     email = models.EmailField()
@@ -207,21 +116,7 @@ class Comment(models.Model):
             return ""
         return reverse("blog:comment_image", args=[self.pk])
 
-
-# =============================================================================
-# AUDIO POST MODEL
-# =============================================================================
-
 class AudioPost(models.Model):
-    """
-    Audio post model for uploading and managing audio files.
-
-    Features:
-        - File upload with date-based folder structure
-        - Auto-generated music name from filename
-        - Active/inactive state management
-        - Automatic timestamp tracking
-    """
     audio_file = models.FileField(upload_to=dated_media_upload_to("audio"))
     cover_image = models.ImageField(upload_to=dated_media_upload_to("audio/covers"), blank=True, null=True)
     description = models.TextField(max_length=500, blank=True)
@@ -235,8 +130,8 @@ class AudioPost(models.Model):
         ordering = ["-created"]
         indexes = [
             models.Index(fields=["created"]),
-            models.Index(fields=["-created", "-id"]),  # For list view sorting
-            models.Index(fields=["uploaded_by", "-created"]),  # For user filtering
+            models.Index(fields=["-created", "-id"]),
+            models.Index(fields=["uploaded_by", "-created"]),
         ]
 
     def __str__(self):
@@ -269,8 +164,6 @@ class AudioPost(models.Model):
         version = int((self.updated or self.created).timestamp()) if (self.updated or self.created) else self.pk
         return f'{reverse("blog:audio_cover_image_proxy", args=[self.pk])}?v={version}'
 
-
-
 class VideoPost(models.Model):
     video_file = models.FileField(upload_to=dated_media_upload_to("videos"))
     cover_image = models.ImageField(upload_to=dated_media_upload_to("videos"), blank=True, null=True)
@@ -284,8 +177,8 @@ class VideoPost(models.Model):
         ordering = ["-created"]
         indexes = [
             models.Index(fields=["created"]),
-            models.Index(fields=["-created", "-id"]),  # For list view sorting
-            models.Index(fields=["uploaded_by", "-created"]),  # For user filtering
+            models.Index(fields=["-created", "-id"]),
+            models.Index(fields=["uploaded_by", "-created"]),
         ]
 
     def __str__(self):
@@ -303,7 +196,7 @@ class VideoPost(models.Model):
 
     def get_cover_proxy_url(self):
         if not self.cover_image:
-            return 
+            return ""
         version = int((self.updated or self.created).timestamp()) if (self.updated or self.created) else self.pk
         return f'{reverse("blog:video_cover_image_proxy", args=[self.pk])}?v={version}'
 
@@ -313,20 +206,7 @@ class VideoPost(models.Model):
         version = int((self.updated or self.created).timestamp()) if (self.updated or self.created) else self.pk
         return f'{reverse("blog:video_file_proxy", args=[self.pk])}?v={version}'
 
-
-# =============================================================================
-# AUDIT LOG MODEL
-# =============================================================================
-
 class AuditLog(models.Model):
-    """
-    Audit log model for recording HTTP requests and responses.
-
-    Features:
-        - Stores request method, path, and response status
-        - Tracks user, IP address, and response time
-        - Read-only historical records for security monitoring
-    """
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True)
     method = models.CharField(max_length=10)
     path = models.CharField(max_length=500)
@@ -342,97 +222,16 @@ class AuditLog(models.Model):
     def __str__(self):
         return f"{self.method} {self.path} - {self.status_code}"
 
-# ┌─────────────────────────────────────────────────────────────────────────────┐
-# │                         blog/models.py                                     │
-# │                     (Database Models Definition)                           │
-# └─────────────────────────────────────────────────────────────────────────────┘
-#                                       │
-#                                       ▼
-# ┌─────────────────────────────────────────────────────────────────────────────┐
-# │                            IMPORTS (Dependencies)                           │
-# ├─────────────────────────────────────────────────────────────────────────────┤
-# │  os               │  django.db.models        │  django.urls                │
-# │  markdown         │  ├─ Model                │  └─ reverse                 │
-# │  django.conf      │  ├─ Manager              │  django.utils               │
-# │  └─ settings      │  ├─ ForeignKey           │  ├─ timezone                │
-# │  django.core      │  ├─ CharField            │  └─ text.slugify            │
-# │  └─ exceptions    │  ├─ DateTimeField        │  markdownx.models           │
-# │      └─ Validation│  ├─ ImageField           │  └─ MarkdownxField          │
-# │          Error     │  ├─ SlugField            │  taggit.managers            │
-# │                    │  ├─ TextChoices          │  └─ TaggableManager         │
-# │                    │  ├─ BooleanField         │                             │
-# │                    │  ├─ EmailField           │                             │
-# │                    │  └─ GenericIPAddressField │                             │
-# └─────────────────────────────────────────────────────────────────────────────┘
-#                                       │
-#                                       ▼
-#                  ┌────────────────────────────────────────────────┐
-#                  │         Models, Managers & Classes             │
-#                  └────────────────────────────────────────────────┘
-#                                       │
-#          ┌────────────────────────────┼────────────────────────────┐
-#          ▼                            ▼                            ▼
-# ┌──────────────────────┐  ┌──────────────────────┐  ┌──────────────────────┐
-# │   PublishedManager   │  │   Post               │  │   Comment            │
-# │   (Class)            │  │   (Model)            │  │   (Model)            │
-# ├──────────────────────┤  ├──────────────────────┤  ├──────────────────────┤
-# │ Inherits:            │  │ Status Choices:      │  │ Fields:              │
-# │   models.Manager     │  │   DRAFT, PUBLISHED   │  │   post               │
-# │                      │  │                      │  │   author             │
-# │ Purpose:             │  │ Custom Methods:      │  │   email              │
-# │   Return only        │  │   get_absolute_url() │  │   body               │
-# │   published posts    │  │   get_markdown_body()│  │   image              │
-# │                      │  │   clean()            │  │   created            │
-# │ Methods:             │  │   save()             │  │   updated            │
-# │   get_queryset()     │  │                      │  │   active             │
-# │                      │  │ Meta:                │  │                      │
-# │                      │  │   ordering           │  │ Meta:                │
-# │                      │  │   indexes            │  │   ordering           │
-# │                      │  │   constraints        │  │   indexes            │
-# └──────────────────────┘  └──────────────────────┘  └──────────────────────┘
-#                                       │
-#          ┌────────────────────────────┼────────────────────────────┐
-#          ▼                            ▼                            ▼
-# ┌──────────────────────┐  ┌──────────────────────┐  ┌──────────────────────┐
-# │   AudioPost          │  │   AuditLog           │  │                      │
-# │   (Model)            │  │   (Model)            │  │                      │
-# ├──────────────────────┤  ├──────────────────────┤  │                      │
-# │ Fields:              │  │ Fields:              │  │                      │
-# │   audio_file         │  │   user               │  │                      │
-# │   description        │  │   method             │  │                      │
-# │   uploaded_by        │  │   path               │  │                      │
-# │   music_name         │  │   ip_address         │  │                      │
-# │   active             │  │   status_code        │  │                      │
-# │   created            │  │   response_time      │  │                      │
-# │   updated            │  │   timestamp          │  │                      │
-# │                      │  │                      │  │                      │
-# │ Meta:                │  │ Meta:                │  │                      │
-# │   ordering           │  │   ordering           │  │                      │
-# │   indexes            │  │   indexes            │  │                      │
-# │                      │  │                      │  │                      │
-# │ Custom Method:       │  │                      │  │                      │
-# │   save() auto-       │  │                      │  │                      │
-# │   generate music_name│  │                      │  │                      │
-# └──────────────────────┘  └──────────────────────┘  └──────────────────────┘
-
-
-
-
 class Note(models.Model):
-    """
-    Personal note model - each user has their own private notes.
-    """
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="notes")
     title = models.CharField(max_length=50)
     content = models.TextField()
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
-    
+
     class Meta:
         ordering = ["-updated"]
-        indexes = [
-            models.Index(fields=["user", "-updated"]),
-        ]
-    
+        indexes = [models.Index(fields=["user", "-updated"])]
+
     def __str__(self):
         return f"{self.user.username} - {self.title}"

@@ -1,7 +1,13 @@
 # syntax=docker/dockerfile:1.7
+# =============================================
+# my_site — Development Docker image
+# =============================================
 
 FROM python:3.12-slim
 
+# =============================================
+# ENVIRONMENT
+# =============================================
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     DJANGO_SETTINGS_MODULE=my_site.settings.dev \
@@ -10,25 +16,45 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /code
 
-RUN addgroup --system app && adduser --system --ingroup app app \
+# =============================================
+# SYSTEM DEPENDENCIES
+# =============================================
+# gosu: used by entrypoint to drop privileges from root to app user
+RUN addgroup --system app \
+    && adduser --system --ingroup app app \
     && apt-get update \
-    && apt-get install -y --no-install-recommends gosu \
+    && apt-get install -y --no-install-recommends \
+        gosu \
     && rm -rf /var/lib/apt/lists/*
 
+# =============================================
+# PYTHON DEPENDENCIES
+# =============================================
+# Copy requirements.txt first (low change frequency) to leverage layer caching
 COPY requirements.txt /tmp/requirements.txt
 
-# Install primarily from local Linux wheels, fall back to PyPI when missing.
+# Install primarily from local Linux wheels, fall back to PyPI when missing
 COPY --from=linux_wheels / /wheels/linux/
-
 RUN python -m pip install --upgrade pip && \
     pip install --find-links=/wheels/linux -r /tmp/requirements.txt
 
+# =============================================
+# APPLICATION CODE
+# =============================================
+# Copy remaining code (high change frequency)
 COPY . .
 
+# =============================================
+# RUNTIME DIRECTORIES & PERMISSIONS
+# =============================================
 RUN mkdir -p /code/staticfiles /code/media /code/logs /code/backups && \
     chown -R app:app /code && \
     chmod -R 755 /code/staticfiles /code/media /code/logs /code/backups
 
+# =============================================
+# ENTRYPOINT
+# =============================================
+# Placed outside /code to avoid being affected by bind mounts
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
