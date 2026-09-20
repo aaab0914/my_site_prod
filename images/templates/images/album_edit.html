@@ -1,33 +1,33 @@
 {% extends "blog/hero_base.html" %}
-
 {% block title %}Edit Album{% endblock %}
 {% block hero_class %}hero-theme-gallery{% endblock %}
 {% block hero_page_title %}Edit Album{% endblock %}
 {% block hero_page_description %}Update the album title and description without changing its existing images.{% endblock %}
 {% block hero_body %}
-<section class="page-card album-edit-card">
-    <form method="post">
-        {% csrf_token %}
-        {% if form.non_field_errors %}<div class="album-edit-errors">{{ form.non_field_errors }}</div>{% endif %}
-        <div class="album-edit-field">
-            {{ form.title.label_tag }}
-            {{ form.title }}
-            {% if form.title.errors %}<div class="album-edit-errors">{{ form.title.errors }}</div>{% endif %}
-        </div>
-        <div class="album-edit-field">
-            {{ form.description.label_tag }}
-            {{ form.description }}
-            {% if form.description.errors %}<div class="album-edit-errors">{{ form.description.errors }}</div>{% endif %}
-        </div>
-        <div class="album-edit-actions">
-            <button class="album-edit-save" type="submit">Save Changes</button>
-            <a class="album-edit-cancel" href="{% url 'blog:images:album_detail' album.id %}">Cancel</a>
-        </div>
-    </form>
-</section>
+    <section class="page-card album-edit-card">
+        <form method="post">
+            {% csrf_token %}
+            {% if form.non_field_errors %}<div class="album-edit-errors">{{ form.non_field_errors }}</div>{% endif %}
+            <div class="album-edit-field">
+                {{ form.title.label_tag }}
+                {{ form.title }}
+                {% if form.title.errors %}<div class="album-edit-errors">{{ form.title.errors }}</div>{% endif %}
+            </div>
+            <div class="album-edit-field">
+                {{ form.description.label_tag }}
+                {{ form.description }}
+                {% if form.description.errors %}<div class="album-edit-errors">{{ form.description.errors }}</div>{% endif %}
+            </div>
+            <div class="album-edit-actions">
+                <button class="album-edit-save" type="submit">Save Changes</button>
+                <a class="album-edit-cancel"
+                   href="{% url 'blog:images:album_detail' album.id %}">Cancel</a>
+            </div>
+        </form>
+    </section>
 {% endblock %}
 {% block hero_base_css %}
-<style>
+    <style>
     .album-edit-card { max-width: 760px; margin: 0 auto; padding: 28px; }
     .album-edit-field { margin-bottom: 18px; }
     .album-edit-field label { display: block; margin-bottom: 8px; color: #173042; font-weight: 700; }
@@ -38,5 +38,5 @@
     .album-edit-save { background: #0f766e; color: #fff; }
     .album-edit-cancel { background: #e9eff4; color: #22384a; }
     .album-edit-errors { margin: 0 0 12px; color: #b42318; }
-</style>
+    </style>
 {% endblock %}

@@ -1,9 +1,7 @@
-{% extends 'blog/base.html' %}
-
+{% extends "blog/base.html" %}
 {% block title %}Delete Post{% endblock %}
-
 {% block content %}
-<style>
+    <style>
     .post-delete-shell { max-width: 1040px; margin: 0 auto 36px; }
     .post-delete-hero {
         margin-bottom: 24px; padding: 30px; border-radius: 28px;
@@ -31,40 +29,36 @@
         .post-delete-layout { grid-template-columns: 1fr; }
         .post-delete-panel { padding: 18px; }
     }
-</style>
-
-<section class="post-delete-shell page-shell">
-    <div class="post-delete-hero page-hero">
-        <h1 class="page-hero-title">Delete Post</h1>
-        <p class="page-hero-copy">Review the post details before removal. This action permanently deletes the post from the site.</p>
-    </div>
-
-    <div class="post-delete-layout">
-        <section class="post-delete-panel">
-            <h2>Post Summary</h2>
-            <div class="post-delete-details">
-                <div><strong>Title:</strong> {{ post.title }}</div>
-                <div><strong>Author:</strong> {{ post.author.username }}</div>
-                <div><strong>Published:</strong> {{ post.publish|date:"F j, Y, g:i a" }}</div>
-                <div><strong>Status:</strong> {{ post.get_status_display }}</div>
-                {% if post.tags.all %}
-                    <div><strong>Tags:</strong> {% for tag in post.tags.all %}{{ tag.name }}{% if not forloop.last %}, {% endif %}{% endfor %}</div>
-                {% endif %}
-            </div>
-
-            <form method="post">
-                {% csrf_token %}
-                <div class="post-delete-actions">
-                    <button type="submit" class="post-delete-button">Delete Post</button>
-                    <a href="{% url 'blog:all_posts_list' %}" class="post-delete-link">Back to Posts</a>
+    </style>
+    <section class="post-delete-shell page-shell">
+        <div class="post-delete-hero page-hero">
+            <h1 class="page-hero-title">Delete Post</h1>
+            <p class="page-hero-copy">Review the post details before removal. This action permanently deletes the post from the site.</p>
+        </div>
+        <div class="post-delete-layout">
+            <section class="post-delete-panel">
+                <h2>Post Summary</h2>
+                <div class="post-delete-details">
+                    <div><strong>Title:</strong> {{ post.title }}</div>
+                    <div><strong>Author:</strong> {{ post.author.username }}</div>
+                    <div><strong>Published:</strong> {{ post.publish|date:"F j, Y, g:i a" }}</div>
+                    <div><strong>Status:</strong> {{ post.get_status_display }}</div>
+                    {% if post.tags.all %}
+                        <div><strong>Tags:</strong> {% for tag in post.tags.all %}{{ tag.name }}{% if not forloop.last %}, {% endif %}{% endfor %}</div>
+                    {% endif %}
                 </div>
-            </form>
-        </section>
-
-        <aside class="post-delete-panel post-delete-note">
-            <h3>Before You Delete</h3>
-            <p>Deletion removes the post detail page and its content from the public site. Confirm only after checking that the post should no longer stay online.</p>
-        </aside>
-    </div>
-</section>
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="post-delete-actions">
+                        <button type="submit" class="post-delete-button">Delete Post</button>
+                        <a href="{% url 'blog:all_posts_list' %}" class="post-delete-link">Back to Posts</a>
+                    </div>
+                </form>
+            </section>
+            <aside class="post-delete-panel post-delete-note">
+                <h3>Before You Delete</h3>
+                <p>Deletion removes the post detail page and its content from the public site. Confirm only after checking that the post should no longer stay online.</p>
+            </aside>
+        </div>
+    </section>
 {% endblock %}

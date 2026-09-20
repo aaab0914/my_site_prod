@@ -1,9 +1,7 @@
 {% extends "blog/base.html" %}
-
 {% block title %}Change Username{% endblock %}
-
 {% block content %}
-<style>
+    <style>
     .account-shell { max-width: 960px; margin: 0 auto 36px; }
     .account-hero { margin-bottom: 24px; padding: 30px; border-radius: 28px; background: radial-gradient(circle at top right, rgba(255,255,255,.24), transparent 28%), linear-gradient(135deg, #1b2941, #236b83 58%, #d9b26a 155%); color: #fff; box-shadow: 0 24px 54px rgba(15,23,42,.2); }
     .account-hero h1 { margin: 0 0 10px; border: 0; font-size: 42px; font-weight: 800; letter-spacing: -.03em; }
@@ -20,30 +18,28 @@
     .account-button { background: linear-gradient(135deg, #0f766e, #14532d); color: #fff; }
     .account-link { background: #e9eef3; color: #21384b; }
     @media screen and (max-width: 768px) { .account-hero { padding: 24px 20px; } .account-hero h1 { font-size: 32px; } .account-panel { padding: 18px; } }
-</style>
-
-<section class="account-shell page-shell">
-    <div class="account-hero page-hero">
-        <h1 class="page-hero-title">Change Username</h1>
-        <p class="page-hero-copy">Update the public name shown across your posts, comments, and profile while keeping the rest of your account intact.</p>
-    </div>
-
-    <section class="account-panel">
-        <h2>Username Update</h2>
-        <form method="post" class="account-form">
-            {% csrf_token %}
-            <p>
-                <label for="id_username">New Username</label>
-                {{ form.username }}
-                {% if form.username.errors %}
-                    <div class="account-error">{{ form.username.errors }}</div>
-                {% endif %}
-            </p>
-            <div class="account-actions">
-                <button type="submit" class="account-button">Update Username</button>
-                <a href="{% url 'users:profile' %}" class="account-link">Back to Profile</a>
-            </div>
-        </form>
+    </style>
+    <section class="account-shell page-shell">
+        <div class="account-hero page-hero">
+            <h1 class="page-hero-title">Change Username</h1>
+            <p class="page-hero-copy">Update the public name shown across your posts, comments, and profile while keeping the rest of your account intact.</p>
+        </div>
+        <section class="account-panel">
+            <h2>Username Update</h2>
+            <form method="post" class="account-form">
+                {% csrf_token %}
+                <p>
+                    <label for="id_username">New Username</label>
+                    {{ form.username }}
+                    {% if form.username.errors %}
+                        <div class="account-error">{{ form.username.errors }}</div>
+                    {% endif %}
+                </p>
+                <div class="account-actions">
+                    <button type="submit" class="account-button">Update Username</button>
+                    <a href="{% url 'users:profile' %}" class="account-link">Back to Profile</a>
+                </div>
+            </form>
+        </section>
     </section>
-</section>
 {% endblock %}

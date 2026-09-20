@@ -1,10 +1,8 @@
 {% extends "blog/hero_base.html" %}
 {% load blog_tags %}
-
 {% block title %}Create Post{% endblock %}
-
 {% block hero_base_css %}
-<style>
+    <style>
     .hero-page-shell.post-create-shell,
     .hero-page-shell.post-create-shell *,
     .post-create-shell *::before,
@@ -237,95 +235,90 @@
             padding: 18px;
         }
     }
-</style>
+    </style>
 {% endblock %}
 {% block hero_shell_class %}post-create-shell{% endblock %}
 {% block hero_page_title %}Create Post{% endblock %}
 {% block hero_page_description %}Write the title, body, tags, and optional cover image in a cleaner layout. Cover images support click, drag-and-drop, and clipboard paste for faster publishing.{% endblock %}
 {% block hero_grid_class %}has-aside post-create-grid{% endblock %}
 {% block content_body %}
-        <form method="post" enctype="multipart/form-data" class="post-create-panel" id="post-create-form">
-            {% csrf_token %}
-            <h2>Post Details</h2>
-
-            {% if form.non_field_errors %}
-                <div class="post-create-errors">{{ form.non_field_errors }}</div>
+    <form method="post"
+          enctype="multipart/form-data"
+          class="post-create-panel"
+          id="post-create-form">
+        {% csrf_token %}
+        <h2>Post Details</h2>
+        {% if form.non_field_errors %}
+            <div class="post-create-errors">{{ form.non_field_errors }}</div>
+        {% endif %}
+        <div class="post-create-field">
+            <label for="{{ form.title.id_for_label }}">Title</label>
+            {{ form.title }}
+            <div class="post-create-help">Maximum 50 characters.</div>
+            {% if form.title.errors %}
+                <div class="post-create-error">{{ form.title.errors }}</div>
             {% endif %}
-
-            <div class="post-create-field">
-                <label for="{{ form.title.id_for_label }}">Title</label>
-                {{ form.title }}
-                <div class="post-create-help">Maximum 50 characters.</div>
-                {% if form.title.errors %}
-                    <div class="post-create-error">{{ form.title.errors }}</div>
-                {% endif %}
-            </div>
-
-            <div class="post-create-field">
-                <label for="{{ form.body.id_for_label }}">Body</label>
-                {{ form.body }}
-                <div class="post-create-help">Maximum 500 characters.</div>
-                <div class="post-create-help">Use clear paragraphs. The editor keeps the structure simple and close to the final post output.</div>
-                {% if form.body.errors %}
-                    <div class="post-create-error">{{ form.body.errors }}</div>
-                {% endif %}
-            </div>
-
-            <div class="post-create-dropzone" id="post-create-dropzone" tabindex="0">
-                <strong>Choose or paste a cover image</strong>
-                <p>Click to pick a file, drag one into this area, or paste an image from the clipboard. Only one cover image is kept.</p>
-            </div>
-
-            <div class="post-create-field">
-                <label for="{{ form.cover_image.id_for_label }}">Cover image</label>
-                {{ form.cover_image }}
-                <div class="post-create-help" id="post-cover-file-name">No file selected.</div>
-                {% if form.cover_image.errors %}
-                    <div class="post-create-error">{{ form.cover_image.errors }}</div>
-                {% endif %}
-            </div>
-
-            <div class="post-create-field">
-                <label for="{{ form.tags.id_for_label }}">Tags</label>
-                {{ form.tags }}
-                <div class="post-create-help">Use commas to separate multiple tags. Without commas, the whole input is treated as one tag.</div>
-                {% if form.tags.errors %}
-                    <div class="post-create-error">{{ form.tags.errors }}</div>
-                {% endif %}
-            </div>
-
-            <div class="post-create-actions">
-                <button type="submit" class="post-create-submit">Publish Post</button>
-                <button type="reset" class="post-create-reset" id="post-create-reset">Reset</button>
-            </div>
-        </form>
+        </div>
+        <div class="post-create-field">
+            <label for="{{ form.body.id_for_label }}">Body</label>
+            {{ form.body }}
+            <div class="post-create-help">Maximum 500 characters.</div>
+            <div class="post-create-help">Use clear paragraphs. The editor keeps the structure simple and close to the final post output.</div>
+            {% if form.body.errors %}
+                <div class="post-create-error">{{ form.body.errors }}</div>
+            {% endif %}
+        </div>
+        <div class="post-create-dropzone" id="post-create-dropzone" tabindex="0">
+            <strong>Choose or paste a cover image</strong>
+            <p>Click to pick a file, drag one into this area, or paste an image from the clipboard. Only one cover image is kept.</p>
+        </div>
+        <div class="post-create-field">
+            <label for="{{ form.cover_image.id_for_label }}">Cover image</label>
+            {{ form.cover_image }}
+            <div class="post-create-help" id="post-cover-file-name">No file selected.</div>
+            {% if form.cover_image.errors %}
+                <div class="post-create-error">{{ form.cover_image.errors }}</div>
+            {% endif %}
+        </div>
+        <div class="post-create-field">
+            <label for="{{ form.tags.id_for_label }}">Tags</label>
+            {{ form.tags }}
+            <div class="post-create-help">Use commas to separate multiple tags. Without commas, the whole input is treated as one tag.</div>
+            {% if form.tags.errors %}
+                <div class="post-create-error">{{ form.tags.errors }}</div>
+            {% endif %}
+        </div>
+        <div class="post-create-actions">
+            <button type="submit" class="post-create-submit">Publish Post</button>
+            <button type="reset" class="post-create-reset" id="post-create-reset">Reset</button>
+        </div>
+    </form>
 {% endblock %}
 {% block aside %}
-        <aside class="post-create-side">
-            <section class="post-create-panel post-create-note">
-                <div class="post-create-pills">
-                    <span class="post-create-pill">Status: Published immediately</span>
-                    <span class="post-create-pill">Cover: JPEG, PNG, WebP</span>
-                    <span class="post-create-pill">Cover limit: 10 MB before optimization</span>
-                </div>
-            </section>
-            <section class="post-create-panel post-create-note">
-                <h3>Publishing Notes</h3>
-                <ul>
-                    <li>The post is published as soon as the form passes validation.</li>
-                    <li>The cover image is converted to an optimized JPEG after upload.</li>
-                    <li>Pasted images work best when the clipboard contains a direct image item.</li>
-                </ul>
-            </section>
-
-            <section class="post-create-panel post-create-note">
-                <h3>Current Cover Selection</h3>
-                <div id="post-cover-preview" class="post-create-help">No file selected.</div>
-            </section>
-        </aside>
+    <aside class="post-create-side">
+        <section class="post-create-panel post-create-note">
+            <div class="post-create-pills">
+                <span class="post-create-pill">Status: Published immediately</span>
+                <span class="post-create-pill">Cover: JPEG, PNG, WebP</span>
+                <span class="post-create-pill">Cover limit: 10 MB before optimization</span>
+            </div>
+        </section>
+        <section class="post-create-panel post-create-note">
+            <h3>Publishing Notes</h3>
+            <ul>
+                <li>The post is published as soon as the form passes validation.</li>
+                <li>The cover image is converted to an optimized JPEG after upload.</li>
+                <li>Pasted images work best when the clipboard contains a direct image item.</li>
+            </ul>
+        </section>
+        <section class="post-create-panel post-create-note">
+            <h3>Current Cover Selection</h3>
+            <div id="post-cover-preview" class="post-create-help">No file selected.</div>
+        </section>
+    </aside>
 {% endblock %}
 {% block extra_scripts %}
-<script>
+    <script>
 (() => {
     const fileInput = document.getElementById("{{ form.cover_image.id_for_label }}");
     const fileName = document.getElementById("post-cover-file-name");
@@ -411,5 +404,5 @@
         }, 0);
     });
 })();
-</script>
+    </script>
 {% endblock %}

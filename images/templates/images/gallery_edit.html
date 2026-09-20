@@ -1,10 +1,8 @@
 {% extends "blog/base.html" %}
-
 {% block title %}Edit Image{% endblock %}
-
 {% block content %}
-{% include "images/includes/gallery_shared_css.html" %}
-<style>
+    {% include "images/includes/gallery_shared_css.html" %}
+    <style>
     .gallery-edit {
         max-width: 760px;
         margin: 0 auto 32px;
@@ -45,17 +43,18 @@
     .gallery-edit-cancel {
         display: inline-block;
     }
-</style>
-
-<section class="gallery-edit gallery-card-surface">
-    <h1>Edit Image</h1>
-    <form method="post">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <div class="gallery-edit-actions">
-            <button class="gallery-edit-save gallery-pill-button is-primary" type="submit">Save</button>
-            <a class="gallery-edit-cancel gallery-pill-button is-neutral" href="{% url 'blog:images:gallery_detail' image.id %}">Cancel</a>
-        </div>
-    </form>
-</section>
+    </style>
+    <section class="gallery-edit gallery-card-surface">
+        <h1>Edit Image</h1>
+        <form method="post">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <div class="gallery-edit-actions">
+                <button class="gallery-edit-save gallery-pill-button is-primary"
+                        type="submit">Save</button>
+                <a class="gallery-edit-cancel gallery-pill-button is-neutral"
+                   href="{% url 'blog:images:gallery_detail' image.id %}">Cancel</a>
+            </div>
+        </form>
+    </section>
 {% endblock %}

@@ -1,9 +1,7 @@
 {% extends "blog/hero_base.html" %}
-
 {% block title %}Video Library{% endblock %}
-
 {% block hero_base_css %}
-<style>
+    <style>
     .video-list { display: grid; gap: 16px; }
     .video-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(300px, 1.2fr); gap: 18px; align-items: start; padding: 18px 20px; border-radius: 20px; border: 1px solid #d7e1ea; background: #fff; box-shadow: 0 12px 30px rgba(15,23,42,.07); }
     .video-row-main h2 { margin: 0 0 6px; color: #16283a; font-size: 24px; }
@@ -25,7 +23,7 @@
     @media screen and (max-width: 768px) {
         .video-row { padding: 16px; }
     }
-</style>
+    </style>
 {% endblock %}
 {% block hero_class %}hero-theme-teal{% endblock %}
 {% block hero_page_title %}<span aria-hidden="true">🎞️</span> Video Library{% endblock %}
@@ -44,14 +42,18 @@
                         {% endif %}
                         <div class="video-actions">
                             {% if request.user.is_superuser %}
-                                <a href="{% url 'blog:video_edit' video.id %}" class="video-button-secondary">Edit Video</a>
+                                <a href="{% url 'blog:video_edit' video.id %}"
+                                   class="video-button-secondary">Edit Video</a>
                             {% elif not request.user.is_authenticated %}
-                                <a href="{% url 'users:login' %}?next={% url 'blog:video_detail' video.id %}" class="video-button-secondary">Sign in to manage</a>
+                                <a href="{% url 'users:login' %}?next={% url 'blog:video_detail' video.id %}"
+                                   class="video-button-secondary">Sign in to manage</a>
                             {% endif %}
                         </div>
                     </div>
                     <div class="video-frame">
-                        <video {% if video.cover_image %}poster="{{ video.get_cover_proxy_url }}" {% endif %}controls preload="none" class="video-player">
+                        <video {% if video.cover_image %}poster="{{ video.get_cover_proxy_url }}" {% endif %}controls
+                               preload="none"
+                               class="video-player">
                             <source src="{{ video.get_video_proxy_url }}">
                             Your browser does not support video playback.
                         </video>
@@ -59,7 +61,6 @@
                 </article>
             {% endfor %}
         </div>
-
         {% if page_obj and page_obj.paginator.num_pages > 1 %}
             <nav class="video-pagination">
                 {% if page_obj.has_previous %}

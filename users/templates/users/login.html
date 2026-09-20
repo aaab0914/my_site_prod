@@ -1,9 +1,7 @@
 {% extends "blog/hero_base.html" %}
-
 {% block title %}Log In{% endblock %}
-
 {% block hero_base_css %}
-<style>
+    <style>
     .account-layout {
         display: grid;
         grid-template-columns: minmax(0, 1.4fr) minmax(280px, 0.9fr);
@@ -119,32 +117,32 @@
             padding: 18px;
         }
     }
-</style>
+    </style>
 {% endblock %}
 {% block hero_class %}hero-theme-teal{% endblock %}
 {% block hero_page_title %}Log In{% endblock %}
 {% block hero_page_description %}Access your account, continue writing, manage uploads, and open your profile from a cleaner sign-in screen.{% endblock %}
 {% block hero_grid_class %}has-aside account-layout{% endblock %}
 {% block content_body %}
-        <section class="account-panel">
-            <h2>Welcome Back</h2>
-            <form method="post" class="account-form">
-                {% csrf_token %}
-                {{ form.as_p }}
-                <div class="account-actions">
-                    <button type="submit" class="account-button">Log In</button>
-                    <a href="{% url 'users:register' %}" class="account-link">Create Account</a>
-                </div>
-            </form>
-        </section>
+    <section class="account-panel">
+        <h2>Welcome Back</h2>
+        <form method="post" class="account-form">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <div class="account-actions">
+                <button type="submit" class="account-button">Log In</button>
+                <a href="{% url 'users:register' %}" class="account-link">Create Account</a>
+            </div>
+        </form>
+    </section>
 {% endblock %}
 {% block aside %}
-        <aside class="account-panel account-note">
-            <h3>After Login</h3>
-            <ul>
-                <li>Open your profile and update account details.</li>
-                <li>Create posts and manage comments.</li>
-                <li>Upload audio and gallery images from your account area.</li>
-            </ul>
-        </aside>
+    <aside class="account-panel account-note">
+        <h3>After Login</h3>
+        <ul>
+            <li>Open your profile and update account details.</li>
+            <li>Create posts and manage comments.</li>
+            <li>Upload audio and gallery images from your account area.</li>
+        </ul>
+    </aside>
 {% endblock %}

@@ -1,9 +1,7 @@
 {% extends "blog/hero_base.html" %}
-
 {% block title %}{{ album.title }}{% endblock %}
-
 {% block hero_base_css %}
-<style>
+    <style>
 .album-detail-shell { display: grid; gap: 24px; width: min(100%, 1120px); margin: 0 auto 36px; }
 .album-detail-hero { height:auto !important; min-height:210px !important; padding:26px 36px !important; }
 .album-detail-hero .hero-page-kicker { width:100%; margin-bottom:16px; }
@@ -21,31 +19,34 @@
 .album-item img { width:100%; height:280px; object-fit:cover; display:block; background:#eef2f6; }
 .album-item-body { padding:16px; color:#4f6274; line-height:1.6; }
 @media screen and (max-width: 900px) { .album-detail-shell { width: 100%; margin: 0 auto 24px; } .album-detail-hero { min-height:0 !important; padding:24px 20px !important; } .album-detail-hero .page-hero-title { font-size:24px !important; } .album-detail-top { align-items:flex-start; } .album-grid { grid-template-columns:1fr; } }
-</style>
+    </style>
 {% endblock %}
 {% block hero_shell_class %}album-detail-shell{% endblock %}
 {% block hero_class %}hero-theme-gallery album-detail-hero{% endblock %}
 {% block hero_pretitle %}
-        <div class="album-detail-top">
-            <a class="album-detail-back" href="{% url 'blog:images:album_list' %}">Back to Album</a>
-            {% if can_manage %}
-                <div class="album-detail-actions">
-                    <a class="album-edit" href="{% url 'blog:images:album_edit' album.id %}">Edit Album</a>
-                    <a class="album-delete" href="{% url 'blog:images:album_delete' album.id %}">Delete Album</a>
-                </div>
-            {% endif %}
-        </div>
+    <div class="album-detail-top">
+        <a class="album-detail-back" href="{% url 'blog:images:album_list' %}">Back to Album</a>
+        {% if can_manage %}
+            <div class="album-detail-actions">
+                <a class="album-edit" href="{% url 'blog:images:album_edit' album.id %}">Edit Album</a>
+                <a class="album-delete"
+                   href="{% url 'blog:images:album_delete' album.id %}">Delete Album</a>
+            </div>
+        {% endif %}
+    </div>
 {% endblock %}
 {% block hero_page_title %}{{ album.title }}{% endblock %}
 {% block hero_description %}
-        <div class="album-detail-meta">{{ images|length }} image{{ images|length|pluralize }} by {{ album.uploaded_by.username }} on {{ album.created|date:"Y-m-d H:i" }}</div>
-        {% if album.description %}<div class="album-detail-description">{{ album.description }}</div>{% endif %}
+    <div class="album-detail-meta">{{ images|length }} image{{ images|length|pluralize }} by {{ album.uploaded_by.username }} on {{ album.created|date:"Y-m-d H:i" }}</div>
+    {% if album.description %}<div class="album-detail-description">{{ album.description }}</div>{% endif %}
 {% endblock %}
 {% block hero_body %}
     <section class="album-grid">
         {% for image in images %}
             <article class="album-item">
-                <img src="{{ image.get_image_proxy_url }}" alt="{{ image.title }}" loading="lazy">
+                <img src="{{ image.get_image_proxy_url }}"
+                     alt="{{ image.title }}"
+                     loading="lazy">
                 <div class="album-item-body">{{ image.title }}</div>
             </article>
         {% endfor %}

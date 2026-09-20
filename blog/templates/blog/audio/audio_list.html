@@ -1,9 +1,7 @@
 {% extends "blog/hero_base.html" %}
-
 {% block title %}Audio Library{% endblock %}
-
 {% block hero_base_css %}
-<style>
+    <style>
     .audio-list { display: grid; gap: 16px; }
     .audio-row {
         display: flex;
@@ -51,7 +49,7 @@
         .audio-row { padding: 16px; }
         .audio-side, .audio-actions { justify-content: flex-start; }
     }
-</style>
+    </style>
 {% endblock %}
 {% block hero_class %}hero-theme-teal{% endblock %}
 {% block hero_page_title %}Audio Library{% endblock %}
@@ -69,37 +67,36 @@
                             <div class="audio-description">{{ audio.description }}</div>
                         {% endif %}
                     </div>
-
                     <div class="audio-player-shell">
-                        <audio
-                            controls
-                            preload="none"
-                            playsinline
-                            webkit-playsinline
-                            class="audio-player"
-                            id="audio-player-{{ audio.id }}"
-                            src="{{ audio.get_audio_proxy_url }}"
-                        >
+                        <audio controls
+                               preload="none"
+                               playsinline
+                               webkit-playsinline
+                               class="audio-player"
+                               id="audio-player-{{ audio.id }}"
+                               src="{{ audio.get_audio_proxy_url }}">
                             Your browser does not support audio playback.
                         </audio>
                     </div>
-
                     <div class="audio-side">
                         <label class="audio-loop-label">
-                            <input type="checkbox" class="audio-loop-toggle" data-audio-id="{{ audio.id }}">
+                            <input type="checkbox"
+                                   class="audio-loop-toggle"
+                                   data-audio-id="{{ audio.id }}">
                             <span>Loop this track</span>
                         </label>
                         {% if user.is_superuser or user == audio.uploaded_by %}
                             <div class="audio-actions">
-                                <a href="{% url 'blog:audio_post_edit' audio.id %}" class="audio-button-secondary">Edit</a>
-                                <a href="{% url 'blog:audio_post_delete' audio.id %}" class="audio-button-danger">Delete</a>
+                                <a href="{% url 'blog:audio_post_edit' audio.id %}"
+                                   class="audio-button-secondary">Edit</a>
+                                <a href="{% url 'blog:audio_post_delete' audio.id %}"
+                                   class="audio-button-danger">Delete</a>
                             </div>
                         {% endif %}
                     </div>
                 </article>
             {% endfor %}
         </div>
-
         {% if page_obj and page_obj.paginator.num_pages > 1 %}
             <nav class="audio-pagination">
                 {% if page_obj.has_previous %}
@@ -122,7 +119,7 @@
     {% endif %}
 {% endblock %}
 {% block extra_scripts %}
-<script>
+    <script>
 (() => {
     const players = Array.from(document.querySelectorAll('audio[id^="audio-player-"]'));
 
@@ -146,5 +143,5 @@
         });
     });
 })();
-</script>
+    </script>
 {% endblock %}

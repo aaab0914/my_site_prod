@@ -1,9 +1,7 @@
 {% extends "blog/base.html" %}
-
 {% block title %}Edit Profile{% endblock %}
-
 {% block content %}
-<style>
+    <style>
     .account-shell { max-width: 1040px; margin: 0 auto 36px; }
     .account-hero {
         margin-bottom: 24px; padding: 30px; border-radius: 28px;
@@ -39,70 +37,61 @@
         .account-layout { grid-template-columns: 1fr; }
         .account-panel { padding: 18px; }
     }
-</style>
-
-<section class="account-shell page-shell">
-    <div class="account-hero page-hero">
-        <h1 class="page-hero-title">Edit Profile</h1>
-        <p class="page-hero-copy">Update your public profile, avatar, and personal details from a page that matches the rest of the site’s newer interface.</p>
-    </div>
-
-    <div class="account-layout">
-        <section class="account-panel">
-            <h2>Profile Settings</h2>
-            <form method="post" enctype="multipart/form-data">
-                {% csrf_token %}
-
-                {% if form.non_field_errors %}
-                    <div class="account-errors">{{ form.non_field_errors }}</div>
-                {% endif %}
-
-                <div class="account-field">
-                    <label for="{{ form.avatar.id_for_label }}">Avatar</label>
-                    {{ form.avatar }}
-                    <div class="account-help">Choose a clear profile image. Avatar updates may be limited by your cooldown rule.</div>
-                    {% if form.avatar.errors %}
-                        <div class="account-error">{{ form.avatar.errors }}</div>
+    </style>
+    <section class="account-shell page-shell">
+        <div class="account-hero page-hero">
+            <h1 class="page-hero-title">Edit Profile</h1>
+            <p class="page-hero-copy">Update your public profile, avatar, and personal details from a page that matches the rest of the site’s newer interface.</p>
+        </div>
+        <div class="account-layout">
+            <section class="account-panel">
+                <h2>Profile Settings</h2>
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    {% if form.non_field_errors %}
+                        <div class="account-errors">{{ form.non_field_errors }}</div>
                     {% endif %}
-                </div>
-
-                <div class="account-field">
-                    <label for="{{ form.bio.id_for_label }}">Bio</label>
-                    {{ form.bio }}
-                    {% if form.bio.errors %}
-                        <div class="account-error">{{ form.bio.errors }}</div>
+                    <div class="account-field">
+                        <label for="{{ form.avatar.id_for_label }}">Avatar</label>
+                        {{ form.avatar }}
+                        <div class="account-help">Choose a clear profile image. Avatar updates may be limited by your cooldown rule.</div>
+                        {% if form.avatar.errors %}
+                            <div class="account-error">{{ form.avatar.errors }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="account-field">
+                        <label for="{{ form.bio.id_for_label }}">Bio</label>
+                        {{ form.bio }}
+                        {% if form.bio.errors %}
+                            <div class="account-error">{{ form.bio.errors }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="account-field">
+                        <label for="{{ form.location.id_for_label }}">Location</label>
+                        {{ form.location }}
+                        {% if form.location.errors %}
+                            <div class="account-error">{{ form.location.errors }}</div>
+                        {% endif %}
+                    </div>
+                    {% if remaining_days > 0 %}
+                        <div class="account-status wait">You can change your avatar again in <strong>{{ remaining_days }} day(s)</strong>.</div>
+                    {% else %}
+                        <div class="account-status ok">Your avatar can be changed right now.</div>
                     {% endif %}
-                </div>
-
-                <div class="account-field">
-                    <label for="{{ form.location.id_for_label }}">Location</label>
-                    {{ form.location }}
-                    {% if form.location.errors %}
-                        <div class="account-error">{{ form.location.errors }}</div>
-                    {% endif %}
-                </div>
-
-                {% if remaining_days > 0 %}
-                    <div class="account-status wait">You can change your avatar again in <strong>{{ remaining_days }} day(s)</strong>.</div>
-                {% else %}
-                    <div class="account-status ok">Your avatar can be changed right now.</div>
-                {% endif %}
-
-                <div class="account-actions">
-                    <button type="submit" class="account-button">Save Changes</button>
-                    <a href="{% url 'users:profile' %}" class="account-link">Back to Profile</a>
-                </div>
-            </form>
-        </section>
-
-        <aside class="account-panel account-note">
-            <h3>Profile Notes</h3>
-            <ul>
-                <li>Use a clean avatar image for better profile presentation.</li>
-                <li>Keep your bio short and readable.</li>
-                <li>Location and profile details help visitors identify your content faster.</li>
-            </ul>
-        </aside>
-    </div>
-</section>
+                    <div class="account-actions">
+                        <button type="submit" class="account-button">Save Changes</button>
+                        <a href="{% url 'users:profile' %}" class="account-link">Back to Profile</a>
+                    </div>
+                </form>
+            </section>
+            <aside class="account-panel account-note">
+                <h3>Profile Notes</h3>
+                <ul>
+                    <li>Use a clean avatar image for better profile presentation.</li>
+                    <li>Keep your bio short and readable.</li>
+                    <li>Location and profile details help visitors identify your content faster.</li>
+                </ul>
+            </aside>
+        </div>
+    </section>
 {% endblock %}

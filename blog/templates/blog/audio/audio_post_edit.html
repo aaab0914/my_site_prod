@@ -1,9 +1,7 @@
-{% extends 'blog/base.html' %}
-
+{% extends "blog/base.html" %}
 {% block title %}Edit Audio{% endblock %}
-
 {% block content %}
-<style>
+    <style>
     .audio-edit-shell { max-width: 1040px; margin: 0 auto 36px; }
     .audio-edit-hero {
         margin-bottom: 24px; padding: 30px; border-radius: 28px;
@@ -45,105 +43,99 @@
         .audio-edit-layout { grid-template-columns: 1fr; }
         .audio-edit-panel { padding: 18px; }
     }
-</style>
-
-<section class="audio-edit-shell page-shell">
-    <div class="audio-edit-hero page-hero">
-        <h1 class="page-hero-title">Edit Audio</h1>
-        <p class="page-hero-copy">Update the track title, replace the file if needed, and keep the description in sync with the audio library.</p>
-    </div>
-
-    <div class="audio-edit-layout">
-        <section class="audio-edit-panel">
-            <h2>Track Settings</h2>
-            <form method="post" enctype="multipart/form-data">
-                {% csrf_token %}
-
-                {% if form.non_field_errors %}
-                    <div class="audio-edit-errors">{{ form.non_field_errors }}</div>
+    </style>
+    <section class="audio-edit-shell page-shell">
+        <div class="audio-edit-hero page-hero">
+            <h1 class="page-hero-title">Edit Audio</h1>
+            <p class="page-hero-copy">Update the track title, replace the file if needed, and keep the description in sync with the audio library.</p>
+        </div>
+        <div class="audio-edit-layout">
+            <section class="audio-edit-panel">
+                <h2>Track Settings</h2>
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    {% if form.non_field_errors %}
+                        <div class="audio-edit-errors">{{ form.non_field_errors }}</div>
+                    {% endif %}
+                    <div class="audio-edit-field">
+                        <label for="{{ form.music_name.id_for_label }}">Track title</label>
+                        {{ form.music_name }}
+                        {% if form.music_name.errors %}
+                            <div class="audio-edit-error">{{ form.music_name.errors }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="audio-edit-field">
+                        <label for="{{ form.audio_file.id_for_label }}">Replace audio file</label>
+                        {{ form.audio_file }}
+                        <div class="audio-edit-help">Leave this blank to keep the current file.</div>
+                        {% if form.audio_file.errors %}
+                            <div class="audio-edit-error">{{ form.audio_file.errors }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="audio-edit-field">
+                        <label for="{{ form.cover_image.id_for_label }}">Cover image</label>
+                        {{ form.cover_image }}
+                        <div class="audio-edit-dropzone" id="cover-edit-dropzone" tabindex="0">
+                            <strong>Choose or paste a cover image</strong>
+                            <p>Click to pick an image, drag one here, or paste directly into this area.</p>
+                        </div>
+                        <div class="audio-edit-help" id="cover-edit-file-name">No new cover selected.</div>
+                        <div class="audio-edit-help">Upload a square cover if possible. Supported: JPG, JPEG, PNG, WebP, GIF. Max 5MB.</div>
+                        {% if audiopost.cover_image %}
+                            <div class="audio-edit-help">Current cover file: {{ audiopost.get_cover_filename }}</div>
+                        {% endif %}
+                        {% if form.cover_image.errors %}
+                            <div class="audio-edit-error">{{ form.cover_image.errors }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="audio-edit-field">
+                        <label for="{{ form.description.id_for_label }}">Description</label>
+                        {{ form.description }}
+                        {% if form.description.errors %}
+                            <div class="audio-edit-error">{{ form.description.errors }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="audio-edit-actions">
+                        <button type="submit" class="audio-edit-button">Save Changes</button>
+                        <a href="{% url 'blog:audio_list' %}" class="audio-edit-link">Back to Library</a>
+                    </div>
+                </form>
+            </section>
+            <aside class="audio-edit-panel audio-edit-note">
+                <h3>Current File</h3>
+                {% if audiopost.audio_file %}
+                    <div class="audio-edit-file-box">
+                        <div><strong>{{ audiopost.music_name|default:"Untitled track" }}</strong></div>
+                        {% if audiopost.cover_image %}
+                            <img class="audio-edit-cover-preview"
+                                 src="{{ audiopost.get_cover_image_proxy_url }}"
+                                 alt="{{ audiopost.music_name|default:'Audio cover' }} cover">
+                            <div class="audio-edit-help">Current cover file: {{ audiopost.get_cover_filename }}</div>
+                        {% else %}
+                            <div class="audio-edit-help" style="margin-top:12px;">No cover image uploaded yet.</div>
+                        {% endif %}
+                        <audio controls>
+                            <source src="{{ audiopost.get_audio_proxy_url }}" type="audio/mpeg">
+                            Your browser does not support the audio element.
+                        </audio>
+                        <div class="audio-edit-help"><a href="{{ audiopost.get_audio_proxy_url }}"
+   target="_blank">Open current file</a></div>
+                        <div class="audio-edit-actions" style="margin-top:14px;">
+                            <a href="{% url 'blog:audio_post_delete' audiopost.id %}"
+                               class="audio-edit-delete-link">Delete Track</a>
+                        </div>
+                    </div>
                 {% endif %}
-
-                <div class="audio-edit-field">
-                    <label for="{{ form.music_name.id_for_label }}">Track title</label>
-                    {{ form.music_name }}
-                    {% if form.music_name.errors %}
-                        <div class="audio-edit-error">{{ form.music_name.errors }}</div>
-                    {% endif %}
-                </div>
-
-                <div class="audio-edit-field">
-                    <label for="{{ form.audio_file.id_for_label }}">Replace audio file</label>
-                    {{ form.audio_file }}
-                    <div class="audio-edit-help">Leave this blank to keep the current file.</div>
-                    {% if form.audio_file.errors %}
-                        <div class="audio-edit-error">{{ form.audio_file.errors }}</div>
-                    {% endif %}
-                </div>
-
-                <div class="audio-edit-field">
-                    <label for="{{ form.cover_image.id_for_label }}">Cover image</label>
-                    {{ form.cover_image }}
-                    <div class="audio-edit-dropzone" id="cover-edit-dropzone" tabindex="0">
-                        <strong>Choose or paste a cover image</strong>
-                        <p>Click to pick an image, drag one here, or paste directly into this area.</p>
-                    </div>
-                    <div class="audio-edit-help" id="cover-edit-file-name">No new cover selected.</div>
-                    <div class="audio-edit-help">Upload a square cover if possible. Supported: JPG, JPEG, PNG, WebP, GIF. Max 5MB.</div>
-                    {% if audiopost.cover_image %}
-                        <div class="audio-edit-help">Current cover file: {{ audiopost.get_cover_filename }}</div>
-                    {% endif %}
-                    {% if form.cover_image.errors %}
-                        <div class="audio-edit-error">{{ form.cover_image.errors }}</div>
-                    {% endif %}
-                </div>
-
-                <div class="audio-edit-field">
-                    <label for="{{ form.description.id_for_label }}">Description</label>
-                    {{ form.description }}
-                    {% if form.description.errors %}
-                        <div class="audio-edit-error">{{ form.description.errors }}</div>
-                    {% endif %}
-                </div>
-
-                <div class="audio-edit-actions">
-                    <button type="submit" class="audio-edit-button">Save Changes</button>
-                    <a href="{% url 'blog:audio_list' %}" class="audio-edit-link">Back to Library</a>
-                </div>
-            </form>
-        </section>
-
-        <aside class="audio-edit-panel audio-edit-note">
-            <h3>Current File</h3>
-            {% if audiopost.audio_file %}
-                <div class="audio-edit-file-box">
-                    <div><strong>{{ audiopost.music_name|default:"Untitled track" }}</strong></div>
-                    {% if audiopost.cover_image %}
-                        <img class="audio-edit-cover-preview" src="{{ audiopost.get_cover_image_proxy_url }}" alt="{{ audiopost.music_name|default:'Audio cover' }} cover">
-                        <div class="audio-edit-help">Current cover file: {{ audiopost.get_cover_filename }}</div>
-                    {% else %}
-                        <div class="audio-edit-help" style="margin-top:12px;">No cover image uploaded yet.</div>
-                    {% endif %}
-                    <audio controls>
-                        <source src="{{ audiopost.get_audio_proxy_url }}" type="audio/mpeg">
-                        Your browser does not support the audio element.
-                    </audio>
-                    <div class="audio-edit-help"><a href="{{ audiopost.get_audio_proxy_url }}" target="_blank">Open current file</a></div>
-                    <div class="audio-edit-actions" style="margin-top:14px;">
-                        <a href="{% url 'blog:audio_post_delete' audiopost.id %}" class="audio-edit-delete-link">Delete Track</a>
-                    </div>
-                </div>
-            {% endif %}
-
-            <h3 style="margin-top:18px;">Editing Notes</h3>
-            <ul>
-                <li>Replacing the file updates the track stored in the library.</li>
-                <li>Keep titles short so the list view stays clean.</li>
-                <li>Descriptions are optional, but useful for context.</li>
-            </ul>
-        </aside>
-    </div>
-</section>
-<script>
+                <h3 style="margin-top:18px;">Editing Notes</h3>
+                <ul>
+                    <li>Replacing the file updates the track stored in the library.</li>
+                    <li>Keep titles short so the list view stays clean.</li>
+                    <li>Descriptions are optional, but useful for context.</li>
+                </ul>
+            </aside>
+        </div>
+    </section>
+    <script>
 (() => {
     const coverInput = document.getElementById("{{ form.cover_image.id_for_label }}");
     const coverDropzone = document.getElementById("cover-edit-dropzone");
@@ -216,5 +208,5 @@
         syncCoverFile(files[0]);
     });
 })();
-</script>
+    </script>
 {% endblock %}

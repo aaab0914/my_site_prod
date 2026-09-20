@@ -1,10 +1,8 @@
 {% extends "blog/base.html" %}
 {% load blog_tags %}
-
 {% block title %}Search Posts{% endblock %}
-
 {% block content %}
-<style>
+    <style>
     .search-shell {
         max-width: 1040px;
         margin: 0 auto 36px;
@@ -313,105 +311,97 @@
             padding: 18px;
         }
     }
-</style>
-
-<section class="search-shell page-shell">
-    {% if query %}
-        <div class="search-hero page-hero">
-            <h1 class="page-hero-title">Search Results</h1>
-            <p class="page-hero-copy">Review matching posts for your query and jump straight into the content that matters.</p>
-        </div>
-
-        <div class="search-layout">
-            <section class="search-panel">
-                <div class="search-results-meta">
-                    Results for <strong>"{{ query }}"</strong><br>
-                    Found {{ total_results }} post{{ total_results|pluralize }}.
-                </div>
-
-                {% include "includes/sort_controls.html" %}
-
-                <div class="search-results">
-                    {% for result in results %}
-                        <article class="search-result-card">
-                            <a href="{{ result.url }}" class="search-result-card-link">
-                                <div class="search-result-meta-label">{{ result.meta }}</div>
-                                <h4>{{ result.title }}</h4>
-                                <div class="search-result-body">
-                                {% if result.kind == "post" %}
-                                    {{ result.body_html|markdown|truncatewords_html:23 }}
-                                {% else %}
-                                    {{ result.body_html|truncatewords:23 }}
+    </style>
+    <section class="search-shell page-shell">
+        {% if query %}
+            <div class="search-hero page-hero">
+                <h1 class="page-hero-title">Search Results</h1>
+                <p class="page-hero-copy">Review matching posts for your query and jump straight into the content that matters.</p>
+            </div>
+            <div class="search-layout">
+                <section class="search-panel">
+                    <div class="search-results-meta">
+                        Results for <strong>"{{ query }}"</strong>
+                        <br>
+                        Found {{ total_results }} post{{ total_results|pluralize }}.
+                    </div>
+                    {% include "includes/sort_controls.html" %}
+                    <div class="search-results">
+                        {% for result in results %}
+                            <article class="search-result-card">
+                                <a href="{{ result.url }}" class="search-result-card-link">
+                                    <div class="search-result-meta-label">{{ result.meta }}</div>
+                                    <h4>{{ result.title }}</h4>
+                                    <div class="search-result-body">
+                                        {% if result.kind == "post" %}
+                                            {{ result.body_html|markdown|truncatewords_html:23 }}
+                                        {% else %}
+                                            {{ result.body_html|truncatewords:23 }}
+                                        {% endif %}
+                                    </div>
+                                </a>
+                            </article>
+                        {% empty %}
+                            <div class="search-empty">
+                                No posts matched <strong>"{{ query }}"</strong>. Try a shorter phrase or different keywords.
+                            </div>
+                        {% endfor %}
+                    </div>
+                    {% if page_obj and page_obj.paginator.num_pages > 1 %}
+                        <div class="search-pagination">
+                            <div class="search-page-meta">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</div>
+                            <div class="search-page-links">
+                                {% if page_obj.has_previous %}
+                                    <a href="?query={{ query|urlencode }}&sort={{ selected_sort }}&page={{ page_obj.previous_page_number }}"
+                                       class="search-link">Previous Page</a>
                                 {% endif %}
-                                </div>
-                            </a>
-                        </article>
-                    {% empty %}
-                        <div class="search-empty">
-                            No posts matched <strong>"{{ query }}"</strong>. Try a shorter phrase or different keywords.
+                                {% if page_obj.has_next %}
+                                    <a href="?query={{ query|urlencode }}&sort={{ selected_sort }}&page={{ page_obj.next_page_number }}"
+                                       class="search-link">Next Page</a>
+                                {% endif %}
+                            </div>
                         </div>
-                    {% endfor %}
-                </div>
-
-                {% if page_obj and page_obj.paginator.num_pages > 1 %}
-                    <div class="search-pagination">
-                        <div class="search-page-meta">
-                            Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
-                        </div>
-                        <div class="search-page-links">
-                            {% if page_obj.has_previous %}
-                                <a href="?query={{ query|urlencode }}&sort={{ selected_sort }}&page={{ page_obj.previous_page_number }}" class="search-link">Previous Page</a>
-                            {% endif %}
-                            {% if page_obj.has_next %}
-                                <a href="?query={{ query|urlencode }}&sort={{ selected_sort }}&page={{ page_obj.next_page_number }}" class="search-link">Next Page</a>
-                            {% endif %}
-                        </div>
-                    </div>
-                {% endif %}
-
-                <div class="search-actions">
-                    <a href="{% url 'blog:post_search' %}" class="search-link">Search Again</a>
-                    <a href="{% url 'blog:all_posts_list' %}" class="search-link">Back to Blog</a>
-                </div>
-            </section>
-
-            <aside class="search-panel search-note">
-                <h3>Search Tips</h3>
-                <ul>
-                    <li>Try shorter keywords first.</li>
-                    <li>Search for a title word, tag term, or topic phrase.</li>
-                    <li>If nothing appears, broaden the wording and search again.</li>
-                </ul>
-            </aside>
-        </div>
-    {% else %}
-        <div class="search-hero page-hero">
-            <h1>Search Posts</h1>
-            <p>Find posts by topic, title, or phrase with a cleaner search page that fits the newer upload screens.</p>
-        </div>
-
-        <div class="search-layout">
-            <section class="search-panel">
-                <h2>Start a Search</h2>
-                <form method="get" class="search-form">
-                    {{ form.as_p }}
+                    {% endif %}
                     <div class="search-actions">
-                        <button type="submit" class="search-button">Search</button>
-                        <a href="{% url 'blog:all_posts_list' %}" class="search-link">Browse Posts</a>
+                        <a href="{% url 'blog:post_search' %}" class="search-link">Search Again</a>
+                        <a href="{% url 'blog:all_posts_list' %}" class="search-link">Back to Blog</a>
                     </div>
-                </form>
-            </section>
-
-            <aside class="search-panel search-note">
-                <h3>What works well here</h3>
-                <p>The search is best for post titles, repeated phrases, and topic-driven browsing when you already know part of what you want.</p>
-                <ul>
-                    <li>Use one or two keywords for broader results.</li>
-                    <li>Use a phrase for narrower matches.</li>
-                    <li>Return to the blog list if you prefer manual browsing.</li>
-                </ul>
-            </aside>
-        </div>
-    {% endif %}
-</section>
+                </section>
+                <aside class="search-panel search-note">
+                    <h3>Search Tips</h3>
+                    <ul>
+                        <li>Try shorter keywords first.</li>
+                        <li>Search for a title word, tag term, or topic phrase.</li>
+                        <li>If nothing appears, broaden the wording and search again.</li>
+                    </ul>
+                </aside>
+            </div>
+        {% else %}
+            <div class="search-hero page-hero">
+                <h1>Search Posts</h1>
+                <p>Find posts by topic, title, or phrase with a cleaner search page that fits the newer upload screens.</p>
+            </div>
+            <div class="search-layout">
+                <section class="search-panel">
+                    <h2>Start a Search</h2>
+                    <form method="get" class="search-form">
+                        {{ form.as_p }}
+                        <div class="search-actions">
+                            <button type="submit" class="search-button">Search</button>
+                            <a href="{% url 'blog:all_posts_list' %}" class="search-link">Browse Posts</a>
+                        </div>
+                    </form>
+                </section>
+                <aside class="search-panel search-note">
+                    <h3>What works well here</h3>
+                    <p>The search is best for post titles, repeated phrases, and topic-driven browsing when you already know part of what you want.</p>
+                    <ul>
+                        <li>Use one or two keywords for broader results.</li>
+                        <li>Use a phrase for narrower matches.</li>
+                        <li>Return to the blog list if you prefer manual browsing.</li>
+                    </ul>
+                </aside>
+            </div>
+        {% endif %}
+    </section>
 {% endblock %}

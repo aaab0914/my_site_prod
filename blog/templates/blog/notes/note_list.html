@@ -1,9 +1,7 @@
 {% extends "blog/hero_base.html" %}
-
 {% block title %}My Notes{% endblock %}
-
 {% block hero_base_css %}
-<style>
+    <style>
     .notes-header {
         display: flex;
         justify-content: space-between;
@@ -138,47 +136,46 @@
         font-size: 16px;
         margin-bottom: 20px;
     }
-</style>
+    </style>
 {% endblock %}
-
 {% block content_body %}
-<div class="notes-header">
-    <h1><span aria-hidden="true">🗒️</span> My Notes <span class="notes-private-label">🔒 Private</span></h1>
-    <a href="{% url 'blog:note_create' %}" class="btn-create-note"><i class="bi bi-plus-circle"></i> New Note</a>
-</div>
-<p class="notes-private-description">Only you can see, edit, and delete your notes.</p>
-{% include "includes/sort_controls.html" %}
-
-{% if notes %}
-    <div class="notes-grid">
-        {% for note in notes %}
-        <div class="note-card">
-            <h2 class="note-title">{{ note.title }}</h2>
-            <div class="note-content">{{ note.content|linebreaks }}</div>
-            <div class="note-meta">
-                <i class="bi bi-clock"></i> Updated: {{ note.updated|date:"Y-m-d H:i" }}
-            </div>
-            <div class="note-actions">
-                <a href="{% url 'blog:note_edit' note.pk %}" class="btn-note">
-                    <i class="bi bi-pencil"></i> Edit
-                </a>
-                <a href="{% url 'blog:note_delete' note.pk %}" class="btn-note btn-note-delete">
-                    <i class="bi bi-trash"></i> Delete
-                </a>
-            </div>
-        </div>
-        {% endfor %}
+    <div class="notes-header">
+        <h1><span aria-hidden="true">🗒️</span> My Notes <span class="notes-private-label">🔒 Private</span></h1>
+        <a href="{% url 'blog:note_create' %}" class="btn-create-note"><i class="bi bi-plus-circle"></i> New Note</a>
     </div>
-{% else %}
-    <div class="empty-state">
-        <div class="empty-state-icon">
-            <i class="bi bi-journal-text"></i>
+    <p class="notes-private-description">Only you can see, edit, and delete your notes.</p>
+    {% include "includes/sort_controls.html" %}
+    {% if notes %}
+        <div class="notes-grid">
+            {% for note in notes %}
+                <div class="note-card">
+                    <h2 class="note-title">{{ note.title }}</h2>
+                    <div class="note-content">{{ note.content|linebreaks }}</div>
+                    <div class="note-meta">
+                        <i class="bi bi-clock"></i> Updated: {{ note.updated|date:"Y-m-d H:i" }}
+                    </div>
+                    <div class="note-actions">
+                        <a href="{% url 'blog:note_edit' note.pk %}" class="btn-note">
+                            <i class="bi bi-pencil"></i> Edit
+                        </a>
+                        <a href="{% url 'blog:note_delete' note.pk %}"
+                           class="btn-note btn-note-delete">
+                            <i class="bi bi-trash"></i> Delete
+                        </a>
+                    </div>
+                </div>
+            {% endfor %}
         </div>
-        <p class="empty-state-text">You do not have any notes yet.</p>
-        <a href="{% url 'blog:note_create' %}" class="btn-create-note">
-            <i class="bi bi-plus-circle"></i>
-            Create Your First Note
-        </a>
-    </div>
-{% endif %}
+    {% else %}
+        <div class="empty-state">
+            <div class="empty-state-icon">
+                <i class="bi bi-journal-text"></i>
+            </div>
+            <p class="empty-state-text">You do not have any notes yet.</p>
+            <a href="{% url 'blog:note_create' %}" class="btn-create-note">
+                <i class="bi bi-plus-circle"></i>
+                Create Your First Note
+            </a>
+        </div>
+    {% endif %}
 {% endblock %}

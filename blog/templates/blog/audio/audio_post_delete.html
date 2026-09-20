@@ -1,9 +1,7 @@
 {% extends "blog/base.html" %}
-
 {% block title %}Delete Audio{% endblock %}
-
 {% block content %}
-<style>
+    <style>
     .audio-delete-shell { max-width: 1040px; margin: 0 auto 36px; }
     .audio-delete-hero {
         margin-bottom: 24px; padding: 30px; border-radius: 28px;
@@ -32,45 +30,44 @@
         .audio-delete-layout { grid-template-columns: 1fr; }
         .audio-delete-panel { padding: 18px; }
     }
-</style>
-
-<section class="audio-delete-shell page-shell">
-    <div class="audio-delete-hero page-hero">
-        <h1 class="page-hero-title">Delete Audio Track</h1>
-        <p class="page-hero-copy">Review the track details before removal. This action deletes the audio item from the list and should only be used when you are sure.</p>
-    </div>
-
-    <div class="audio-delete-layout">
-        <section class="audio-delete-panel">
-            <h2>Track Summary</h2>
-            <div class="audio-delete-details">
-                <div><strong>Title:</strong> {{ audiopost.music_name }}</div>
-                <div><strong>Description:</strong> {{ audiopost.description|default:"No description" }}</div>
-                <div><strong>Uploaded by:</strong> {{ audiopost.uploaded_by.username }}</div>
-                <div><strong>Uploaded at:</strong> {{ audiopost.created|date:"F j, Y, g:i a" }}</div>
-                {% if audiopost.audio_file %}
-                    <div><strong>File:</strong> <a href="{{ audiopost.get_audio_proxy_url }}" target="_blank">{{ audiopost.get_audio_filename }}</a></div>
-                {% endif %}
-                {% if audiopost.cover_image %}
-                    <img class="audio-delete-cover" src="{{ audiopost.get_cover_image_proxy_url }}" alt="{{ audiopost.music_name }} cover">
-                {% else %}
-                    <div><strong>Cover:</strong> No cover image uploaded.</div>
-                {% endif %}
-            </div>
-
-            <form method="post">
-                {% csrf_token %}
-                <div class="audio-delete-actions">
-                    <button type="submit" class="audio-delete-button">Delete Track</button>
-                    <a href="{% url 'blog:audio_list' %}" class="audio-delete-link">Back to Library</a>
+    </style>
+    <section class="audio-delete-shell page-shell">
+        <div class="audio-delete-hero page-hero">
+            <h1 class="page-hero-title">Delete Audio Track</h1>
+            <p class="page-hero-copy">Review the track details before removal. This action deletes the audio item from the list and should only be used when you are sure.</p>
+        </div>
+        <div class="audio-delete-layout">
+            <section class="audio-delete-panel">
+                <h2>Track Summary</h2>
+                <div class="audio-delete-details">
+                    <div><strong>Title:</strong> {{ audiopost.music_name }}</div>
+                    <div><strong>Description:</strong> {{ audiopost.description|default:"No description" }}</div>
+                    <div><strong>Uploaded by:</strong> {{ audiopost.uploaded_by.username }}</div>
+                    <div><strong>Uploaded at:</strong> {{ audiopost.created|date:"F j, Y, g:i a" }}</div>
+                    {% if audiopost.audio_file %}
+                        <div><strong>File:</strong> <a href="{{ audiopost.get_audio_proxy_url }}"
+    target="_blank">{{ audiopost.get_audio_filename }}</a></div>
+                    {% endif %}
+                    {% if audiopost.cover_image %}
+                        <img class="audio-delete-cover"
+                             src="{{ audiopost.get_cover_image_proxy_url }}"
+                             alt="{{ audiopost.music_name }} cover">
+                    {% else %}
+                        <div><strong>Cover:</strong> No cover image uploaded.</div>
+                    {% endif %}
                 </div>
-            </form>
-        </section>
-
-        <aside class="audio-delete-panel audio-delete-note">
-            <h3>Before You Delete</h3>
-            <p>Deleting a track removes it from the shared audio library immediately. Double-check the title and file before confirming the action.</p>
-        </aside>
-    </div>
-</section>
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="audio-delete-actions">
+                        <button type="submit" class="audio-delete-button">Delete Track</button>
+                        <a href="{% url 'blog:audio_list' %}" class="audio-delete-link">Back to Library</a>
+                    </div>
+                </form>
+            </section>
+            <aside class="audio-delete-panel audio-delete-note">
+                <h3>Before You Delete</h3>
+                <p>Deleting a track removes it from the shared audio library immediately. Double-check the title and file before confirming the action.</p>
+            </aside>
+        </div>
+    </section>
 {% endblock %}

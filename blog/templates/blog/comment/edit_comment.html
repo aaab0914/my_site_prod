@@ -1,9 +1,7 @@
-{% extends 'blog/base.html' %}
-
+{% extends "blog/base.html" %}
 {% block title %}Edit Comment{% endblock title %}
-
 {% block content %}
-<style>
+    <style>
     .comment-edit-shell { max-width: 960px; margin: 0 auto 36px; overflow: hidden; }
     .comment-edit-shell *, .comment-edit-shell *::before, .comment-edit-shell *::after { box-sizing: border-box; }
     .comment-edit-shell label, .comment-edit-shell input, .comment-edit-shell textarea, .comment-edit-shell button { float: none !important; clear: none !important; }
@@ -29,30 +27,29 @@
         .comment-edit-hero h1 { font-size: 32px; }
         .comment-edit-panel { padding: 18px; }
     }
-</style>
-
-<section class="comment-edit-shell page-shell">
-    <div class="comment-edit-hero page-hero">
-        <h1 class="page-hero-title">Edit Comment</h1>
-        <p class="page-hero-copy">Update the comment text and return to the post once the changes are saved.</p>
-    </div>
-
-    <section class="comment-edit-panel">
-        <h2>Comment Content</h2>
-        <form method="post">
-            {% csrf_token %}
-            <div class="comment-edit-field">
-                <label for="{{ form.body.id_for_label }}">Comment</label>
-                {{ form.body }}
-                {% if form.body.errors %}
-                    <div class="comment-edit-error">{{ form.body.errors }}</div>
-                {% endif %}
-            </div>
-            <div class="comment-edit-actions">
-                <button type="submit" class="comment-edit-button">Save Changes</button>
-                <a href="{% url 'blog:post_detail' post.publish.year post.publish.month post.publish.day post.slug %}" class="comment-edit-link">Back to Post</a>
-            </div>
-        </form>
+    </style>
+    <section class="comment-edit-shell page-shell">
+        <div class="comment-edit-hero page-hero">
+            <h1 class="page-hero-title">Edit Comment</h1>
+            <p class="page-hero-copy">Update the comment text and return to the post once the changes are saved.</p>
+        </div>
+        <section class="comment-edit-panel">
+            <h2>Comment Content</h2>
+            <form method="post">
+                {% csrf_token %}
+                <div class="comment-edit-field">
+                    <label for="{{ form.body.id_for_label }}">Comment</label>
+                    {{ form.body }}
+                    {% if form.body.errors %}
+                        <div class="comment-edit-error">{{ form.body.errors }}</div>
+                    {% endif %}
+                </div>
+                <div class="comment-edit-actions">
+                    <button type="submit" class="comment-edit-button">Save Changes</button>
+                    <a href="{% url 'blog:post_detail' post.publish.year post.publish.month post.publish.day post.slug %}"
+                       class="comment-edit-link">Back to Post</a>
+                </div>
+            </form>
+        </section>
     </section>
-</section>
 {% endblock %}

@@ -1,10 +1,8 @@
 {% extends "blog/base.html" %}
-
 {% block title %}Delete Image{% endblock %}
-
 {% block content %}
-{% include "images/includes/gallery_shared_css.html" %}
-<style>
+    {% include "images/includes/gallery_shared_css.html" %}
+    <style>
     .gallery-delete {
         max-width: 720px;
         margin: 0 auto 32px;
@@ -26,17 +24,18 @@
     .gallery-delete-cancel {
         display: inline-block;
     }
-</style>
-
-<section class="gallery-delete gallery-card-surface">
-    <h1>Delete Image</h1>
-    <p>{{ image.title }}</p>
-    <form method="post">
-        {% csrf_token %}
-        <div class="gallery-delete-actions">
-            <button class="gallery-delete-confirm gallery-pill-button is-danger" type="submit">Delete</button>
-            <a class="gallery-delete-cancel gallery-pill-button is-neutral" href="{% url 'blog:images:gallery_detail' image.id %}">Cancel</a>
-        </div>
-    </form>
-</section>
+    </style>
+    <section class="gallery-delete gallery-card-surface">
+        <h1>Delete Image</h1>
+        <p>{{ image.title }}</p>
+        <form method="post">
+            {% csrf_token %}
+            <div class="gallery-delete-actions">
+                <button class="gallery-delete-confirm gallery-pill-button is-danger"
+                        type="submit">Delete</button>
+                <a class="gallery-delete-cancel gallery-pill-button is-neutral"
+                   href="{% url 'blog:images:gallery_detail' image.id %}">Cancel</a>
+            </div>
+        </form>
+    </section>
 {% endblock %}

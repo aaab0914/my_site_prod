@@ -1,9 +1,7 @@
 {% extends "blog/hero_base.html" %}
-
 {% block title %}Register{% endblock %}
-
 {% block hero_base_css %}
-<style>
+    <style>
     .account-layout {
         display: grid;
         grid-template-columns: minmax(0, 1.45fr) minmax(280px, 0.85fr);
@@ -134,33 +132,33 @@
             padding: 18px;
         }
     }
-</style>
+    </style>
 {% endblock %}
 {% block hero_class %}hero-theme-gallery{% endblock %}
 {% block hero_page_title %}Create Account{% endblock %}
 {% block hero_page_description %}Register a new account to publish posts, upload media, and manage your profile from the same workspace. The email field is optional.{% endblock %}
 {% block hero_grid_class %}has-aside account-layout{% endblock %}
 {% block content_body %}
-        <section class="account-panel">
-            <h2>Registration</h2>
-            <form method="post" class="account-form">
-                {% csrf_token %}
-                {{ form.as_div }}
-                <div class="account-actions">
-                    <button type="submit" class="account-button">Sign Up</button>
-                    <a href="{% url 'users:login' %}" class="account-link">Already Have an Account</a>
-                </div>
-            </form>
-        </section>
+    <section class="account-panel">
+        <h2>Registration</h2>
+        <form method="post" class="account-form">
+            {% csrf_token %}
+            {{ form.as_div }}
+            <div class="account-actions">
+                <button type="submit" class="account-button">Sign Up</button>
+                <a href="{% url 'users:login' %}" class="account-link">Already Have an Account</a>
+            </div>
+        </form>
+    </section>
 {% endblock %}
 {% block aside %}
-        <aside class="account-panel account-note">
-            <h3>What You Get</h3>
-            <ul>
-                <li>Email is optional during registration.</li>
-                <li>A public profile with account controls.</li>
-                <li>Access to post creation and media uploads.</li>
-                <li>Personal comment and activity history.</li>
-            </ul>
-        </aside>
+    <aside class="account-panel account-note">
+        <h3>What You Get</h3>
+        <ul>
+            <li>Email is optional during registration.</li>
+            <li>A public profile with account controls.</li>
+            <li>Access to post creation and media uploads.</li>
+            <li>Personal comment and activity history.</li>
+        </ul>
+    </aside>
 {% endblock %}

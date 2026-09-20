@@ -1,10 +1,8 @@
 {% extends "blog/base.html" %}
 {% load blog_tags %}
-
 {% block title %}{{ profile_user.username }}'s Profile{% endblock %}
-
 {% block content %}
-<style>
+    <style>
     .profile-shell { max-width: 1180px; margin: 0 auto 36px; }
     .profile-hero {
         margin-bottom: 24px;
@@ -49,165 +47,166 @@
         .profile-panel { padding: 18px; }
         .profile-head { grid-template-columns: 1fr; }
     }
-</style>
-
-<section class="profile-shell page-shell">
-    <div class="profile-hero page-hero">
-        <div class="profile-title-row">
-            <h1 class="page-hero-title">{{ profile_user.username }}'s Profile</h1>
-            {% if profile_user.is_superuser %}<span class="admin-badge">Administrator</span>{% endif %}
+    </style>
+    <section class="profile-shell page-shell">
+        <div class="profile-hero page-hero">
+            <div class="profile-title-row">
+                <h1 class="page-hero-title">{{ profile_user.username }}'s Profile</h1>
+                {% if profile_user.is_superuser %}<span class="admin-badge">Administrator</span>{% endif %}
+            </div>
+            <p class="page-hero-copy">Review account details, posts, comments, and uploaded media from one place.</p>
         </div>
-        <p class="page-hero-copy">Review account details, posts, comments, and uploaded media from one place.</p>
-    </div>
-
-    <div class="profile-grid">
-        <section class="profile-panel">
-            <div class="profile-head">
-                {% if profile_user.profile and profile_user.profile.avatar %}
-                    <div class="profile-avatar">
-                        <img src="{{ profile_user.profile.get_avatar_proxy_url }}" alt="{{ profile_user.username }}'s avatar">
-                    </div>
-                {% else %}
-                    <div class="profile-avatar-empty">
-                        <span>{{ profile_user.username|first|upper }}</span>
-                    </div>
-                {% endif %}
-                <div>
-                    <div class="profile-meta">
-                        <div><strong>Username:</strong> {{ profile_user.username }}</div>
-                        <div><strong>Email:</strong> {{ profile_user.email }}</div>
-                        <div><strong>Joined:</strong> {{ profile_user.date_joined|date:"F j, Y" }}</div>
-                        <div><strong>Bio:</strong> {{ profile_user.profile.bio|default:"No bio yet." }}</div>
-                        <div><strong>Location:</strong> {{ profile_user.profile.location|default:"Not specified" }}</div>
-                    </div>
-                    <div class="profile-actions">
-                        <a href="{% url 'blog:user_feed' profile_user.username %}" class="profile-link">RSS Feed</a>
-                        {% if profile_user == request.user %}
-                            <a href="{% url 'users:profile_edit' %}" class="profile-button">Edit Profile</a>
-                            <a href="{% url 'users:username_change' %}" class="profile-link">Change Username</a>
-                            <a href="{% url 'users:api_token_manage' %}" class="profile-link">API Token</a>
-                        {% endif %}
+        <div class="profile-grid">
+            <section class="profile-panel">
+                <div class="profile-head">
+                    {% if profile_user.profile and profile_user.profile.avatar %}
+                        <div class="profile-avatar">
+                            <img src="{{ profile_user.profile.get_avatar_proxy_url }}"
+                                 alt="{{ profile_user.username }}'s avatar">
+                        </div>
+                    {% else %}
+                        <div class="profile-avatar-empty">
+                            <span>{{ profile_user.username|first|upper }}</span>
+                        </div>
+                    {% endif %}
+                    <div>
+                        <div class="profile-meta">
+                            <div><strong>Username:</strong> {{ profile_user.username }}</div>
+                            <div><strong>Email:</strong> {{ profile_user.email }}</div>
+                            <div><strong>Joined:</strong> {{ profile_user.date_joined|date:"F j, Y" }}</div>
+                            <div><strong>Bio:</strong> {{ profile_user.profile.bio|default:"No bio yet." }}</div>
+                            <div><strong>Location:</strong> {{ profile_user.profile.location|default:"Not specified" }}</div>
+                        </div>
+                        <div class="profile-actions">
+                            <a href="{% url 'blog:user_feed' profile_user.username %}"
+                               class="profile-link">RSS Feed</a>
+                            {% if profile_user == request.user %}
+                                <a href="{% url 'users:profile_edit' %}" class="profile-button">Edit Profile</a>
+                                <a href="{% url 'users:username_change' %}" class="profile-link">Change Username</a>
+                                <a href="{% url 'users:api_token_manage' %}" class="profile-link">API Token</a>
+                            {% endif %}
+                        </div>
                     </div>
                 </div>
-            </div>
-
-            <h2>{% if profile_user == request.user %}My Posts ({{ posts_total_count }}){% else %}{{ profile_user.username }}'s Posts ({{ posts_total_count }}){% endif %}</h2>
-            {% if posts %}
-                <ul class="profile-list">
-                    {% for post in posts %}
-                        <li><a href="{{ post.get_absolute_url }}">{{ post.title }}</a><div>{{ post.publish|date:"F j, Y" }}</div></li>
-                    {% endfor %}
-                </ul>
-                {% if posts_page_obj and posts_page_obj.paginator.num_pages > 1 %}
-                    <nav class="profile-pagination">
-                        {% if posts_page_obj.has_previous %}
-                            <a href="?posts_page={{ posts_page_obj.previous_page_number }}">Prev</a>
-                        {% endif %}
-                        {% for page_number in posts_page_obj.paginator.page_range %}
-                            {% if page_number == posts_page_obj.number %}
-                                <span class="is-current">{{ page_number }}</span>
-                            {% else %}
-                                <a href="?posts_page={{ page_number }}">{{ page_number }}</a>
+                <h2>{% if profile_user == request.user %}My Posts ({{ posts_total_count }}){% else %}{{ profile_user.username }}'s Posts ({{ posts_total_count }}){% endif %}</h2>
+                {% if posts %}
+                    <ul class="profile-list">
+                        {% for post in posts %}
+                            <li>
+                                <a href="{{ post.get_absolute_url }}">{{ post.title }}</a>
+                                <div>{{ post.publish|date:"F j, Y" }}</div>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                    {% if posts_page_obj and posts_page_obj.paginator.num_pages > 1 %}
+                        <nav class="profile-pagination">
+                            {% if posts_page_obj.has_previous %}
+                                <a href="?posts_page={{ posts_page_obj.previous_page_number }}">Prev</a>
                             {% endif %}
-                        {% endfor %}
-                        {% if posts_page_obj.has_next %}
-                            <a href="?posts_page={{ posts_page_obj.next_page_number }}">Next</a>
+                            {% for page_number in posts_page_obj.paginator.page_range %}
+                                {% if page_number == posts_page_obj.number %}
+                                    <span class="is-current">{{ page_number }}</span>
+                                {% else %}
+                                    <a href="?posts_page={{ page_number }}">{{ page_number }}</a>
+                                {% endif %}
+                            {% endfor %}
+                            {% if posts_page_obj.has_next %}
+                                <a href="?posts_page={{ posts_page_obj.next_page_number }}">Next</a>
+                            {% endif %}
+                        </nav>
+                    {% endif %}
+                {% else %}
+                    <p class="profile-empty">{% if profile_user == request.user %}You have not written any posts yet.{% else %}{{ profile_user.username }} has not written any posts yet.{% endif %}</p>
+                {% endif %}
+            </section>
+            <div class="profile-stack">
+                <aside class="profile-panel">
+                    <h3>{% if profile_user == request.user %}My Comments{% else %}{{ profile_user.username }}'s Comments{% endif %}</h3>
+                    {% if comments %}
+                        <ul class="profile-list">
+                            {% for comment in comments %}
+                                <li>
+                                    <div><strong>On:</strong> <a href="{{ comment.post.get_absolute_url }}">{{ comment.post.title }}</a></div>
+                                    <div>{{ comment.body|truncatewords:20 }}</div>
+                                    <div>{{ comment.created|date:"F j, Y" }}</div>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p class="profile-empty">{% if profile_user == request.user %}You have not written any comments yet.{% else %}{{ profile_user.username }} has not written any comments yet.{% endif %}</p>
+                    {% endif %}
+                </aside>
+                {% if profile_user == request.user %}
+                    <aside class="profile-panel">
+                        <h3>My Notes ({{ notes_total_count }})</h3>
+                        {% if notes %}
+                            <ul class="profile-list">
+                                {% for note in notes %}
+                                    <li><a href="{% url 'blog:note_edit' note.pk %}">{{ note.title }}</a><div>{{ note.updated|date:"F j, Y" }}</div></li>
+                                {% endfor %}
+                            </ul>
+                            <div class="profile-actions">
+                                <a href="{% url 'blog:note_list' %}" class="profile-link">Open My Notes</a>
+                            </div>
+                        {% else %}
+                            <p class="profile-empty">You have not created any notes yet.</p>
+                            <div class="profile-actions">
+                                <a href="{% url 'blog:note_create' %}" class="profile-button">Create a Note</a>
+                            </div>
                         {% endif %}
-                    </nav>
+                    </aside>
                 {% endif %}
-            {% else %}
-                <p class="profile-empty">{% if profile_user == request.user %}You have not written any posts yet.{% else %}{{ profile_user.username }} has not written any posts yet.{% endif %}</p>
-            {% endif %}
-        </section>
-
-        <div class="profile-stack">
-            <aside class="profile-panel">
-                <h3>{% if profile_user == request.user %}My Comments{% else %}{{ profile_user.username }}'s Comments{% endif %}</h3>
-                {% if comments %}
-                    <ul class="profile-list">
-                        {% for comment in comments %}
-                            <li><div><strong>On:</strong> <a href="{{ comment.post.get_absolute_url }}">{{ comment.post.title }}</a></div><div>{{ comment.body|truncatewords:20 }}</div><div>{{ comment.created|date:"F j, Y" }}</div></li>
-                        {% endfor %}
-                    </ul>
-                {% else %}
-                    <p class="profile-empty">{% if profile_user == request.user %}You have not written any comments yet.{% else %}{{ profile_user.username }} has not written any comments yet.{% endif %}</p>
-                {% endif %}
-            </aside>
-            {% if profile_user == request.user %}
-            <aside class="profile-panel">
-                <h3>My Notes ({{ notes_total_count }})</h3>
-                {% if notes %}
-                    <ul class="profile-list">
-                        {% for note in notes %}
-                            <li><a href="{% url 'blog:note_edit' note.pk %}">{{ note.title }}</a><div>{{ note.updated|date:"F j, Y" }}</div></li>
-                        {% endfor %}
-                    </ul>
-                    <div class="profile-actions">
-                        <a href="{% url 'blog:note_list' %}" class="profile-link">Open My Notes</a>
-                    </div>
-                {% else %}
-                    <p class="profile-empty">You have not created any notes yet.</p>
-                    <div class="profile-actions">
-                        <a href="{% url 'blog:note_create' %}" class="profile-button">Create a Note</a>
-                    </div>
-                {% endif %}
-            </aside>
-            {% endif %}
+            </div>
         </div>
-    </div>
-
-    <div class="upload-grid">
-        <section class="profile-panel">
-            <h3>Gallery Images ({{ gallery_images|length }})</h3>
-            {% if gallery_images %}
-                <ul class="profile-list">
-                    {% for image in gallery_images %}
-                        <li><a href="{% url 'blog:images:gallery_detail' image.id %}">{{ image.title }}</a><div>{{ image.created|date:"F j, Y" }}</div></li>
-                    {% endfor %}
-                </ul>
-            {% else %}
-                <p class="profile-empty">No gallery images uploaded yet.</p>
-            {% endif %}
-        </section>
-
-        <section class="profile-panel">
-            <h3>Albums ({{ albums|length }})</h3>
-            {% if albums %}
-                <ul class="profile-list">
-                    {% for album in albums %}
-                        <li><a href="{% url 'blog:images:album_detail' album.id %}">{{ album.title }}</a><div>{{ album.image_count }} image{{ album.image_count|pluralize }} · {{ album.created|date:"F j, Y" }}</div></li>
-                    {% endfor %}
-                </ul>
-            {% else %}
-                <p class="profile-empty">No albums uploaded yet.</p>
-            {% endif %}
-        </section>
-
-        <section class="profile-panel">
-            <h3>Audio Uploads ({{ audio_posts|length }})</h3>
-            {% if audio_posts %}
-                <ul class="profile-list">
-                    {% for audio in audio_posts %}
-                        <li><a href="{% url 'blog:audio_list' %}">{{ audio.music_name|default:audio.get_audio_filename }}</a><div>{{ audio.created|date:"F j, Y" }}</div></li>
-                    {% endfor %}
-                </ul>
-            {% else %}
-                <p class="profile-empty">No audio uploaded yet.</p>
-            {% endif %}
-        </section>
-
-        <section class="profile-panel">
-            <h3>Video Uploads ({{ video_posts|length }})</h3>
-            {% if video_posts %}
-                <ul class="profile-list">
-                    {% for video in video_posts %}
-                        <li><a href="{% url 'blog:video_list' %}">{{ video.title|default:video.get_video_filename }}</a><div>{{ video.created|date:"F j, Y" }}</div></li>
-                    {% endfor %}
-                </ul>
-            {% else %}
-                <p class="profile-empty">No videos uploaded yet.</p>
-            {% endif %}
-        </section>
-    </div>
-</section>
+        <div class="upload-grid">
+            <section class="profile-panel">
+                <h3>Gallery Images ({{ gallery_images|length }})</h3>
+                {% if gallery_images %}
+                    <ul class="profile-list">
+                        {% for image in gallery_images %}
+                            <li><a href="{% url 'blog:images:gallery_detail' image.id %}">{{ image.title }}</a><div>{{ image.created|date:"F j, Y" }}</div></li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="profile-empty">No gallery images uploaded yet.</p>
+                {% endif %}
+            </section>
+            <section class="profile-panel">
+                <h3>Albums ({{ albums|length }})</h3>
+                {% if albums %}
+                    <ul class="profile-list">
+                        {% for album in albums %}
+                            <li><a href="{% url 'blog:images:album_detail' album.id %}">{{ album.title }}</a><div>{{ album.image_count }} image{{ album.image_count|pluralize }} · {{ album.created|date:"F j, Y" }}</div></li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="profile-empty">No albums uploaded yet.</p>
+                {% endif %}
+            </section>
+            <section class="profile-panel">
+                <h3>Audio Uploads ({{ audio_posts|length }})</h3>
+                {% if audio_posts %}
+                    <ul class="profile-list">
+                        {% for audio in audio_posts %}
+                            <li><a href="{% url 'blog:audio_list' %}">{{ audio.music_name|default:audio.get_audio_filename }}</a><div>{{ audio.created|date:"F j, Y" }}</div></li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="profile-empty">No audio uploaded yet.</p>
+                {% endif %}
+            </section>
+            <section class="profile-panel">
+                <h3>Video Uploads ({{ video_posts|length }})</h3>
+                {% if video_posts %}
+                    <ul class="profile-list">
+                        {% for video in video_posts %}
+                            <li><a href="{% url 'blog:video_list' %}">{{ video.title|default:video.get_video_filename }}</a><div>{{ video.created|date:"F j, Y" }}</div></li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="profile-empty">No videos uploaded yet.</p>
+                {% endif %}
+            </section>
+        </div>
+    </section>
 {% endblock %}

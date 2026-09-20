@@ -1,9 +1,7 @@
-{% extends 'blog/base.html' %}
-
+{% extends "blog/base.html" %}
 {% block title %}Delete Comment{% endblock title %}
-
 {% block content %}
-<style>
+    <style>
     .comment-delete-shell { max-width: 960px; margin: 0 auto 36px; }
     .comment-delete-hero {
         margin-bottom: 24px; padding: 30px; border-radius: 28px;
@@ -27,31 +25,29 @@
         .comment-delete-layout { grid-template-columns: 1fr; }
         .comment-delete-panel { padding: 18px; }
     }
-</style>
-
-<section class="comment-delete-shell page-shell">
-    <div class="comment-delete-hero page-hero">
-        <h1 class="page-hero-title">Delete Comment</h1>
-        <p class="page-hero-copy">Review the comment before removal. This action permanently deletes the comment from the post.</p>
-    </div>
-
-    <div class="comment-delete-layout">
-        <section class="comment-delete-panel">
-            <h2>Comment Preview</h2>
-            <div class="comment-delete-quote">{{ comment.body }}</div>
-            <form method="post">
-                {% csrf_token %}
-                <div class="comment-delete-actions">
-                    <button type="submit" class="comment-delete-button">Delete Comment</button>
-                    <a href="{% url 'blog:post_detail' comment.post.publish.year comment.post.publish.month comment.post.publish.day comment.post.slug %}" class="comment-delete-link">Back to Post</a>
-                </div>
-            </form>
-        </section>
-
-        <aside class="comment-delete-panel comment-delete-note">
-            <h3>Before You Delete</h3>
-            <p>Removing the comment clears it from the post discussion immediately. Check the content first in case this was meant to be edited instead.</p>
-        </aside>
-    </div>
-</section>
+    </style>
+    <section class="comment-delete-shell page-shell">
+        <div class="comment-delete-hero page-hero">
+            <h1 class="page-hero-title">Delete Comment</h1>
+            <p class="page-hero-copy">Review the comment before removal. This action permanently deletes the comment from the post.</p>
+        </div>
+        <div class="comment-delete-layout">
+            <section class="comment-delete-panel">
+                <h2>Comment Preview</h2>
+                <div class="comment-delete-quote">{{ comment.body }}</div>
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="comment-delete-actions">
+                        <button type="submit" class="comment-delete-button">Delete Comment</button>
+                        <a href="{% url 'blog:post_detail' comment.post.publish.year comment.post.publish.month comment.post.publish.day comment.post.slug %}"
+                           class="comment-delete-link">Back to Post</a>
+                    </div>
+                </form>
+            </section>
+            <aside class="comment-delete-panel comment-delete-note">
+                <h3>Before You Delete</h3>
+                <p>Removing the comment clears it from the post discussion immediately. Check the content first in case this was meant to be edited instead.</p>
+            </aside>
+        </div>
+    </section>
 {% endblock content %}

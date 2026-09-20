@@ -1,9 +1,7 @@
 {% extends "blog/hero_base.html" %}
-
 {% block title %}Album{% endblock %}
-
 {% block hero_base_css %}
-<style>
+    <style>
 .album-shell { display: grid; gap: 24px; width: min(100%, 1120px); margin: 0 auto 36px; }
 .album-hero h1 { margin: 0; font-size: 42px; }
 .album-hero p { margin: 10px 0 0; max-width: 760px; line-height: 1.7; color: rgba(255,255,255,.9); }
@@ -25,36 +23,43 @@
 .album-pagination .is-current { background:#0f766e; color:#fff; }
 @media screen and (max-width: 1100px) { .album-grid { grid-template-columns: repeat(3, minmax(0,1fr)); } }
 @media screen and (max-width: 900px) { .album-shell { width: 100%; margin: 0 auto 24px; } .album-grid { grid-template-columns:1fr; } .album-hero h1 { font-size:32px; } }
-</style>
+    </style>
 {% endblock %}
 {% block hero_shell_class %}album-shell{% endblock %}
 {% block hero_class %}hero-theme-gallery album-hero{% endblock %}
 {% block hero_page_title %}Album{% endblock %}
 {% block hero_page_description %}Each upload creates one album. Opening the album shows all images from that upload together.{% endblock %}
 {% block hero_body %}
-<div class="album-actions">
-<a class="album-link" href="{% url 'blog:images:gallery_list' %}">Open Gallery</a>
-{% if user.is_authenticated %}<a class="album-button" href="{% url 'blog:images:album_upload' %}">Upload To Album</a>{% endif %}
-</div>
-{% if albums %}
-{% include "includes/sort_controls.html" %}
-<section class="album-grid">
-{% for album in albums %}
-<article class="album-card">
-{% with cover=album.cover_image %}
-<a href="{% url 'blog:images:album_detail' album.id %}">{% if cover %}<img class="album-cover" src="{{ cover.get_image_proxy_url }}" alt="{{ album.title }}">{% endif %}</a>
-{% endwith %}
-<div class="album-body">
-<h2><a href="{% url 'blog:images:album_detail' album.id %}">{{ album.title }}</a></h2>
-<div class="album-meta">{{ album.image_count }} image{{ album.image_count|pluralize }} by {{ album.uploaded_by.username }} on {{ album.created|date:"Y-m-d H:i" }}</div>
-</div>
-</article>
-{% endfor %}
-</section>
-{% if page_obj and page_obj.paginator.num_pages > 1 %}
-<nav class="album-pagination">{% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}{% if pagination_suffix %}&{{ pagination_suffix|slice:'1:' }}{% endif %}">Prev</a>{% endif %}{% for page_number in page_obj.paginator.page_range %}{% if page_number == page_obj.number %}<span class="is-current">{{ page_number }}</span>{% else %}<a href="?page={{ page_number }}{% if pagination_suffix %}&{{ pagination_suffix|slice:'1:' }}{% endif %}">{{ page_number }}</a>{% endif %}{% endfor %}{% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}{% if pagination_suffix %}&{{ pagination_suffix|slice:'1:' }}{% endif %}">Next</a>{% endif %}</nav>
-{% endif %}
-{% else %}
-<div class="album-empty">No albums yet.</div>
-{% endif %}
+    <div class="album-actions">
+        <a class="album-link" href="{% url 'blog:images:gallery_list' %}">Open Gallery</a>
+        {% if user.is_authenticated %}<a class="album-button"
+   href="{% url 'blog:images:album_upload' %}">Upload To Album</a>{% endif %}
+    </div>
+    {% if albums %}
+        {% include "includes/sort_controls.html" %}
+        <section class="album-grid">
+            {% for album in albums %}
+                <article class="album-card">
+                    {% with cover=album.cover_image %}
+                        <a href="{% url 'blog:images:album_detail' album.id %}">
+                            {% if cover %}
+                                <img class="album-cover"
+                                     src="{{ cover.get_image_proxy_url }}"
+                                     alt="{{ album.title }}">
+                            {% endif %}
+                        </a>
+                    {% endwith %}
+                    <div class="album-body">
+                        <h2><a href="{% url 'blog:images:album_detail' album.id %}">{{ album.title }}</a></h2>
+                        <div class="album-meta">{{ album.image_count }} image{{ album.image_count|pluralize }} by {{ album.uploaded_by.username }} on {{ album.created|date:"Y-m-d H:i" }}</div>
+                    </div>
+                </article>
+            {% endfor %}
+        </section>
+        {% if page_obj and page_obj.paginator.num_pages > 1 %}
+            <nav class="album-pagination">{% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}{% if pagination_suffix %}&{{ pagination_suffix|slice:'1:' }}{% endif %}">Prev</a>{% endif %}{% for page_number in page_obj.paginator.page_range %}{% if page_number == page_obj.number %}<span class="is-current">{{ page_number }}</span>{% else %}<a href="?page={{ page_number }}{% if pagination_suffix %}&{{ pagination_suffix|slice:'1:' }}{% endif %}">{{ page_number }}</a>{% endif %}{% endfor %}{% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}{% if pagination_suffix %}&{{ pagination_suffix|slice:'1:' }}{% endif %}">Next</a>{% endif %}</nav>
+        {% endif %}
+    {% else %}
+        <div class="album-empty">No albums yet.</div>
+    {% endif %}
 {% endblock %}
