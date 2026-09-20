@@ -8,7 +8,6 @@ from blog.models import AuditLog
 
 from .request_context import reset_current_request, set_current_request
 
-
 logger = logging.getLogger(__name__)
 
 _SKIP_PREFIXES = (
@@ -53,7 +52,8 @@ class AuditLoggingMiddleware:
             try:
                 AuditLog.objects.create(
                     user=request.user
-                    if getattr(request.user, "is_authenticated", False) and getattr(request.user, "pk", None)
+                    if getattr(request.user, "is_authenticated", False)
+                    and getattr(request.user, "pk", None)
                     else None,
                     method=request.method,
                     path=request.path,
@@ -75,14 +75,15 @@ class AuditLoggingMiddleware:
 
         method = (request.method or "GET").upper()
         if path.startswith(self.admin_prefix):
-            return method in {"POST", "PUT", "PATCH", "DELETE"} or response.status_code >= 400
+            return (
+                method in {"POST", "PUT", "PATCH", "DELETE"}
+                or response.status_code >= 400
+            )
         if method in {"POST", "PUT", "PATCH", "DELETE"}:
             return True
         if path.startswith(self.auth_paths):
             return True
-        if response.status_code >= 400:
-            return True
-        return False
+        return response.status_code >= 400
 
     def should_skip_due_to_rate_limit(self, request, response):
         method = (request.method or "GET").upper()

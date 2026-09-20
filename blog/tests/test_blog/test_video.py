@@ -22,7 +22,9 @@ class VideoRouteTests(TestCase):
             password="VideoPass123!",
         )
 
-    def create_video(self, title="Original Video", file_name="clip.mp4", content=b"video-bytes"):
+    def create_video(
+        self, title="Original Video", file_name="clip.mp4", content=b"video-bytes"
+    ):
         return VideoPost.objects.create(
             uploaded_by=self.superuser,
             title=title,
@@ -60,5 +62,7 @@ class VideoRouteTests(TestCase):
 
     def test_video_file_proxy_is_public(self):
         video = self.create_video(title="Love")
-        response = self.client.get(reverse("blog:video_file_proxy", kwargs={"pk": video.pk}))
+        response = self.client.get(
+            reverse("blog:video_file_proxy", kwargs={"pk": video.pk})
+        )
         self.assertEqual(response.status_code, 200)

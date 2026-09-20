@@ -1,11 +1,10 @@
-from pathlib import Path
 import os
 import shutil
 import subprocess
 import unittest
+from pathlib import Path
 
 from django.test import SimpleTestCase
-
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 PROD_ENV_PATH = BASE_DIR / ".env.prod.example"
@@ -16,7 +15,11 @@ class DockerComposeFileTests(SimpleTestCase):
         self.prod_compose_path = BASE_DIR / "docker-compose.prod.yml"
         self.prod_compose_text = self.prod_compose_path.read_text(encoding="utf-8")
         self.prod_env_path = PROD_ENV_PATH
-        self.prod_env_text = self.prod_env_path.read_text(encoding="utf-8") if self.prod_env_path.exists() else ""
+        self.prod_env_text = (
+            self.prod_env_path.read_text(encoding="utf-8")
+            if self.prod_env_path.exists()
+            else ""
+        )
         self.readme_path = BASE_DIR / "README.md"
         self.readme_text = self.readme_path.read_text(encoding="utf-8")
 
@@ -27,7 +30,9 @@ class DockerComposeFileTests(SimpleTestCase):
     @unittest.skipUnless(PROD_ENV_PATH.exists(), ".env.prod.example is not present")
     def test_prod_env_example_sets_prod_settings_module(self):
         """环境变量通过 .env.prod 注入"""
-        self.assertIn("DJANGO_SETTINGS_MODULE=my_site.settings.prod", self.prod_env_text)
+        self.assertIn(
+            "DJANGO_SETTINGS_MODULE=my_site.settings.prod", self.prod_env_text
+        )
 
     def test_prod_compose_defines_expected_services(self):
         self.assertIn("services:", self.prod_compose_text)
@@ -68,12 +73,18 @@ class DockerComposeFileTests(SimpleTestCase):
         self.assertIn("- ./backups:/code/backups", self.prod_compose_text)
 
     def test_prod_web_service_has_healthcheck(self):
-        self.assertIn("urllib.request.Request('http://127.0.0.1:8000/users/login/'", self.prod_compose_text)
+        self.assertIn(
+            "urllib.request.Request('http://127.0.0.1:8000/users/login/'",
+            self.prod_compose_text,
+        )
         self.assertIn("print(response.status)", self.prod_compose_text)
         self.assertIn("'X-Forwarded-Proto': 'https'", self.prod_compose_text)
 
     def test_nginx_service_mounts_expected_files(self):
-        self.assertIn("./nginx.prod.conf:/etc/nginx/conf.d/default.conf:ro", self.prod_compose_text)
+        self.assertIn(
+            "./nginx.prod.conf:/etc/nginx/conf.d/default.conf:ro",
+            self.prod_compose_text,
+        )
         self.assertIn("./staticfiles:/static:ro", self.prod_compose_text)
         self.assertIn("./media:/media:ro", self.prod_compose_text)
 
@@ -87,9 +98,17 @@ class DockerComposeFileTests(SimpleTestCase):
         self.assertNotIn("/code:ro", self.prod_compose_text)
 
     def test_readme_documents_prod_compose_usage(self):
-        self.assertIn("docker compose -f docker-compose.prod.yml up -d --build", self.readme_text)
-        self.assertIn("docker compose -f docker-compose.prod.yml exec web python manage.py migrate", self.readme_text)
-        self.assertIn("docker compose -f docker-compose.prod.yml exec web python manage.py test", self.readme_text)
+        self.assertIn(
+            "docker compose -f docker-compose.prod.yml up -d --build", self.readme_text
+        )
+        self.assertIn(
+            "docker compose -f docker-compose.prod.yml exec web python manage.py migrate",
+            self.readme_text,
+        )
+        self.assertIn(
+            "docker compose -f docker-compose.prod.yml exec web python manage.py test",
+            self.readme_text,
+        )
 
     def test_compose_config_is_valid_when_docker_is_available(self):
         docker = shutil.which("docker")
@@ -112,7 +131,14 @@ class DockerComposeFileTests(SimpleTestCase):
             self.skipTest("docker is not installed in this environment")
 
         result = subprocess.run(
-            [docker, "compose", "-f", "docker-compose.prod.yml", "config", "--services"],
+            [
+                docker,
+                "compose",
+                "-f",
+                "docker-compose.prod.yml",
+                "config",
+                "--services",
+            ],
             cwd=BASE_DIR,
             capture_output=True,
             text=True,
@@ -123,7 +149,9 @@ class DockerComposeFileTests(SimpleTestCase):
         self.assertIn("web", result.stdout)
         self.assertIn("nginx", result.stdout)
 
-    def test_production_compose_config_is_valid_with_ci_env_when_docker_is_available(self):
+    def test_production_compose_config_is_valid_with_ci_env_when_docker_is_available(
+        self,
+    ):
         docker = shutil.which("docker")
         if docker is None:
             self.skipTest("docker is not installed in this environment")

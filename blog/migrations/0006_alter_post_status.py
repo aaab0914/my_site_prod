@@ -4,15 +4,18 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('blog', '0005_trigram_ext'),
+        ("blog", "0005_trigram_ext"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='post',
-            name='status',
-            field=models.CharField(choices=[('DF', 'Draft'), ('PB', 'Published')], default='DF', max_length=10),
+            model_name="post",
+            name="status",
+            field=models.CharField(
+                choices=[("DF", "Draft"), ("PB", "Published")],
+                default="DF",
+                max_length=10,
+            ),
         ),
     ]

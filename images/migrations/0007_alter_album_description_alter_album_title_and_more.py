@@ -4,40 +4,39 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('images', '0006_alter_imagepost_options_alter_albumimage_image_and_more'),
+        ("images", "0006_alter_imagepost_options_alter_albumimage_image_and_more"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='album',
-            name='description',
+            model_name="album",
+            name="description",
             field=models.TextField(blank=True, max_length=500),
         ),
         migrations.AlterField(
-            model_name='album',
-            name='title',
+            model_name="album",
+            name="title",
             field=models.CharField(max_length=50),
         ),
         migrations.AlterField(
-            model_name='albumimage',
-            name='description',
+            model_name="albumimage",
+            name="description",
             field=models.TextField(blank=True, max_length=500),
         ),
         migrations.AlterField(
-            model_name='albumimage',
-            name='title',
+            model_name="albumimage",
+            name="title",
             field=models.CharField(max_length=50),
         ),
         migrations.AlterField(
-            model_name='imagepost',
-            name='description',
+            model_name="imagepost",
+            name="description",
             field=models.TextField(blank=True, max_length=500),
         ),
         migrations.AlterField(
-            model_name='imagepost',
-            name='title',
+            model_name="imagepost",
+            name="title",
             field=models.CharField(max_length=50),
         ),
     ]

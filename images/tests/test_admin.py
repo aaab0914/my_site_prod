@@ -2,12 +2,12 @@ import shutil
 import tempfile
 from io import BytesIO
 
-from PIL import Image
 from django.contrib import admin
 from django.contrib.auth.models import User
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import Client, TestCase, override_settings
 from django.urls import reverse
+from PIL import Image
 
 from images.admin import AlbumAdmin, AlbumImageAdmin, AlbumImageInline, ImageAdmin
 from images.models import Album, AlbumImage, ImagePost
@@ -40,29 +40,39 @@ class ImageAdminTests(TestCase):
     def test_image_admin_thumbnail_preview_renders_img(self):
         image = ImagePost.objects.create(
             title="Test Image",
-            image=SimpleUploadedFile("test.png", make_test_image(), content_type="image/png"),
+            image=SimpleUploadedFile(
+                "test.png", make_test_image(), content_type="image/png"
+            ),
             uploaded_by=self.user,
         )
         model_admin = ImageAdmin(ImagePost, admin.site)
         self.assertIn("<img", model_admin.thumbnail_preview(image))
 
     def test_album_admin_cover_preview_renders_img(self):
-        album = Album.objects.create(title="Album", description="desc", uploaded_by=self.user)
+        album = Album.objects.create(
+            title="Album", description="desc", uploaded_by=self.user
+        )
         AlbumImage.objects.create(
             album=album,
             title="Cover",
-            image=SimpleUploadedFile("cover.png", make_test_image(), content_type="image/png"),
+            image=SimpleUploadedFile(
+                "cover.png", make_test_image(), content_type="image/png"
+            ),
             uploaded_by=self.user,
         )
         model_admin = AlbumAdmin(Album, admin.site)
         self.assertIn("<img", model_admin.cover_preview(album))
 
     def test_album_image_admin_thumbnail_preview_renders_img(self):
-        album = Album.objects.create(title="Album", description="desc", uploaded_by=self.user)
+        album = Album.objects.create(
+            title="Album", description="desc", uploaded_by=self.user
+        )
         image = AlbumImage.objects.create(
             album=album,
             title="Album Image",
-            image=SimpleUploadedFile("album.png", make_test_image(), content_type="image/png"),
+            image=SimpleUploadedFile(
+                "album.png", make_test_image(), content_type="image/png"
+            ),
             uploaded_by=self.user,
         )
         model_admin = AlbumImageAdmin(AlbumImage, admin.site)
@@ -81,17 +91,25 @@ class ImageAdminTests(TestCase):
     def test_image_admin_change_page_is_available_for_superuser(self):
         image = ImagePost.objects.create(
             title="Test Image",
-            image=SimpleUploadedFile("test.png", make_test_image(), content_type="image/png"),
+            image=SimpleUploadedFile(
+                "test.png", make_test_image(), content_type="image/png"
+            ),
             uploaded_by=self.user,
         )
         self.client.force_login(self.superuser)
-        response = self.client.get(reverse("admin:images_imagepost_change", args=[image.pk]))
+        response = self.client.get(
+            reverse("admin:images_imagepost_change", args=[image.pk])
+        )
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Test Image")
 
     def test_album_admin_change_page_is_available_for_superuser(self):
-        album = Album.objects.create(title="Album", description="desc", uploaded_by=self.user)
+        album = Album.objects.create(
+            title="Album", description="desc", uploaded_by=self.user
+        )
         self.client.force_login(self.superuser)
-        response = self.client.get(reverse("admin:images_album_change", args=[album.pk]))
+        response = self.client.get(
+            reverse("admin:images_album_change", args=[album.pk])
+        )
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Album")

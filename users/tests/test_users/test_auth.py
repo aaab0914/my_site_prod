@@ -35,7 +35,9 @@ class UserRegisterViewTests(TestCase):
         }
         response = self.client.post(self.register_url, data)
         self.assertEqual(response.status_code, 302)
-        self.assertTrue(User.objects.filter(username="newuser_no_email", email="").exists())
+        self.assertTrue(
+            User.objects.filter(username="newuser_no_email", email="").exists()
+        )
         self.assertEqual(response.url, reverse("operation_success"))
 
     def test_register_password_mismatch(self):
@@ -52,7 +54,9 @@ class UserRegisterViewTests(TestCase):
 class UserLoginViewTests(TestCase):
     def setUp(self):
         self.client = Client()
-        self.user = User.objects.create_user(username="testuser", password="testpass123")
+        self.user = User.objects.create_user(
+            username="testuser", password="testpass123"
+        )
         self.login_url = reverse("users:login")
         cache.clear()
 
@@ -61,12 +65,16 @@ class UserLoginViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
 
     def test_login_success(self):
-        response = self.client.post(self.login_url, {"username": "testuser", "password": "testpass123"})
+        response = self.client.post(
+            self.login_url, {"username": "testuser", "password": "testpass123"}
+        )
         self.assertEqual(response.status_code, 302)
         self.assertIn("_auth_user_id", self.client.session)
 
     def test_login_wrong_password(self):
-        self.client.post(self.login_url, {"username": "testuser", "password": "wrongpass"})
+        self.client.post(
+            self.login_url, {"username": "testuser", "password": "wrongpass"}
+        )
         self.assertNotIn("_auth_user_id", self.client.session)
 
     def test_login_is_rate_limited_after_repeated_failures(self):

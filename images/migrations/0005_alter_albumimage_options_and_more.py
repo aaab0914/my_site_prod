@@ -4,24 +4,23 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('images', '0004_album_batch'),
+        ("images", "0004_album_batch"),
     ]
 
     operations = [
         migrations.AlterModelOptions(
-            name='albumimage',
-            options={'ordering': ['created', 'id']},
+            name="albumimage",
+            options={"ordering": ["created", "id"]},
         ),
         migrations.RenameIndex(
-            model_name='album',
-            new_name='images_albu_created_6f3216_idx',
-            old_name='images_albu_created_8f0a4d_idx',
+            model_name="album",
+            new_name="images_albu_created_6f3216_idx",
+            old_name="images_albu_created_8f0a4d_idx",
         ),
         migrations.RenameIndex(
-            model_name='albumimage',
-            new_name='images_albu_created_a81a7e_idx',
-            old_name='images_albu_created_8a93e5_idx',
+            model_name="albumimage",
+            new_name="images_albu_created_a81a7e_idx",
+            old_name="images_albu_created_8a93e5_idx",
         ),
     ]

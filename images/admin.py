@@ -6,16 +6,21 @@ from django.utils.html import format_html, format_html_join
 from .forms import ImagePostForm
 from .models import Album, AlbumImage, ImagePost
 
-
 ADMIN_CACHE_TTL = 60 * 60 * 24 * 30
 
 
 def _album_preview_cache_key(prefix, obj, images):
     latest_image_stamp = max(
-        int((image.updated or image.created).timestamp()) if (image.updated or image.created) else image.pk
+        int((image.updated or image.created).timestamp())
+        if (image.updated or image.created)
+        else image.pk
         for image in images
     )
-    album_stamp = int((obj.updated or obj.created).timestamp()) if (obj.updated or obj.created) else obj.pk
+    album_stamp = (
+        int((obj.updated or obj.created).timestamp())
+        if (obj.updated or obj.created)
+        else obj.pk
+    )
     return f"admin:{prefix}:album:{obj.pk}:album:{album_stamp}:images:{len(images)}:{latest_image_stamp}"
 
 
@@ -38,7 +43,15 @@ class ImageAdmin(admin.ModelAdmin):
     list_filter = ["created", "updated", "uploaded_by"]
     search_fields = ["title", "description", "uploaded_by__username"]
     readonly_fields = ["thumbnail_preview", "created", "updated"]
-    fields = ["title", "image", "thumbnail_preview", "description", "uploaded_by", "created", "updated"]
+    fields = [
+        "title",
+        "image",
+        "thumbnail_preview",
+        "description",
+        "uploaded_by",
+        "created",
+        "updated",
+    ]
     raw_id_fields = ["uploaded_by"]
     autocomplete_fields = ["uploaded_by"]
     ordering = ["-created"]
@@ -65,7 +78,15 @@ class AlbumAdmin(admin.ModelAdmin):
     list_filter = ["created", "updated", "uploaded_by"]
     search_fields = ["title", "description", "uploaded_by__username"]
     readonly_fields = ["cover_preview", "gallery_preview", "created", "updated"]
-    fields = ["title", "cover_preview", "gallery_preview", "description", "uploaded_by", "created", "updated"]
+    fields = [
+        "title",
+        "cover_preview",
+        "gallery_preview",
+        "description",
+        "uploaded_by",
+        "created",
+        "updated",
+    ]
     raw_id_fields = ["uploaded_by"]
     autocomplete_fields = ["uploaded_by"]
     ordering = ["-created"]
@@ -75,17 +96,24 @@ class AlbumAdmin(admin.ModelAdmin):
     inlines = [AlbumImageInline]
 
     def get_queryset(self, request):
-        image_queryset = AlbumImage.objects.select_related("uploaded_by").only(
-            "id",
-            "album_id",
-            "title",
-            "image",
-            "created",
-            "updated",
-            "uploaded_by__username",
-        ).order_by("created", "id")
-        return super().get_queryset(request).select_related("uploaded_by").prefetch_related(
-            Prefetch("images", queryset=image_queryset)
+        image_queryset = (
+            AlbumImage.objects.select_related("uploaded_by")
+            .only(
+                "id",
+                "album_id",
+                "title",
+                "image",
+                "created",
+                "updated",
+                "uploaded_by__username",
+            )
+            .order_by("created", "id")
+        )
+        return (
+            super()
+            .get_queryset(request)
+            .select_related("uploaded_by")
+            .prefetch_related(Prefetch("images", queryset=image_queryset))
         )
 
     def _album_images(self, obj):
@@ -120,7 +148,14 @@ class AlbumAdmin(admin.ModelAdmin):
         cached_html = cache.get(cache_key)
         if cached_html is not None:
             return cached_html
-        items = [(image.get_image_proxy_url(), image.get_image_proxy_url(), image.title or f"Image {image.pk}") for image in images]
+        items = [
+            (
+                image.get_image_proxy_url(),
+                image.get_image_proxy_url(),
+                image.title or f"Image {image.pk}",
+            )
+            for image in images
+        ]
         html = format_html(
             '<div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(140px, 1fr)); gap:12px; max-width:960px;">{}</div>',
             format_html_join(

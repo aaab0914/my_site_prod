@@ -1,21 +1,19 @@
 from datetime import datetime
 from pathlib import Path
 
+from django import forms
 from django.conf import settings
 from django.contrib import admin
-from django.contrib.contenttypes.models import ContentType
 from django.contrib.sites.models import Site
-from django import forms
-from django.db.models import Count, Q
 from django.template.response import TemplateResponse
-from django.urls import path, reverse
-from django.utils.html import format_html, format_html_join
+from django.urls import path
+from django.utils.html import format_html
 from django.utils.timezone import now
-import taggit.admin
 from taggit.models import Tag
 
-from .models import AudioPost, AuditLog, Comment, Post, VideoPost
-from my_site.tagging import normalize_post_tags, normalize_tag_name, normalize_tag_slug
+from my_site.tagging import normalize_post_tags
+
+from .models import AudioPost, AuditLog, Post, VideoPost
 
 
 def make_active(modeladmin, request, queryset):
@@ -158,12 +156,24 @@ def admin_system_status_view(request):
                 "tail": _tail_lines(path, limit=8),
             }
         )
-    backup_files = sorted(backups_dir.glob("*.sql"), key=lambda p: p.stat().st_mtime, reverse=True) if backups_dir.exists() else []
-    valid_backup_files = [item for item in backup_files if item.exists() and item.stat().st_size > 0]
-    latest_backup = valid_backup_files[0] if valid_backup_files else (backup_files[0] if backup_files else None)
+    backup_files = (
+        sorted(backups_dir.glob("*.sql"), key=lambda p: p.stat().st_mtime, reverse=True)
+        if backups_dir.exists()
+        else []
+    )
+    valid_backup_files = [
+        item for item in backup_files if item.exists() and item.stat().st_size > 0
+    ]
+    latest_backup = (
+        valid_backup_files[0]
+        if valid_backup_files
+        else (backup_files[0] if backup_files else None)
+    )
     backup_log_path = logs_dir / "backup.log"
     backup_log_tail = _tail_lines(backup_log_path, limit=20)
-    latest_backup_success = bool(latest_backup and latest_backup.exists() and latest_backup.stat().st_size > 0)
+    latest_backup_success = bool(
+        latest_backup and latest_backup.exists() and latest_backup.stat().st_size > 0
+    )
     latest_backup_message = "No backup record found."
     effective_events = []
     for line in backup_log_tail:
@@ -193,7 +203,9 @@ def admin_system_status_view(request):
         }
         for item in backup_files[:10]
     ]
-    recent_audit_count = AuditLog.objects.filter(timestamp__gte=today.replace(minute=0, second=0, microsecond=0)).count()
+    recent_audit_count = AuditLog.objects.filter(
+        timestamp__gte=today.replace(minute=0, second=0, microsecond=0)
+    ).count()
     context = {
         **admin.site.each_context(request),
         "title": "System Status",
@@ -202,8 +214,12 @@ def admin_system_status_view(request):
         "backup_log_tail": backup_log_tail,
         "backup_log_path": backup_log_path,
         "latest_backup": latest_backup,
-        "latest_backup_size": _human_size(latest_backup.stat().st_size) if latest_backup else "-",
-        "latest_backup_mtime": datetime.fromtimestamp(latest_backup.stat().st_mtime) if latest_backup else None,
+        "latest_backup_size": _human_size(latest_backup.stat().st_size)
+        if latest_backup
+        else "-",
+        "latest_backup_mtime": datetime.fromtimestamp(latest_backup.stat().st_mtime)
+        if latest_backup
+        else None,
         "latest_backup_success": latest_backup_success,
         "latest_backup_message": latest_backup_message,
         "backup_count": len(backup_files),
@@ -219,7 +235,11 @@ _original_get_urls = admin.site.get_urls
 
 def _custom_admin_get_urls():
     custom_urls = [
-        path("system-status/", admin.site.admin_view(admin_system_status_view), name="system_status"),
+        path(
+            "system-status/",
+            admin.site.admin_view(admin_system_status_view),
+            name="system_status",
+        ),
     ]
     return custom_urls + _original_get_urls()
 
@@ -239,10 +259,15 @@ except admin.sites.NotRegistered:
 
 
 class PostAdminForm(forms.ModelForm):
-    body = forms.CharField(max_length=500, 
+    body = forms.CharField(
+        max_length=500,
         widget=forms.Textarea(
-            attrs={"rows": 16, "cols": 140, "style": "width: 100%; min-height: 24em; resize: vertical;"}
-        )
+            attrs={
+                "rows": 16,
+                "cols": 140,
+                "style": "width: 100%; min-height: 24em; resize: vertical;",
+            }
+        ),
     )
 
     def __init__(self, *args, **kwargs):
@@ -293,13 +318,19 @@ class AudioPostAdmin(admin.ModelAdmin):
     def audio_preview(self, obj):
         if not obj.audio_file:
             return "-"
-        return format_html('<audio controls preload="none" style="width:220px;"><source src="{}"></audio>', obj.get_audio_proxy_url())
+        return format_html(
+            '<audio controls preload="none" style="width:220px;"><source src="{}"></audio>',
+            obj.get_audio_proxy_url(),
+        )
 
     @admin.display(description="Cover Preview")
     def cover_preview(self, obj):
         if not obj.cover_image:
             return "-"
-        return format_html('<img src="{}" alt="cover" style="width:56px;height:56px;object-fit:cover;border-radius:6px;">', obj.get_cover_image_proxy_url())
+        return format_html(
+            '<img src="{}" alt="cover" style="width:56px;height:56px;object-fit:cover;border-radius:6px;">',
+            obj.get_cover_image_proxy_url(),
+        )
 
 
 @admin.register(VideoPost)
@@ -315,4 +346,7 @@ class VideoPostAdmin(admin.ModelAdmin):
     def video_preview(self, obj):
         if not obj.video_file:
             return "-"
-        return format_html('<video controls preload="none" style="width:180px;max-height:110px;"><source src="{}"></video>', obj.get_video_proxy_url())
+        return format_html(
+            '<video controls preload="none" style="width:180px;max-height:110px;"><source src="{}"></video>',
+            obj.get_video_proxy_url(),
+        )

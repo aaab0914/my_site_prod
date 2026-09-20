@@ -25,9 +25,11 @@ class ImagePost(models.Model):
     def clean(self):
         super().clean()
         if self.image and self.image.size > 10 * 1024 * 1024:
-            raise ValidationError({
-                "image": f"图片文件大小不能超过 10MB。当前文件大小: {self.image.size / (1024 * 1024):.2f}MB"
-            })
+            raise ValidationError(
+                {
+                    "image": f"图片文件大小不能超过 10MB。当前文件大小: {self.image.size / (1024 * 1024):.2f}MB"
+                }
+            )
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
@@ -41,7 +43,9 @@ class ImagePost(models.Model):
 class Album(models.Model):
     title = models.CharField(max_length=50)
     description = models.TextField(max_length=500, blank=True)
-    uploaded_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="albums")
+    uploaded_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="albums"
+    )
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
 
@@ -53,18 +57,22 @@ class Album(models.Model):
         return self.title
 
     def cover_image(self):
-        return self.images.order_by('id').first()
+        return self.images.order_by("id").first()
 
     def image_count(self):
         return self.images.count()
 
 
 class AlbumImage(models.Model):
-    album = models.ForeignKey(Album, on_delete=models.CASCADE, related_name="images", null=True, blank=True)
+    album = models.ForeignKey(
+        Album, on_delete=models.CASCADE, related_name="images", null=True, blank=True
+    )
     title = models.CharField(max_length=50)
     image = models.ImageField(upload_to=dated_media_upload_to("albums"))
     description = models.TextField(max_length=500, blank=True)
-    uploaded_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="album_images")
+    uploaded_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="album_images"
+    )
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
 

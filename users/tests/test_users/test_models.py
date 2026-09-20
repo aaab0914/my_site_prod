@@ -9,7 +9,9 @@ from users.models import Profile, UserActivity, UserPreference
 
 class UserModelTests(TestCase):
     def setUp(self):
-        self.user = User.objects.create_user(username="testuser", password="testpass123", email="test@example.com")
+        self.user = User.objects.create_user(
+            username="testuser", password="testpass123", email="test@example.com"
+        )
 
     def test_profile_created_on_user_creation(self):
         self.assertTrue(hasattr(self.user, "profile"))
@@ -37,7 +39,9 @@ class UserModelTests(TestCase):
         self.assertEqual(self.user.profile.get_avatar_change_remaining_days(), 2)
 
     def test_user_activity_creation(self):
-        activity = UserActivity.objects.create(user=self.user, action="login", ip_address="127.0.0.1")
+        activity = UserActivity.objects.create(
+            user=self.user, action="login", ip_address="127.0.0.1"
+        )
         self.assertEqual(activity.user, self.user)
         self.assertEqual(activity.action, "login")
 

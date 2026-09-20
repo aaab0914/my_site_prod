@@ -1,6 +1,6 @@
+import django.db.models.deletion
 from django.conf import settings
 from django.db import migrations, models
-import django.db.models.deletion
 
 
 def populate_comment_authors(apps, schema_editor):
@@ -22,7 +22,6 @@ def populate_comment_authors(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("blog", "0013_alter_audiopost_updated_alter_comment_body_auditlog"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),

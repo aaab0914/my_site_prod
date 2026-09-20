@@ -125,7 +125,9 @@ class SearchTest(TestCase):
         self.assertEqual(response.status_code, 200)
 
     def test_search_no_results(self):
-        response = self.client.get(reverse("blog:post_search"), {"query": "NonexistentTerm"})
+        response = self.client.get(
+            reverse("blog:post_search"), {"query": "NonexistentTerm"}
+        )
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Found 0 posts.")
         self.assertEqual(len(response.context["results"]), 0)

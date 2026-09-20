@@ -4,10 +4,10 @@ My Site Package
 A Django blog project with advanced features.
 """
 
-__version__ = '1.0.0'
-__author__ = 'Your Name'
-__email__ = 'your@email.com'
-__description__ = 'My Blog Project'
+__version__ = "1.0.0"
+__author__ = "Your Name"
+__email__ = "your@email.com"
+__description__ = "My Blog Project"
 
 from .celery import app as celery_app
 

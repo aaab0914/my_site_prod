@@ -1,12 +1,11 @@
-from pathlib import Path
 import json
 import shutil
 import subprocess
+from pathlib import Path
 from urllib.error import HTTPError
 from urllib.request import Request, build_opener, urlopen
 
 from django.test import SimpleTestCase
-
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
@@ -20,15 +19,23 @@ class GrafanaIntegrationTests(SimpleTestCase):
             BASE_DIR / "grafana" / "provisioning" / "dashboards" / "dashboards.yml"
         ).read_text(encoding="utf-8")
         self.grafana_dashboard = json.loads(
-            (BASE_DIR / "grafana" / "provisioning" / "dashboards" / "json" / "app-observability.json").read_text(
-                encoding="utf-8"
-            )
+            (
+                BASE_DIR
+                / "grafana"
+                / "provisioning"
+                / "dashboards"
+                / "json"
+                / "app-observability.json"
+            ).read_text(encoding="utf-8")
         )
 
     def test_grafana_integration_provisions_prometheus_datasource_and_dashboard(self):
         self.assertIn("type: prometheus", self.grafana_datasource)
         self.assertIn("url: http://prometheus:9090", self.grafana_datasource)
-        self.assertIn("path: /etc/grafana/provisioning/dashboards/json", self.grafana_dashboard_provider)
+        self.assertIn(
+            "path: /etc/grafana/provisioning/dashboards/json",
+            self.grafana_dashboard_provider,
+        )
         self.assertEqual(self.grafana_dashboard["uid"], "app-observability")
         panel_titles = {panel["title"] for panel in self.grafana_dashboard["panels"]}
         self.assertIn("Django Request Rate", panel_titles)

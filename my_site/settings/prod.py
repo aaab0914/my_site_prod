@@ -1,7 +1,6 @@
 from copy import deepcopy
-from django.template.loaders.cached import Loader as CachedLoader
-from .base import *  # noqa: F401,F403
 
+from .base import *
 
 DEBUG = False
 
@@ -23,10 +22,14 @@ SECURE_COOKIE_NAME_PREFIX = config("SECURE_COOKIE_NAME_PREFIX", default="__Secur
 SESSION_COOKIE_NAME = f"{SECURE_COOKIE_NAME_PREFIX}sessionid"
 CSRF_COOKIE_NAME = f"{SECURE_COOKIE_NAME_PREFIX}csrftoken"
 SECURE_HSTS_SECONDS = config("SECURE_HSTS_SECONDS", default=31536000, cast=int)
-SECURE_HSTS_INCLUDE_SUBDOMAINS = config("SECURE_HSTS_INCLUDE_SUBDOMAINS", default=True, cast=bool)
+SECURE_HSTS_INCLUDE_SUBDOMAINS = config(
+    "SECURE_HSTS_INCLUDE_SUBDOMAINS", default=True, cast=bool
+)
 SECURE_HSTS_PRELOAD = config("SECURE_HSTS_PRELOAD", default=True, cast=bool)
 
-MEDIA_SYNC_INTERVAL_SECONDS = config("MEDIA_SYNC_INTERVAL_SECONDS", default=300, cast=int)
+MEDIA_SYNC_INTERVAL_SECONDS = config(
+    "MEDIA_SYNC_INTERVAL_SECONDS", default=300, cast=int
+)
 MEDIA_SYNC_ENABLED = config("MEDIA_SYNC_ENABLED", default=False, cast=bool)
 
 CACHES = {
@@ -102,4 +105,6 @@ if TESTING:
         }
     }
 
-MIDDLEWARE = [mw for mw in MIDDLEWARE if mw != "my_site.media_sync_middleware.MediaSyncMiddleware"]
+MIDDLEWARE = [
+    mw for mw in MIDDLEWARE if mw != "my_site.media_sync_middleware.MediaSyncMiddleware"
+]

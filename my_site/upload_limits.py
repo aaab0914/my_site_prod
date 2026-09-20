@@ -1,6 +1,5 @@
 from django.core.exceptions import ValidationError
 
-
 MB = 1024 * 1024
 
 IMAGE_MAX_SIZE = 10 * MB
@@ -35,7 +34,9 @@ def validate_upload_size(upload, max_size, label):
     return upload
 
 
-def validate_upload_type(upload, *, allowed_types, allowed_extensions, label, type_message, extension_message):
+def validate_upload_type(
+    upload, *, allowed_types, allowed_extensions, label, type_message, extension_message
+):
     if getattr(upload, "content_type", "") not in allowed_types:
         raise ValidationError(type_message)
     if not upload.name.lower().endswith(allowed_extensions):

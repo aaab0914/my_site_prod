@@ -18,7 +18,9 @@ class FilesystemPermissionSafetyTests(SimpleTestCase):
         self.assertIn("- .:/code", self.compose)
 
     def test_bind_mount_risk_is_mitigated_by_external_entrypoint_location(self):
-        self.assertIn("COPY entrypoint.sh /usr/local/bin/entrypoint.sh", self.dockerfile)
+        self.assertIn(
+            "COPY entrypoint.sh /usr/local/bin/entrypoint.sh", self.dockerfile
+        )
         self.assertNotIn('ENTRYPOINT ["/code/entrypoint.sh"]', self.dockerfile)
 
     def test_entrypoint_repairs_runtime_permissions_for_writable_directories(self):
@@ -38,7 +40,13 @@ class DockerRuntimeProbeTests(SimpleTestCase):
         docker = shutil.which("docker")
         if docker is None:
             self.skipTest("docker is not installed in this environment")
-        result = subprocess.run([docker, "compose", "config"], cwd=BASE_DIR, capture_output=True, text=True, timeout=30)
+        result = subprocess.run(
+            [docker, "compose", "config"],
+            cwd=BASE_DIR,
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
         self.assertEqual(result.returncode, 0, msg=result.stderr)
         self.assertIn("services:", result.stdout)
 

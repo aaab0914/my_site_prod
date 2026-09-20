@@ -3,12 +3,12 @@ import binascii
 import json
 from io import BytesIO
 
-from PIL import Image, UnidentifiedImageError
 from django import forms
 from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import InMemoryUploadedFile, SimpleUploadedFile
+from PIL import Image, UnidentifiedImageError
 
-from .models import Album, AlbumImage, ImagePost
+from .models import Album, ImagePost
 
 
 class ImagePostForm(forms.ModelForm):
@@ -122,11 +122,11 @@ class GalleryUploadForm(forms.Form):
         return uploads
 
 
-
-
 class AlbumUploadForm(forms.Form):
     title = forms.CharField(max_length=50)
-    description = forms.CharField(required=False, widget=forms.Textarea(attrs={"rows": 4}))
+    description = forms.CharField(
+        required=False, widget=forms.Textarea(attrs={"rows": 4})
+    )
     images = AlbumMultipleFileField(
         required=False,
         widget=AlbumMultipleFileInput(attrs={"accept": "image/*"}),

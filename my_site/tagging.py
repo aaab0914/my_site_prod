@@ -42,7 +42,12 @@ def normalize_all_tag_objects():
         if not normalized_name:
             continue
         normalized_slug = normalize_tag_slug(normalized_name)
-        target = Tag.objects.filter(name=normalized_name).exclude(pk=tag.pk).order_by("id").first()
+        target = (
+            Tag.objects.filter(name=normalized_name)
+            .exclude(pk=tag.pk)
+            .order_by("id")
+            .first()
+        )
         if target:
             for tagged_item in list(tag.taggit_taggeditem_items.all()):
                 exists = target.taggit_taggeditem_items.filter(

@@ -1,9 +1,8 @@
 import os
-from pathlib import Path
 import shutil
 import subprocess
 import unittest
-
+from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 COMPOSE_FILE = BASE_DIR / "docker-compose.prod.yml"
@@ -17,7 +16,9 @@ class ProdComposeFileExistenceTests(unittest.TestCase):
         self.assertTrue(COMPOSE_FILE.exists(), "docker-compose.prod.yml 不存在")
 
     def test_compose_prod_file_not_empty(self):
-        self.assertGreater(COMPOSE_FILE.stat().st_size, 0, "docker-compose.prod.yml 是空文件")
+        self.assertGreater(
+            COMPOSE_FILE.stat().st_size, 0, "docker-compose.prod.yml 是空文件"
+        )
 
 
 class ProdComposeServiceStructureTests(unittest.TestCase):
@@ -93,7 +94,9 @@ class ProdComposeWebServiceConfigTests(unittest.TestCase):
         self.assertIn("condition: service_healthy", self.text)
 
     def test_web_service_has_healthcheck(self):
-        self.assertIn("urllib.request.Request('http://127.0.0.1:8000/users/login/'", self.text)
+        self.assertIn(
+            "urllib.request.Request('http://127.0.0.1:8000/users/login/'", self.text
+        )
         self.assertIn("print(response.status)", self.text)
 
     def test_no_runserver_command(self):
@@ -172,7 +175,7 @@ class ProdComposeNginxConfigTests(unittest.TestCase):
         self.text = COMPOSE_FILE.read_text(encoding="utf-8")
 
     def test_nginx_is_optional_profile(self):
-        self.assertIn("profiles: [\"optional\"]", self.text)
+        self.assertIn('profiles: ["optional"]', self.text)
 
     def test_nginx_uses_nginx_125(self):
         self.assertIn("image: nginx:1.25", self.text)
@@ -198,16 +201,16 @@ class ProdComposeOptionalServicesTests(unittest.TestCase):
         self.text = COMPOSE_FILE.read_text(encoding="utf-8")
 
     def test_flower_has_optional_profile(self):
-        self.assertIn("profiles: [\"optional\"]", self.text)
+        self.assertIn('profiles: ["optional"]', self.text)
 
     def test_flower_binds_localhost_only(self):
         self.assertIn('"127.0.0.1:15556:5555"', self.text)
 
     def test_prometheus_has_optional_profile(self):
-        self.assertIn("profiles: [\"optional\"]", self.text)
+        self.assertIn('profiles: ["optional"]', self.text)
 
     def test_grafana_has_optional_profile(self):
-        self.assertIn("profiles: [\"optional\"]", self.text)
+        self.assertIn('profiles: ["optional"]', self.text)
 
     def test_loki_has_config_mount(self):
         self.assertIn("./loki/config.yml:/etc/loki/config.yml:ro", self.text)
@@ -236,25 +239,27 @@ class ProdComposeConfigValidationTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.env = os.environ.copy()
-        cls.env.update({
-            "DB_NAME": "test_db",
-            "DB_USER": "test_user",
-            "DB_PASSWORD": "StrongPass123!",
-            "DB_HOST": "db",
-            "DB_PORT": "5432",
-            "SECRET_KEY": "test-secret-key-not-for-production",
-            "DEBUG": "False",
-            "ALLOWED_HOSTS": "localhost,127.0.0.1",
-            "CSRF_TRUSTED_ORIGINS": "https://localhost",
-            "REDIS_URL": "redis://redis:6379/0",
-            "CELERY_BROKER_URL": "redis://redis:6379/0",
-            "CELERY_RESULT_BACKEND": "redis://redis:6379/0",
-            "ELASTICSEARCH_URL": "http://elasticsearch:9200",
-            "SENTRY_DSN": "",
-            "SENTRY_TRACES_SAMPLE_RATE": "0",
-            "SENTRY_PROFILES_SAMPLE_RATE": "0",
-            "RUNNING_IN_DOCKER": "true",
-        })
+        cls.env.update(
+            {
+                "DB_NAME": "test_db",
+                "DB_USER": "test_user",
+                "DB_PASSWORD": "StrongPass123!",
+                "DB_HOST": "db",
+                "DB_PORT": "5432",
+                "SECRET_KEY": "test-secret-key-not-for-production",
+                "DEBUG": "False",
+                "ALLOWED_HOSTS": "localhost,127.0.0.1",
+                "CSRF_TRUSTED_ORIGINS": "https://localhost",
+                "REDIS_URL": "redis://redis:6379/0",
+                "CELERY_BROKER_URL": "redis://redis:6379/0",
+                "CELERY_RESULT_BACKEND": "redis://redis:6379/0",
+                "ELASTICSEARCH_URL": "http://elasticsearch:9200",
+                "SENTRY_DSN": "",
+                "SENTRY_TRACES_SAMPLE_RATE": "0",
+                "SENTRY_PROFILES_SAMPLE_RATE": "0",
+                "RUNNING_IN_DOCKER": "true",
+            }
+        )
 
     def test_compose_config_is_valid(self):
         result = subprocess.run(
@@ -285,7 +290,10 @@ class ProdComposeConfigValidationTests(unittest.TestCase):
                 self.assertIn(svc, services)
 
 
-@unittest.skipUnless(ENV_FILE.exists(), ".env.prod.example is not present in the web image (excluded by .dockerignore)")
+@unittest.skipUnless(
+    ENV_FILE.exists(),
+    ".env.prod.example is not present in the web image (excluded by .dockerignore)",
+)
 class ProdEnvFileTests(unittest.TestCase):
     """验证 .env.prod 文件包含必要的环境变量"""
 

@@ -24,8 +24,12 @@ class GunicornContainerConfigTests(SimpleTestCase):
         self.assertIn("python manage.py collectstatic --noinput", self.entrypoint)
 
     def test_dockerfile_uses_stable_entrypoint_path_outside_bind_mount(self):
-        self.assertIn("COPY entrypoint.sh /usr/local/bin/entrypoint.sh", self.dockerfile)
-        self.assertIn('ENTRYPOINT ["sh", "/usr/local/bin/entrypoint.sh"]', self.dockerfile)
+        self.assertIn(
+            "COPY entrypoint.sh /usr/local/bin/entrypoint.sh", self.dockerfile
+        )
+        self.assertIn(
+            'ENTRYPOINT ["sh", "/usr/local/bin/entrypoint.sh"]', self.dockerfile
+        )
 
     def test_gunicorn_command_uses_expected_worker_and_bind_settings(self):
         self.assertIn("--workers 4", self.entrypoint)
@@ -38,7 +42,17 @@ class GunicornContainerConfigTests(SimpleTestCase):
         if gunicorn is None:
             self.skipTest("gunicorn is not installed in this environment")
         result = subprocess.run(
-            [gunicorn, "--check-config", "--workers", "4", "--timeout", "300", "--bind", "0.0.0.0:8000", "my_site.wsgi:application"],
+            [
+                gunicorn,
+                "--check-config",
+                "--workers",
+                "4",
+                "--timeout",
+                "300",
+                "--bind",
+                "0.0.0.0:8000",
+                "my_site.wsgi:application",
+            ],
             cwd=BASE_DIR,
             capture_output=True,
             text=True,

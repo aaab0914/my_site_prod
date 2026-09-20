@@ -3,7 +3,6 @@ from pathlib import Path
 from django.conf import settings
 from django.core.exceptions import PermissionDenied
 
-
 PROTECTED_RUNTIME_ROOT_NAMES = ("logs", "backups")
 PROTECTED_DATABASE_PATH_PARTS = (
     "postgres_data",
@@ -45,10 +44,9 @@ def is_protected_runtime_path(path_value):
     if any(part in candidate_text for part in PROTECTED_DATABASE_PATH_PARTS):
         return True
 
-    if candidate.suffix.lower() in PROTECTED_LOG_SUFFIXES + PROTECTED_DATABASE_SUFFIXES:
-        return True
-
-    return False
+    return (
+        candidate.suffix.lower() in PROTECTED_LOG_SUFFIXES + PROTECTED_DATABASE_SUFFIXES
+    )
 
 
 def ensure_runtime_file_not_protected(path_value, action="delete"):

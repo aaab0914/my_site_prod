@@ -1,16 +1,18 @@
 from io import BytesIO
 
-from PIL import Image
 from django.contrib.auth.models import User
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
+from PIL import Image
 
 from images.models import ImagePost
 
 
 class ImagePostModelTests(TestCase):
     def setUp(self):
-        self.user = User.objects.create_user(username="testuser", password="testpass123")
+        self.user = User.objects.create_user(
+            username="testuser", password="testpass123"
+        )
 
     def create_test_image(self):
         image = Image.new("RGB", (100, 100), color="red")

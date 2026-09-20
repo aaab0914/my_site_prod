@@ -1,13 +1,10 @@
 import shutil
 import tempfile
 
-from django.contrib import admin
 from django.contrib.auth.models import User
 from django.core.cache import cache
-from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import Client, TestCase, override_settings
 from django.urls import reverse
-
 
 
 @override_settings(ALLOWED_HOSTS=["testserver", "localhost"])
@@ -59,4 +56,3 @@ class AdminCustomTests(TestCase):
         self.assertIn("log_statuses", response.context)
         self.assertIn("backup_files", response.context)
         self.assertIn("latest_backup_success", response.context)
-

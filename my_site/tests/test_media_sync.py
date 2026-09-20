@@ -2,7 +2,6 @@ import shutil
 import tempfile
 from pathlib import Path
 
-from django.conf import settings
 from django.contrib.auth.models import User
 from django.test import TestCase, override_settings
 
@@ -58,7 +57,9 @@ class MediaSyncTests(TestCase):
         self.assertEqual(result["missing_actions"], [])
 
     def test_sync_does_not_move_orphan_files_when_disabled(self):
-        orphan_file = Path(self.media_root) / "comments" / "2026" / "07" / "07" / "orphan.jpg"
+        orphan_file = (
+            Path(self.media_root) / "comments" / "2026" / "07" / "07" / "orphan.jpg"
+        )
         _write_media_file(orphan_file)
 
         result = sync_site_media()
@@ -67,7 +68,9 @@ class MediaSyncTests(TestCase):
         self.assertEqual(result["trashed_files"], [])
 
     def test_sync_keeps_referenced_files(self):
-        audio_path = Path(self.media_root) / "audio" / "2026" / "07" / "07" / "track.mp3"
+        audio_path = (
+            Path(self.media_root) / "audio" / "2026" / "07" / "07" / "track.mp3"
+        )
         _write_media_file(audio_path)
         audio = AudioPost.objects.create(
             audio_file="audio/2026/07/07/track.mp3",
@@ -103,8 +106,6 @@ class MediaSyncTests(TestCase):
 
         self.assertTrue(comment.image)
         self.assertTrue(Comment.objects.filter(id=comment.id).exists())
-
-
 
 
 class AuditMiddlewareTests(TestCase):

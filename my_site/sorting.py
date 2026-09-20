@@ -11,7 +11,9 @@ def request_query_string(request, updates=None, *, remove=None):
     return f"?{encoded}" if encoded else ""
 
 
-def build_sort_context(request, sort_options, *, default_sort, page_param="page", sort_param="sort"):
+def build_sort_context(
+    request, sort_options, *, default_sort, page_param="page", sort_param="sort"
+):
     selected_sort = request.GET.get(sort_param, default_sort)
     if selected_sort not in sort_options:
         selected_sort = default_sort

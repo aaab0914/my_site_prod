@@ -8,13 +8,14 @@ def validate_image_size(image):
     if image.size > 10 * 1024 * 1024:
         raise ValidationError("图片大小不能超过10MB")
 
+
 # --- users/models/profile.py ---
 from django.contrib.auth.models import User
 from django.db import models
 from django.db.models.signals import post_save
 from django.dispatch import receiver
-from django.utils import timezone
 from django.urls import reverse
+from django.utils import timezone
 
 from my_site.media_naming import static_media_upload_to
 
@@ -26,7 +27,9 @@ class Profile(models.Model):
     bio = models.TextField(max_length=500, blank=True)
     location = models.CharField(max_length=30, blank=True)
     birth_date = models.DateField(null=True, blank=True)
-    avatar = models.ImageField(upload_to=static_media_upload_to("avatars"), null=True, blank=True)
+    avatar = models.ImageField(
+        upload_to=static_media_upload_to("avatars"), null=True, blank=True
+    )
     last_avatar_change = models.DateTimeField(null=True, blank=True)
     last_token_generated_at = models.DateTimeField(null=True, blank=True)
 
@@ -68,8 +71,14 @@ class Profile(models.Model):
     def get_avatar_proxy_url(self):
         if not self.avatar:
             return ""
-        version = int(self.last_avatar_change.timestamp()) if self.last_avatar_change else self.pk
-        return f'{reverse("users:profile_avatar", args=[self.user.username])}?v={version}'
+        version = (
+            int(self.last_avatar_change.timestamp())
+            if self.last_avatar_change
+            else self.pk
+        )
+        return (
+            f"{reverse('users:profile_avatar', args=[self.user.username])}?v={version}"
+        )
 
 
 @receiver(post_save, sender=User)
@@ -82,6 +91,7 @@ def create_user_profile(sender, instance, created, **kwargs):
 def save_user_profile(sender, instance, **kwargs):
     if hasattr(instance, "profile"):
         instance.profile.save()
+
 
 # --- users/models/activity.py ---
 from django.contrib.auth.models import User
@@ -102,13 +112,16 @@ class UserActivity(models.Model):
     def __str__(self):
         return f"{self.user.username} - {self.action} - {self.timestamp}"
 
+
 # --- users/models/preferences.py ---
 from django.contrib.auth.models import User
 from django.db import models
 
 
 class UserPreference(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="preferences")
+    user = models.OneToOneField(
+        User, on_delete=models.CASCADE, related_name="preferences"
+    )
     theme = models.CharField(
         max_length=20,
         default="light",

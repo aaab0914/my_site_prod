@@ -6,35 +6,38 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('blog', '0011_audiopost'),
+        ("blog", "0011_audiopost"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
         migrations.AlterModelOptions(
-            name='audiopost',
-            options={'ordering': ['-created']},
+            name="audiopost",
+            options={"ordering": ["-created"]},
         ),
         migrations.RenameField(
-            model_name='audiopost',
-            old_name='title',
-            new_name='music_name',
+            model_name="audiopost",
+            old_name="title",
+            new_name="music_name",
         ),
         migrations.AddField(
-            model_name='audiopost',
-            name='active',
+            model_name="audiopost",
+            name="active",
             field=models.BooleanField(default=True),
         ),
         migrations.AddField(
-            model_name='audiopost',
-            name='updated',
-            field=models.DateTimeField(auto_now_add=True, default=django.utils.timezone.now),
+            model_name="audiopost",
+            name="updated",
+            field=models.DateTimeField(
+                auto_now_add=True, default=django.utils.timezone.now
+            ),
             preserve_default=False,
         ),
         migrations.AddIndex(
-            model_name='audiopost',
-            index=models.Index(fields=['created'], name='blog_audiop_created_9bfbd6_idx'),
+            model_name="audiopost",
+            index=models.Index(
+                fields=["created"], name="blog_audiop_created_9bfbd6_idx"
+            ),
         ),
     ]

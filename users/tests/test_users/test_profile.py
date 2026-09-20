@@ -14,7 +14,9 @@ from images.models import Album, AlbumImage, ImagePost
 class UserProfileViewTests(TestCase):
     def setUp(self):
         self.client = Client()
-        self.user = User.objects.create_user(username="testuser", password="testpass123")
+        self.user = User.objects.create_user(
+            username="testuser", password="testpass123"
+        )
         self.client.login(username="testuser", password="testpass123")
 
     def test_view_own_profile(self):
@@ -24,7 +26,9 @@ class UserProfileViewTests(TestCase):
 
     def test_view_other_profile(self):
         other_user = User.objects.create_user(username="otheruser", password="pass")
-        response = self.client.get(reverse("users:profile_by_username", kwargs={"username": "otheruser"}))
+        response = self.client.get(
+            reverse("users:profile_by_username", kwargs={"username": "otheruser"})
+        )
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.context["profile_user"], other_user)
 
@@ -47,9 +51,23 @@ class UserProfileViewTests(TestCase):
             status=Post.Status.DRAFT,
             publish=timezone.now(),
         )
-        Comment.objects.create(post=published_post, author=other_user, email="other@example.com", body="Visible comment", active=True)
-        Comment.objects.create(post=published_post, author=other_user, email="other@example.com", body="Hidden comment", active=False)
-        response = self.client.get(reverse("users:profile_by_username", kwargs={"username": "otheruser"}))
+        Comment.objects.create(
+            post=published_post,
+            author=other_user,
+            email="other@example.com",
+            body="Visible comment",
+            active=True,
+        )
+        Comment.objects.create(
+            post=published_post,
+            author=other_user,
+            email="other@example.com",
+            body="Hidden comment",
+            active=False,
+        )
+        response = self.client.get(
+            reverse("users:profile_by_username", kwargs={"username": "otheruser"})
+        )
         self.assertEqual(response.status_code, 200)
         posts = list(response.context["posts"])
         comments = list(response.context["comments"])
@@ -76,15 +94,29 @@ class UserProfileViewTests(TestCase):
             status=Post.Status.DRAFT,
             publish=timezone.now(),
         )
-        Comment.objects.create(post=published_post, author=self.user, email="test@example.com", body="Active own comment", active=True)
-        Comment.objects.create(post=published_post, author=self.user, email="test@example.com", body="Inactive own comment", active=False)
+        Comment.objects.create(
+            post=published_post,
+            author=self.user,
+            email="test@example.com",
+            body="Active own comment",
+            active=True,
+        )
+        Comment.objects.create(
+            post=published_post,
+            author=self.user,
+            email="test@example.com",
+            body="Inactive own comment",
+            active=False,
+        )
         response = self.client.get(reverse("users:profile"))
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.context["posts"].count(), 2)
         self.assertEqual(response.context["comments"].count(), 2)
 
     def test_profile_not_found(self):
-        response = self.client.get(reverse("users:profile_by_username", kwargs={"username": "nonexistent"}))
+        response = self.client.get(
+            reverse("users:profile_by_username", kwargs={"username": "nonexistent"})
+        )
         self.assertEqual(response.status_code, 404)
 
     def test_profile_edit_post_updates_non_file_fields(self):
@@ -99,19 +131,33 @@ class UserProfileViewTests(TestCase):
         self.assertEqual(self.user.profile.location, "Shanghai")
 
     def test_profile_edit_avatar_upload_respects_login_flow(self):
-        avatar = SimpleUploadedFile("avatar.jpg", b"avatar-bytes", content_type="image/jpeg")
+        avatar = SimpleUploadedFile(
+            "avatar.jpg", b"avatar-bytes", content_type="image/jpeg"
+        )
         response = self.client.post(
             reverse("users:profile_edit"),
-            {"bio": "Avatar update", "location": "Beijing", "birth_date": "2001-02-03", "avatar": avatar},
+            {
+                "bio": "Avatar update",
+                "location": "Beijing",
+                "birth_date": "2001-02-03",
+                "avatar": avatar,
+            },
             follow=True,
         )
         self.assertEqual(response.status_code, 200)
 
     def test_profile_edit_rejects_disallowed_avatar_type(self):
-        avatar = SimpleUploadedFile("avatar.webp", b"RIFF1234WEBPVP8 ", content_type="image/webp")
+        avatar = SimpleUploadedFile(
+            "avatar.webp", b"RIFF1234WEBPVP8 ", content_type="image/webp"
+        )
         response = self.client.post(
             reverse("users:profile_edit"),
-            {"bio": "Avatar update", "location": "Beijing", "birth_date": "2001-02-03", "avatar": avatar},
+            {
+                "bio": "Avatar update",
+                "location": "Beijing",
+                "birth_date": "2001-02-03",
+                "avatar": avatar,
+            },
         )
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Upload a valid image.")
@@ -119,28 +165,43 @@ class UserProfileViewTests(TestCase):
     def test_profile_hides_media_records_when_underlying_files_are_missing(self):
         gallery = ImagePost.objects.create(
             title="Gallery item",
-            image=SimpleUploadedFile("gallery.jpg", b"gallery-bytes", content_type="image/jpeg"),
+            image=SimpleUploadedFile(
+                "gallery.jpg", b"gallery-bytes", content_type="image/jpeg"
+            ),
             uploaded_by=self.user,
         )
-        album = Album.objects.create(title="Album", description="", uploaded_by=self.user)
+        album = Album.objects.create(
+            title="Album", description="", uploaded_by=self.user
+        )
         album_image = AlbumImage.objects.create(
             album=album,
             title="Album image",
-            image=SimpleUploadedFile("album.jpg", b"album-bytes", content_type="image/jpeg"),
+            image=SimpleUploadedFile(
+                "album.jpg", b"album-bytes", content_type="image/jpeg"
+            ),
             uploaded_by=self.user,
         )
         audio = AudioPost.objects.create(
-            audio_file=SimpleUploadedFile("sample.mp3", b"audio-bytes", content_type="audio/mpeg"),
+            audio_file=SimpleUploadedFile(
+                "sample.mp3", b"audio-bytes", content_type="audio/mpeg"
+            ),
             uploaded_by=self.user,
             music_name="Sample audio",
         )
         video = VideoPost.objects.create(
-            video_file=SimpleUploadedFile("sample.mp4", b"video-bytes", content_type="video/mp4"),
+            video_file=SimpleUploadedFile(
+                "sample.mp4", b"video-bytes", content_type="video/mp4"
+            ),
             uploaded_by=self.user,
             title="Sample video",
         )
 
-        for relative_name in [gallery.image.name, album_image.image.name, audio.audio_file.name, video.video_file.name]:
+        for relative_name in [
+            gallery.image.name,
+            album_image.image.name,
+            audio.audio_file.name,
+            video.video_file.name,
+        ]:
             media_file = Path(settings.MEDIA_ROOT) / relative_name
             if media_file.exists():
                 media_file.unlink()

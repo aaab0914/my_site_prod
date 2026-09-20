@@ -5,7 +5,6 @@ from django.contrib.sites.models import Site
 from django.db import OperationalError, ProgrammingError
 from django.db.models.signals import post_migrate
 
-
 logger = logging.getLogger(__name__)
 _BOOTSTRAP_CONNECTED = False
 
@@ -30,5 +29,7 @@ def connect_site_bootstrap():
     global _BOOTSTRAP_CONNECTED
     if _BOOTSTRAP_CONNECTED:
         return
-    post_migrate.connect(ensure_default_site, dispatch_uid="my_site.ensure_default_site")
+    post_migrate.connect(
+        ensure_default_site, dispatch_uid="my_site.ensure_default_site"
+    )
     _BOOTSTRAP_CONNECTED = True

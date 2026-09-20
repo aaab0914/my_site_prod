@@ -7,7 +7,11 @@ from .views import AudioPostDeleteView, AudioPostEditView, PostDeleteView, PostE
 app_name = "blog"
 
 post_urlpatterns = [
-    path("<int:year>/<int:month>/<int:day>/<slug:post_slug>/", views.post_detail, name="post_detail"),
+    path(
+        "<int:year>/<int:month>/<int:day>/<slug:post_slug>/",
+        views.post_detail,
+        name="post_detail",
+    ),
     # Notes
     path("notes/", views.note_list, name="note_list"),
     path("notes/create/", views.note_create, name="note_create"),
@@ -26,16 +30,36 @@ post_urlpatterns = [
 ]
 
 comment_urlpatterns = [
-    path("media/comment-image/<int:comment_id>/", views.comment_image, name="comment_image"),
+    path(
+        "media/comment-image/<int:comment_id>/",
+        views.comment_image,
+        name="comment_image",
+    ),
     path("<int:post_id>/comment/", views.add_comment, name="post_comment"),
-    path("<slug:post_slug>/<int:comment_id>/edit/", views.edit_comment, name="edit_comment"),
-    path("<slug:post_slug>/<int:comment_id>/delete/", views.comment_delete, name="comment_delete"),
+    path(
+        "<slug:post_slug>/<int:comment_id>/edit/",
+        views.edit_comment,
+        name="edit_comment",
+    ),
+    path(
+        "<slug:post_slug>/<int:comment_id>/delete/",
+        views.comment_delete,
+        name="comment_delete",
+    ),
 ]
 
 audio_urlpatterns = [
     path("media/audio/<int:pk>/", views.audio_file_proxy, name="audio_file_proxy"),
-    path("media/audio-cover/<int:pk>/", views.audio_cover_image_proxy, name="audio_cover_image_proxy"),
-    path("media/video-cover/<int:pk>/", views.video_cover_image_proxy, name="video_cover_image_proxy"),
+    path(
+        "media/audio-cover/<int:pk>/",
+        views.audio_cover_image_proxy,
+        name="audio_cover_image_proxy",
+    ),
+    path(
+        "media/video-cover/<int:pk>/",
+        views.video_cover_image_proxy,
+        name="video_cover_image_proxy",
+    ),
     path("media/video/<int:pk>/", views.video_file_proxy, name="video_file_proxy"),
     path("audio/upload/", views.audio_upload, name="audio_upload"),
     path("audio/list/", views.audio_list, name="audio_list"),
@@ -45,15 +69,33 @@ audio_urlpatterns = [
     path("video/<int:pk>/edit/", views.video_edit, name="video_edit"),
     path("video/<int:pk>/delete/", views.video_delete, name="video_delete"),
     path("audio/edit/<int:pk>/", AudioPostEditView.as_view(), name="audio_post_edit"),
-    path("audio/delete/<int:pk>/", AudioPostDeleteView.as_view(), name="audio_post_delete"),
-    path("audio/delete/success/", views.audio_post_delete_success, name="audio_post_delete_success"),
+    path(
+        "audio/delete/<int:pk>/",
+        AudioPostDeleteView.as_view(),
+        name="audio_post_delete",
+    ),
+    path(
+        "audio/delete/success/",
+        views.audio_post_delete_success,
+        name="audio_post_delete_success",
+    ),
 ]
 
 api_urlpatterns = [
     path("api/posts/", api_views.PostListAPIView.as_view(), name="api_post_list"),
-    path("api/posts/<int:pk>/", api_views.PostDetailAPIView.as_view(), name="api_post_detail"),
-    path("api/comments/", api_views.CommentListAPIView.as_view(), name="api_comment_list"),
-    path("api/comments/<int:pk>/", api_views.CommentDetailAPIView.as_view(), name="api_comment_detail"),
+    path(
+        "api/posts/<int:pk>/",
+        api_views.PostDetailAPIView.as_view(),
+        name="api_post_detail",
+    ),
+    path(
+        "api/comments/", api_views.CommentListAPIView.as_view(), name="api_comment_list"
+    ),
+    path(
+        "api/comments/<int:pk>/",
+        api_views.CommentDetailAPIView.as_view(),
+        name="api_comment_detail",
+    ),
     path("api/tags/", api_views.tag_list_api, name="api_tag_list"),
     path("api/tags/<slug:slug>/", api_views.tag_detail_api, name="api_tag_detail"),
 ]

@@ -1,38 +1,40 @@
-import mimetypes
-from pathlib import Path
-
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.contrib.postgres.search import SearchQuery, SearchRank, SearchVector, TrigramSimilarity
+from django.contrib.postgres.search import (
+    SearchQuery,
+    SearchRank,
+    SearchVector,
+    TrigramSimilarity,
+)
 from django.core.cache import cache
 from django.core.exceptions import PermissionDenied
-from django.http import FileResponse, Http404
 from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 from django.db.models import Count, Q
+from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse_lazy
-from django.views.decorators.http import require_POST
-from django.views.decorators.cache import cache_page, never_cache
 from django.utils.cache import patch_cache_control
-from my_site.sorting import build_sort_context
+from django.views.decorators.cache import cache_page, never_cache
+from django.views.decorators.http import require_POST
 from django.views.generic.edit import DeleteView, UpdateView
 from taggit.models import Tag
 
+from images.models import ImagePost
+from my_site.protected_media import serve_protected_media
+from my_site.site_views import queue_operation_success
+from my_site.sorting import build_sort_context
+
 from .forms import (
+    AudioEditForm,
+    AudioUploadForm,
     CommentForm,
     EmailPostForm,
     PostCreateForm,
     SearchForm,
-    AudioEditForm,
-    AudioUploadForm,
     VideoUploadForm,
 )
-
-from images.models import ImagePost
-from .models import Note,  Post, Comment, AudioPost, VideoPost
-from my_site.protected_media import serve_protected_media
-from my_site.site_views import queue_operation_success
+from .models import AudioPost, Comment, Note, Post, VideoPost
 from .video_utils import extract_video_thumbnail, generate_thumbnail_filename
 
 
@@ -54,11 +56,12 @@ def _redirect_to_comment_post(comment):
     )
 
 
-
 def _prime_video_list_cache(items=None):
     """Rebuild the legacy video cache used by older integrations."""
     if items is None or cache.get("video_list:items") is None:
-        videos = VideoPost.objects.select_related("uploaded_by").order_by("-created", "-id")
+        videos = VideoPost.objects.select_related("uploaded_by").order_by(
+            "-created", "-id"
+        )
     else:
         videos = items
     payload = [
@@ -78,14 +81,20 @@ def _prime_video_list_cache(items=None):
 
 
 def _cached_post_list_page(page_number=1):
-    posts = list(Post.published.order_by("-publish", "-id")[(page_number - 1) * 10 : page_number * 10])
+    posts = list(
+        Post.published.order_by("-publish", "-id")[
+            (page_number - 1) * 10 : page_number * 10
+        ]
+    )
     payload = {"post_ids": [post.id for post in posts]}
     cache.set(f"post_list:page:{page_number}:tag:all", payload)
     return payload
 
 
 def _cached_search_result_ids(query):
-    ids = list(Post.published.filter(title__icontains=query).values_list("id", flat=True))
+    ids = list(
+        Post.published.filter(title__icontains=query).values_list("id", flat=True)
+    )
     cache.set(f"post_search:query:{query.strip().lower()}", ids)
     return ids
 
@@ -100,8 +109,6 @@ def post_share(request, post_id):
         form = EmailPostForm()
     return render(request, "blog/post/share.html", {"post": post, "form": form})
 
-from django.utils.cache import patch_cache_control
-from django.views.decorators.cache import cache_control
 
 def post_list(request, tag_slug=None):
     # Sorting options
@@ -124,7 +131,11 @@ def post_list(request, tag_slug=None):
     sort_context = build_sort_context(request, sort_options, default_sort="newest")
     selected_sort = sort_context["selected_sort"]
 
-    post_queryset = Post.published.select_related("author").prefetch_related("tags").order_by(*sort_map[selected_sort])
+    post_queryset = (
+        Post.published.select_related("author")
+        .prefetch_related("tags")
+        .order_by(*sort_map[selected_sort])
+    )
     tag = None
     if tag_slug:
         tag = get_object_or_404(Tag, slug=tag_slug)
@@ -160,12 +171,18 @@ def post_list(request, tag_slug=None):
 
 def post_detail(request, year, month, day, post_slug):
     # OPTIMIZED: Added select_related and prefetch_related to reduce N+1 queries
-    post = Post.published.select_related("author").prefetch_related("tags", "comments").filter(
-        slug=post_slug,
-        publish__year=year,
-        publish__month=month,
-        publish__day=day,
-    ).order_by('-publish', '-id').first()
+    post = (
+        Post.published.select_related("author")
+        .prefetch_related("tags", "comments")
+        .filter(
+            slug=post_slug,
+            publish__year=year,
+            publish__month=month,
+            publish__day=day,
+        )
+        .order_by("-publish", "-id")
+        .first()
+    )
     if post is None:
         raise Http404("No Post matches the given query.")
     comments = post.comments.filter(active=True)
@@ -184,7 +201,9 @@ def post_detail(request, year, month, day, post_slug):
         )
 
     similar_posts = (tag_based_posts | title_based_posts).distinct()
-    similar_posts = similar_posts.annotate(same_tags=Count("tags")).order_by("-same_tags", "-publish")[:4]
+    similar_posts = similar_posts.annotate(same_tags=Count("tags")).order_by(
+        "-same_tags", "-publish"
+    )[:4]
     return render(
         request,
         "blog/post/post_detail.html",
@@ -195,6 +214,7 @@ def post_detail(request, year, month, day, post_slug):
             "similar_posts": similar_posts,
         },
     )
+
 
 def post_search(request):
     form = SearchForm(request.GET or None)
@@ -208,7 +228,9 @@ def post_search(request):
 
     if "query" in request.GET and form.is_valid():
         query = form.cleaned_data["query"]
-        search_vector = SearchVector("title", weight="A") + SearchVector("body", weight="B")
+        search_vector = SearchVector("title", weight="A") + SearchVector(
+            "body", weight="B"
+        )
         search_query = SearchQuery(query)
         full_text_results = (
             Post.published.annotate(rank=SearchRank(search_vector, search_query))
@@ -219,13 +241,21 @@ def post_search(request):
             Post.published.annotate(
                 title_similarity=TrigramSimilarity("title", query),
                 body_similarity=TrigramSimilarity("body", query),
-                total_similarity=(TrigramSimilarity("title", query) * 2 + TrigramSimilarity("body", query)),
+                total_similarity=(
+                    TrigramSimilarity("title", query) * 2
+                    + TrigramSimilarity("body", query)
+                ),
             )
             .filter(Q(title_similarity__gt=0.1) | Q(body_similarity__gt=0.1))
             .order_by("-total_similarity", "-publish")
         )
-        raw_results = (full_text_results | trigram_results).distinct().annotate(
-            final_rank=SearchRank(search_vector, search_query) + (TrigramSimilarity("title", query) * 2)
+        raw_results = (
+            (full_text_results | trigram_results)
+            .distinct()
+            .annotate(
+                final_rank=SearchRank(search_vector, search_query)
+                + (TrigramSimilarity("title", query) * 2)
+            )
         )
 
         sort_map = {
@@ -250,11 +280,31 @@ def post_search(request):
             for post in page_obj.object_list
         ]
         sort_options = [
-            {"label": "Relevance", "url": f"?query={query}&sort=relevance", "active": selected_sort == "relevance"},
-            {"label": "Newest", "url": f"?query={query}&sort=newest", "active": selected_sort == "newest"},
-            {"label": "Oldest", "url": f"?query={query}&sort=oldest", "active": selected_sort == "oldest"},
-            {"label": "A-Z", "url": f"?query={query}&sort=title_asc", "active": selected_sort == "title_asc"},
-            {"label": "Z-A", "url": f"?query={query}&sort=title_desc", "active": selected_sort == "title_desc"},
+            {
+                "label": "Relevance",
+                "url": f"?query={query}&sort=relevance",
+                "active": selected_sort == "relevance",
+            },
+            {
+                "label": "Newest",
+                "url": f"?query={query}&sort=newest",
+                "active": selected_sort == "newest",
+            },
+            {
+                "label": "Oldest",
+                "url": f"?query={query}&sort=oldest",
+                "active": selected_sort == "oldest",
+            },
+            {
+                "label": "A-Z",
+                "url": f"?query={query}&sort=title_asc",
+                "active": selected_sort == "title_asc",
+            },
+            {
+                "label": "Z-A",
+                "url": f"?query={query}&sort=title_desc",
+                "active": selected_sort == "title_desc",
+            },
         ]
 
     return render(
@@ -270,6 +320,7 @@ def post_search(request):
             "page_obj": page_obj,
         },
     )
+
 
 @login_required
 def post_create(request):
@@ -300,14 +351,19 @@ def post_create(request):
         )
     return render(request, "blog/post/create_post.html", {"form": form})
 
+
 def post_cover_image(request, pk):
     post = get_object_or_404(Post, pk=pk)
-    return _serve_uploaded_file(post.cover_image, request=request, cache_prefix="post-cover")
+    return _serve_uploaded_file(
+        post.cover_image, request=request, cache_prefix="post-cover"
+    )
 
 
 def comment_image(request, comment_id):
     comment = get_object_or_404(Comment, pk=comment_id)
-    return _serve_uploaded_file(comment.image, request=request, cache_prefix="comment-image")
+    return _serve_uploaded_file(
+        comment.image, request=request, cache_prefix="comment-image"
+    )
 
 
 def audio_file_proxy(request, pk):
@@ -317,11 +373,16 @@ def audio_file_proxy(request, pk):
 
 def audio_cover_image_proxy(request, pk):
     audio = get_object_or_404(AudioPost, pk=pk)
-    return _serve_uploaded_file(audio.cover_image, request=request, cache_prefix="audio-cover")
+    return _serve_uploaded_file(
+        audio.cover_image, request=request, cache_prefix="audio-cover"
+    )
+
 
 def video_cover_image_proxy(request, pk):
     video = get_object_or_404(VideoPost, pk=pk)
-    return _serve_uploaded_file(video.cover_image, request=request, cache_prefix="video-cover")
+    return _serve_uploaded_file(
+        video.cover_image, request=request, cache_prefix="video-cover"
+    )
 
 
 def video_file_proxy(request, pk):
@@ -332,8 +393,10 @@ def video_file_proxy(request, pk):
 def post_delete_success(request):
     return render(request, "blog/post/post_delete_success.html")
 
+
 def audio_post_delete_success(request):
     return render(request, "blog/audio/audio_post_delete_success.html")
+
 
 @login_required
 @require_POST
@@ -358,6 +421,7 @@ def add_comment(request, post_id):
         secondary_label="Back to Blog",
         secondary_url=reverse_lazy("blog:all_posts_list"),
     )
+
 
 @login_required
 def edit_comment(request, post_slug, comment_id):
@@ -388,6 +452,7 @@ def edit_comment(request, post_slug, comment_id):
         {"form": form, "comment": comment, "post": comment.post},
     )
 
+
 @login_required
 def comment_delete(request, post_slug, comment_id):
     comment = get_object_or_404(Comment, id=comment_id)
@@ -414,6 +479,7 @@ def comment_delete(request, post_slug, comment_id):
 
     return render(request, "blog/comment/delete_comment.html", {"comment": comment})
 
+
 @login_required
 def audio_upload(request):
     form = AudioUploadForm(request.POST or None, request.FILES or None)
@@ -423,13 +489,17 @@ def audio_upload(request):
         if not uploaded_files:
             form.add_error("audio_file", "Please choose at least one audio file.")
         elif len(uploaded_files) > 10:
-            form.add_error("audio_file", "You can upload at most 10 audio files at once.")
+            form.add_error(
+                "audio_file", "You can upload at most 10 audio files at once."
+            )
         elif form.is_valid():
             description = form.cleaned_data.get("description", "")
             track_title = form.cleaned_data.get("music_name", "").strip()
 
             for index, uploaded_file in enumerate(uploaded_files):
-                music_name = track_title if index == 0 and len(uploaded_files) == 1 else ""
+                music_name = (
+                    track_title if index == 0 and len(uploaded_files) == 1 else ""
+                )
                 AudioPost.objects.create(
                     music_name=music_name,
                     audio_file=uploaded_file,
@@ -437,7 +507,11 @@ def audio_upload(request):
                     uploaded_by=request.user,
                 )
 
-            track_message = "1 audio file has been uploaded successfully." if len(uploaded_files) == 1 else f"{len(uploaded_files)} audio files have been uploaded successfully."
+            track_message = (
+                "1 audio file has been uploaded successfully."
+                if len(uploaded_files) == 1
+                else f"{len(uploaded_files)} audio files have been uploaded successfully."
+            )
             return queue_operation_success(
                 request,
                 title="Audio Upload Complete",
@@ -450,10 +524,13 @@ def audio_upload(request):
 
     return render(request, "blog/audio/upload_audio.html", {"form": form})
 
+
 def video_upload(request):
     if not request.user.is_authenticated:
         response = redirect("blog:all_posts_list")
-        response["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0, private"
+        response["Cache-Control"] = (
+            "no-store, no-cache, must-revalidate, max-age=0, private"
+        )
         return response
     form = VideoUploadForm(request.POST or None, request.FILES or None)
     if not request.user.is_superuser:
@@ -483,7 +560,9 @@ def video_upload(request):
         )
 
     response = render(request, "blog/video/upload_video.html", {"form": form})
-    response["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0, private"
+    response["Cache-Control"] = (
+        "no-store, no-cache, must-revalidate, max-age=0, private"
+    )
     response["Pragma"] = "no-cache"
     return response
 
@@ -492,11 +571,15 @@ def video_detail(request, pk):
     if not request.user.is_superuser:
         return redirect("blog:all_posts_list")
     video = get_object_or_404(VideoPost.objects.select_related("uploaded_by"), pk=pk)
-    return render(request, "blog/video/video_detail.html", {
-        "video": video,
-        "filename": video.get_video_filename(),
-        "video_url": video.get_video_proxy_url(),
-    })
+    return render(
+        request,
+        "blog/video/video_detail.html",
+        {
+            "video": video,
+            "filename": video.get_video_filename(),
+            "video_url": video.get_video_proxy_url(),
+        },
+    )
 
 
 def video_edit(request, pk):
@@ -506,7 +589,7 @@ def video_edit(request, pk):
     form = VideoUploadForm(request.POST or None, request.FILES or None, instance=video)
     if _is_post_request(request) and form.is_valid():
         # Check if video file was changed
-        video_file_changed = 'video_file' in request.FILES
+        video_file_changed = "video_file" in request.FILES
 
         video = form.save()
 
@@ -533,7 +616,9 @@ def video_edit(request, pk):
             secondary_label="Open Video Library",
             secondary_url=reverse_lazy("blog:video_list"),
         )
-    return render(request, "blog/video/video_edit.html", {"form": form, "videopost": video})
+    return render(
+        request, "blog/video/video_edit.html", {"form": form, "videopost": video}
+    )
 
 
 def video_delete(request, pk):
@@ -577,10 +662,14 @@ def video_list(request):
     }
     sort_context = build_sort_context(request, sort_options, default_sort="newest")
     selected_sort = sort_context["selected_sort"]
-    
-    videos_queryset = VideoPost.objects.select_related("uploaded_by").order_by(*sort_map[selected_sort])
-    page_obj = Paginator(videos_queryset, 8).get_page(request.GET.get("page"))  # Optimized: reduced from 10 to 8
-    
+
+    videos_queryset = VideoPost.objects.select_related("uploaded_by").order_by(
+        *sort_map[selected_sort]
+    )
+    page_obj = Paginator(videos_queryset, 8).get_page(
+        request.GET.get("page")
+    )  # Optimized: reduced from 10 to 8
+
     response = render(
         request,
         "blog/video/video_list.html",
@@ -590,7 +679,9 @@ def video_list(request):
             **sort_context,
         },
     )
-    response["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0, private"
+    response["Cache-Control"] = (
+        "no-store, no-cache, must-revalidate, max-age=0, private"
+    )
     response["Pragma"] = "no-cache"
     return response
 
@@ -615,10 +706,14 @@ def audio_list(request):
     }
     sort_context = build_sort_context(request, sort_options, default_sort="newest")
     selected_sort = sort_context["selected_sort"]
-    
-    audios_queryset = AudioPost.objects.select_related("uploaded_by").order_by(*sort_map[selected_sort])
-    page_obj = Paginator(audios_queryset, 8).get_page(request.GET.get("page"))  # Optimized: reduced from 10 to 8
-    
+
+    audios_queryset = AudioPost.objects.select_related("uploaded_by").order_by(
+        *sort_map[selected_sort]
+    )
+    page_obj = Paginator(audios_queryset, 8).get_page(
+        request.GET.get("page")
+    )  # Optimized: reduced from 10 to 8
+
     return render(
         request,
         "blog/audio/audio_list.html",
@@ -628,7 +723,6 @@ def audio_list(request):
             **sort_context,
         },
     )
-
 
 
 class PostEditView(LoginRequiredMixin, UpdateView):
@@ -660,6 +754,7 @@ class PostEditView(LoginRequiredMixin, UpdateView):
             secondary_url=reverse_lazy("blog:all_posts_list"),
         )
 
+
 class PostDeleteView(LoginRequiredMixin, DeleteView):
     model = Post
     template_name = "blog/post/post_delete.html"
@@ -686,6 +781,7 @@ class PostDeleteView(LoginRequiredMixin, DeleteView):
             secondary_url=reverse_lazy("blog:post_create"),
         )
 
+
 class AudioPostEditView(LoginRequiredMixin, UpdateView):
     model = AudioPost
     form_class = AudioEditForm
@@ -705,6 +801,7 @@ class AudioPostEditView(LoginRequiredMixin, UpdateView):
 
     def get_success_url(self):
         return reverse_lazy("blog:audio_list")
+
 
 class AudioPostDeleteView(LoginRequiredMixin, DeleteView):
     model = AudioPost
@@ -741,6 +838,7 @@ class AudioPostDeleteView(LoginRequiredMixin, DeleteView):
 # NOTES VIEWS
 # =============================================================================
 
+
 @login_required
 def note_list(request):
     """Display user's notes"""
@@ -757,9 +855,15 @@ def note_list(request):
         "updated": "-updated",
         "author": "user__username",
     }[sort_context["selected_sort"]]
-    notes = Note.objects.filter(user=request.user).select_related('user').order_by(ordering)
-    response = render(request, "blog/notes/note_list.html", {"notes": notes, **sort_context})
-    response["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0, private"
+    notes = (
+        Note.objects.filter(user=request.user).select_related("user").order_by(ordering)
+    )
+    response = render(
+        request, "blog/notes/note_list.html", {"notes": notes, **sort_context}
+    )
+    response["Cache-Control"] = (
+        "no-store, no-cache, must-revalidate, max-age=0, private"
+    )
     response["Pragma"] = "no-cache"
     return response
 
@@ -770,13 +874,23 @@ def note_create(request):
     if request.method == "POST":
         title = request.POST.get("title", "").strip()
         content = request.POST.get("content", "").strip()
-        
+
         if title and content:
             Note.objects.create(user=request.user, title=title, content=content)
-            return queue_operation_success(request, title="Note Created", message=f'"{title}" has been created successfully.', primary_label="Open My Notes", primary_url=reverse_lazy("blog:note_list"), secondary_label="Create Another Note", secondary_url=reverse_lazy("blog:note_create"))
-    
+            return queue_operation_success(
+                request,
+                title="Note Created",
+                message=f'"{title}" has been created successfully.',
+                primary_label="Open My Notes",
+                primary_url=reverse_lazy("blog:note_list"),
+                secondary_label="Create Another Note",
+                secondary_url=reverse_lazy("blog:note_create"),
+            )
+
     response = render(request, "blog/notes/note_form.html", {"action": "create"})
-    response["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0, private"
+    response["Cache-Control"] = (
+        "no-store, no-cache, must-revalidate, max-age=0, private"
+    )
     response["Pragma"] = "no-cache"
     return response
 
@@ -785,22 +899,31 @@ def note_create(request):
 def note_edit(request, pk):
     """Edit an existing note"""
     note = get_object_or_404(Note, pk=pk, user=request.user)
-    
+
     if request.method == "POST":
         title = request.POST.get("title", "").strip()
         content = request.POST.get("content", "").strip()
-        
+
         if title and content:
             note.title = title
             note.content = content
             note.save()
-            return queue_operation_success(request, title="Note Updated", message=f'"{title}" has been updated successfully.', primary_label="Open My Notes", primary_url=reverse_lazy("blog:note_list"), secondary_label="Create New Note", secondary_url=reverse_lazy("blog:note_create"))
-    
-    response = render(request, "blog/notes/note_form.html", {
-        "action": "edit",
-        "note": note
-    })
-    response["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0, private"
+            return queue_operation_success(
+                request,
+                title="Note Updated",
+                message=f'"{title}" has been updated successfully.',
+                primary_label="Open My Notes",
+                primary_url=reverse_lazy("blog:note_list"),
+                secondary_label="Create New Note",
+                secondary_url=reverse_lazy("blog:note_create"),
+            )
+
+    response = render(
+        request, "blog/notes/note_form.html", {"action": "edit", "note": note}
+    )
+    response["Cache-Control"] = (
+        "no-store, no-cache, must-revalidate, max-age=0, private"
+    )
     response["Pragma"] = "no-cache"
     return response
 
@@ -812,8 +935,18 @@ def note_delete(request, pk):
     if request.method == "POST":
         title = note.title
         note.delete()
-        return queue_operation_success(request, title="Note Deleted", message=f'"{title}" has been deleted successfully.', primary_label="Open My Notes", primary_url=reverse_lazy("blog:note_list"), secondary_label="Create New Note", secondary_url=reverse_lazy("blog:note_create"))
+        return queue_operation_success(
+            request,
+            title="Note Deleted",
+            message=f'"{title}" has been deleted successfully.',
+            primary_label="Open My Notes",
+            primary_url=reverse_lazy("blog:note_list"),
+            secondary_label="Create New Note",
+            secondary_url=reverse_lazy("blog:note_create"),
+        )
     response = render(request, "blog/notes/note_delete.html", {"note": note})
-    response["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0, private"
+    response["Cache-Control"] = (
+        "no-store, no-cache, must-revalidate, max-age=0, private"
+    )
     response["Pragma"] = "no-cache"
     return response

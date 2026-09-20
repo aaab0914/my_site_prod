@@ -8,7 +8,7 @@ from django.urls import reverse
 from django.utils import timezone
 from PIL import Image
 
-from blog.models import AudioPost, Comment, Post
+from blog.models import Comment, Post
 from blog.search import cached_search_result_ids
 
 
@@ -55,7 +55,9 @@ class BlogRouteIntegrationTests(TestCase):
         self.assertEqual(response.status_code, 200)
 
     def test_blog_tag_route_is_public(self):
-        response = self.client.get(reverse("blog:post_list_by_tag", kwargs={"tag_slug": "integration"}))
+        response = self.client.get(
+            reverse("blog:post_list_by_tag", kwargs={"tag_slug": "integration"})
+        )
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "blog/post/all_posts_list.html")
 
@@ -120,11 +122,15 @@ class BlogRouteIntegrationTests(TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.url, reverse("operation_success"))
         self.assertTrue(
-            Comment.objects.filter(post=self.primary_post, author=self.user, body="Integration comment").exists()
+            Comment.objects.filter(
+                post=self.primary_post, author=self.user, body="Integration comment"
+            ).exists()
         )
 
     def test_edit_comment_rejects_non_owner(self):
-        owner = User.objects.create_user(username="commentowner", password="testpass123")
+        owner = User.objects.create_user(
+            username="commentowner", password="testpass123"
+        )
         comment = Comment.objects.create(
             post=self.primary_post,
             author=owner,
@@ -134,7 +140,10 @@ class BlogRouteIntegrationTests(TestCase):
         )
         self.client.login(username="routeuser", password="testpass123")
         response = self.client.post(
-            reverse("blog:edit_comment", kwargs={"post_slug": self.primary_post.slug, "comment_id": comment.id}),
+            reverse(
+                "blog:edit_comment",
+                kwargs={"post_slug": self.primary_post.slug, "comment_id": comment.id},
+            ),
             {"body": "Malicious edit"},
         )
         self.assertEqual(response.status_code, 302)
@@ -142,7 +151,9 @@ class BlogRouteIntegrationTests(TestCase):
         self.assertEqual(comment.body, "Owner comment")
 
     def test_delete_comment_rejects_non_owner(self):
-        owner = User.objects.create_user(username="commentowner", password="testpass123")
+        owner = User.objects.create_user(
+            username="commentowner", password="testpass123"
+        )
         comment = Comment.objects.create(
             post=self.primary_post,
             author=owner,
@@ -152,7 +163,10 @@ class BlogRouteIntegrationTests(TestCase):
         )
         self.client.login(username="routeuser", password="testpass123")
         response = self.client.post(
-            reverse("blog:comment_delete", kwargs={"post_slug": self.primary_post.slug, "comment_id": comment.id}),
+            reverse(
+                "blog:comment_delete",
+                kwargs={"post_slug": self.primary_post.slug, "comment_id": comment.id},
+            ),
             follow=True,
         )
         self.assertEqual(response.status_code, 200)
@@ -168,7 +182,10 @@ class BlogRouteIntegrationTests(TestCase):
             active=True,
         )
         response = self.client.get(
-            reverse("blog:comment_delete", kwargs={"post_slug": self.primary_post.slug, "comment_id": comment.id})
+            reverse(
+                "blog:comment_delete",
+                kwargs={"post_slug": self.primary_post.slug, "comment_id": comment.id},
+            )
         )
         self.assertEqual(response.status_code, 200)
         self.assertTrue(Comment.objects.filter(id=comment.id).exists())
@@ -185,7 +202,9 @@ class UploadValidationTests(TestCase):
         self.client.login(username="uploaduser", password="testpass123")
 
     def test_post_create_requires_image_under_form_processing(self):
-        oversized_file = SimpleUploadedFile("plain.txt", b"not-an-image", content_type="text/plain")
+        oversized_file = SimpleUploadedFile(
+            "plain.txt", b"not-an-image", content_type="text/plain"
+        )
         response = self.client.post(
             reverse("blog:post_create"),
             {

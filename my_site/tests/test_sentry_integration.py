@@ -3,19 +3,29 @@ from unittest.mock import Mock, patch
 
 from django.test import SimpleTestCase
 
-
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 
 class SentryIntegrationTests(SimpleTestCase):
     def setUp(self):
-        self.base_settings = (BASE_DIR / "my_site" / "settings" / "base.py").read_text(encoding="utf-8")
+        self.base_settings = (BASE_DIR / "my_site" / "settings" / "base.py").read_text(
+            encoding="utf-8"
+        )
 
     def test_sentry_integration_includes_django_and_celery(self):
-        self.assertIn("from sentry_sdk.integrations.celery import CeleryIntegration", self.base_settings)
-        self.assertIn("from sentry_sdk.integrations.django import DjangoIntegration", self.base_settings)
+        self.assertIn(
+            "from sentry_sdk.integrations.celery import CeleryIntegration",
+            self.base_settings,
+        )
+        self.assertIn(
+            "from sentry_sdk.integrations.django import DjangoIntegration",
+            self.base_settings,
+        )
         self.assertIn("SENTRY_DSN = config(", self.base_settings)
-        self.assertIn('"integrations": [DjangoIntegration(), CeleryIntegration()]', self.base_settings)
+        self.assertIn(
+            '"integrations": [DjangoIntegration(), CeleryIntegration()]',
+            self.base_settings,
+        )
         self.assertIn("SENTRY_ENVIRONMENT = config(", self.base_settings)
         self.assertIn("SENTRY_RELEASE = config(", self.base_settings)
         self.assertIn("sentry_sdk.init(", self.base_settings)
@@ -23,33 +33,47 @@ class SentryIntegrationTests(SimpleTestCase):
     def test_sentry_sdk_init_receives_django_and_celery_integrations(self):
         django_integration = object()
         celery_integration = object()
-        fake_config = Mock(side_effect=lambda key, default="", cast=None: {
-            "SECRET_KEY": "test-secret",
-            "ALLOWED_HOSTS": ["localhost", "127.0.0.1"],
-            "CSRF_TRUSTED_ORIGINS": "",
-            "REDIS_URL": "redis://redis:6379/0",
-            "CELERY_BROKER_URL": "redis://redis:6379/0",
-            "CELERY_RESULT_BACKEND": "redis://redis:6379/0",
-            "ELASTICSEARCH_URL": "http://elasticsearch:9200",
-            "STATIC_ROOT": str(BASE_DIR / "staticfiles"),
-            "SENTRY_DSN": "https://examplePublicKey@o0.ingest.sentry.io/0",
-            "SENTRY_ENVIRONMENT": "production",
-            "SENTRY_RELEASE": "my-site@test",
-            "SENTRY_TRACES_SAMPLE_RATE": "0.5",
-            "SENTRY_PROFILES_SAMPLE_RATE": "0.1",
-        }.get(key, default))
+        fake_config = Mock(
+            side_effect=lambda key, default="", cast=None: {
+                "SECRET_KEY": "test-secret",
+                "ALLOWED_HOSTS": ["localhost", "127.0.0.1"],
+                "CSRF_TRUSTED_ORIGINS": "",
+                "REDIS_URL": "redis://redis:6379/0",
+                "CELERY_BROKER_URL": "redis://redis:6379/0",
+                "CELERY_RESULT_BACKEND": "redis://redis:6379/0",
+                "ELASTICSEARCH_URL": "http://elasticsearch:9200",
+                "STATIC_ROOT": str(BASE_DIR / "staticfiles"),
+                "SENTRY_DSN": "https://examplePublicKey@o0.ingest.sentry.io/0",
+                "SENTRY_ENVIRONMENT": "production",
+                "SENTRY_RELEASE": "my-site@test",
+                "SENTRY_TRACES_SAMPLE_RATE": "0.5",
+                "SENTRY_PROFILES_SAMPLE_RATE": "0.1",
+            }.get(key, default)
+        )
 
-        with patch("decouple.config", fake_config), \
-             patch("sentry_sdk.init") as sentry_init, \
-             patch("sentry_sdk.integrations.django.DjangoIntegration", return_value=django_integration), \
-             patch("sentry_sdk.integrations.celery.CeleryIntegration", return_value=celery_integration):
+        with (
+            patch("decouple.config", fake_config),
+            patch("sentry_sdk.init") as sentry_init,
+            patch(
+                "sentry_sdk.integrations.django.DjangoIntegration",
+                return_value=django_integration,
+            ),
+            patch(
+                "sentry_sdk.integrations.celery.CeleryIntegration",
+                return_value=celery_integration,
+            ),
+        ):
             import importlib
+
             import my_site.settings.base as base_module
 
             importlib.reload(base_module)
 
         sentry_init.assert_called_once()
-        self.assertEqual(sentry_init.call_args.kwargs["dsn"], "https://examplePublicKey@o0.ingest.sentry.io/0")
+        self.assertEqual(
+            sentry_init.call_args.kwargs["dsn"],
+            "https://examplePublicKey@o0.ingest.sentry.io/0",
+        )
         self.assertEqual(sentry_init.call_args.kwargs["environment"], "production")
         self.assertEqual(sentry_init.call_args.kwargs["release"], "my-site@test")
         integrations = sentry_init.call_args.kwargs["integrations"]

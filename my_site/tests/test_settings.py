@@ -1,5 +1,4 @@
 import importlib
-import os
 from datetime import datetime
 from pathlib import Path
 
@@ -11,24 +10,30 @@ from django.urls import path
 class SettingsSplitTests(SimpleTestCase):
     def test_manage_defaults_to_dev_settings(self):
         manage_py = (self._base_dir() / "manage.py").read_text(encoding="utf-8")
-        self.assertIn('my_site.settings.dev', manage_py)
+        self.assertIn("my_site.settings.dev", manage_py)
 
     def test_dockerfile_defaults_to_prod_settings(self):
         dockerfile = (self._base_dir() / "Dockerfile.prod").read_text(encoding="utf-8")
         self.assertIn("DJANGO_SETTINGS_MODULE=my_site.settings.prod", dockerfile)
 
     def test_dev_settings_module_is_set_by_dockerfile_not_dev_compose(self):
-        compose = (self._base_dir() / "docker-compose.dev.yml").read_text(encoding="utf-8")
+        compose = (self._base_dir() / "docker-compose.dev.yml").read_text(
+            encoding="utf-8"
+        )
         self.assertNotIn("DJANGO_SETTINGS_MODULE", compose)
         dockerfile = (self._base_dir() / "Dockerfile.dev").read_text(encoding="utf-8")
         self.assertIn("DJANGO_SETTINGS_MODULE=my_site.settings.dev", dockerfile)
 
     def test_prod_compose_explicitly_sets_prod_settings_module(self):
-        compose = (self._base_dir() / "docker-compose.prod.yml").read_text(encoding="utf-8")
+        compose = (self._base_dir() / "docker-compose.prod.yml").read_text(
+            encoding="utf-8"
+        )
         self.assertIn("DJANGO_SETTINGS_MODULE: my_site.settings.prod", compose)
 
     def test_settings_package_default_exports_dev_settings(self):
-        settings_init = (self._base_dir() / "my_site" / "settings" / "__init__.py").read_text(encoding="utf-8")
+        settings_init = (
+            self._base_dir() / "my_site" / "settings" / "__init__.py"
+        ).read_text(encoding="utf-8")
         self.assertIn("from .dev import *", settings_init)
 
     @staticmethod
@@ -51,8 +56,12 @@ class LoggingPolicyTests(SimpleTestCase):
         self.assertIn("file", dev_settings.LOGGING["handlers"])
         self.assertIn("error_file", dev_settings.LOGGING["handlers"])
         self.assertIn("console", dev_settings.LOGGING["loggers"]["django"]["handlers"])
-        self.assertIn("file", dev_settings.LOGGING["loggers"]["django.request"]["handlers"])
-        self.assertIn("error_file", dev_settings.LOGGING["loggers"]["django.request"]["handlers"])
+        self.assertIn(
+            "file", dev_settings.LOGGING["loggers"]["django.request"]["handlers"]
+        )
+        self.assertIn(
+            "error_file", dev_settings.LOGGING["loggers"]["django.request"]["handlers"]
+        )
         self.assertEqual(
             dev_settings.LOGGING["handlers"]["file"]["class"],
             "my_site.logging_utils.DailyMonthlyFileHandler",
@@ -65,7 +74,9 @@ class LoggingPolicyTests(SimpleTestCase):
             dev_settings.LOGGING["handlers"]["error_file"]["filename_prefix"],
             "django-error",
         )
-        self.assertEqual(dev_settings.LOGGING["handlers"]["error_file"]["level"], "WARNING")
+        self.assertEqual(
+            dev_settings.LOGGING["handlers"]["error_file"]["level"], "WARNING"
+        )
 
     def test_prod_settings_enable_file_logging_and_console(self):
         prod_settings = importlib.import_module("my_site.settings.prod")
@@ -77,11 +88,15 @@ class LoggingPolicyTests(SimpleTestCase):
     def test_daily_monthly_file_handler_uses_month_folder_and_daily_filename(self):
         from my_site.logging_utils import DailyMonthlyFileHandler
 
-        handler = DailyMonthlyFileHandler(log_dir=Path.cwd() / "logs", filename_prefix="django", delay=True)
+        handler = DailyMonthlyFileHandler(
+            log_dir=Path.cwd() / "logs", filename_prefix="django", delay=True
+        )
         target_path = Path(handler.baseFilename)
 
         self.assertEqual(target_path.parent.name, datetime.now().strftime("%Y-%m"))
-        self.assertEqual(target_path.name, f"django-{datetime.now().strftime('%Y-%m-%d')}.log")
+        self.assertEqual(
+            target_path.name, f"django-{datetime.now().strftime('%Y-%m-%d')}.log"
+        )
 
 
 class UploadLimitTests(SimpleTestCase):
@@ -105,18 +120,40 @@ class ProductionSecuritySettingsTests(SimpleTestCase):
         self.assertFalse(prod_settings.DEBUG)
 
     def test_prod_settings_default_to_https_and_secure_cookies(self):
-        prod_source = (self._base_dir() / "my_site" / "settings" / "prod.py").read_text(encoding="utf-8")
+        prod_source = (self._base_dir() / "my_site" / "settings" / "prod.py").read_text(
+            encoding="utf-8"
+        )
 
-        self.assertIn('SECURE_SSL_REDIRECT = config("SECURE_SSL_REDIRECT", default=True, cast=bool)', prod_source)
-        self.assertIn('SESSION_COOKIE_SECURE = config("SESSION_COOKIE_SECURE", default=True, cast=bool)', prod_source)
-        self.assertIn('CSRF_COOKIE_SECURE = config("CSRF_COOKIE_SECURE", default=True, cast=bool)', prod_source)
-        self.assertIn('SESSION_COOKIE_HTTPONLY = config("SESSION_COOKIE_HTTPONLY", default=True, cast=bool)', prod_source)
-        self.assertIn('CSRF_COOKIE_HTTPONLY = config("CSRF_COOKIE_HTTPONLY", default=True, cast=bool)', prod_source)
+        self.assertIn(
+            'SECURE_SSL_REDIRECT = config("SECURE_SSL_REDIRECT", default=True, cast=bool)',
+            prod_source,
+        )
+        self.assertIn(
+            'SESSION_COOKIE_SECURE = config("SESSION_COOKIE_SECURE", default=True, cast=bool)',
+            prod_source,
+        )
+        self.assertIn(
+            'CSRF_COOKIE_SECURE = config("CSRF_COOKIE_SECURE", default=True, cast=bool)',
+            prod_source,
+        )
+        self.assertIn(
+            'SESSION_COOKIE_HTTPONLY = config("SESSION_COOKIE_HTTPONLY", default=True, cast=bool)',
+            prod_source,
+        )
+        self.assertIn(
+            'CSRF_COOKIE_HTTPONLY = config("CSRF_COOKIE_HTTPONLY", default=True, cast=bool)',
+            prod_source,
+        )
 
     def test_prod_settings_default_to_hsts(self):
-        prod_source = (self._base_dir() / "my_site" / "settings" / "prod.py").read_text(encoding="utf-8")
+        prod_source = (self._base_dir() / "my_site" / "settings" / "prod.py").read_text(
+            encoding="utf-8"
+        )
 
-        self.assertIn('SECURE_HSTS_SECONDS = config("SECURE_HSTS_SECONDS", default=31536000, cast=int)', prod_source)
+        self.assertIn(
+            'SECURE_HSTS_SECONDS = config("SECURE_HSTS_SECONDS", default=31536000, cast=int)',
+            prod_source,
+        )
         self.assertIn(
             'SECURE_HSTS_INCLUDE_SUBDOMAINS = config("SECURE_HSTS_INCLUDE_SUBDOMAINS", default=True, cast=bool)',
             prod_source,
@@ -180,20 +217,23 @@ class SecurityHeadersRuntimeTests(SimpleTestCase):
         self.assertEqual(response["Referrer-Policy"], "same-origin")
 
 
-
 class IndexPortalTests(SimpleTestCase):
     def test_index_uses_blog_media_routes_instead_of_legacy_root_shortcuts(self):
-        index_html = (self._base_dir() / "my_site" / "templates" / "index.html").read_text(encoding="utf-8")
+        index_html = (
+            self._base_dir() / "my_site" / "templates" / "index.html"
+        ).read_text(encoding="utf-8")
         self.assertIn('href="/blog/gallery/"', index_html)
         self.assertIn('href="/blog/gallery/upload/"', index_html)
         self.assertIn('href="/blog/audio/list/"', index_html)
         self.assertNotIn('href="/gallery/"', index_html)
 
-
-
     def test_index_uses_default_font_and_portal_title(self):
-        index_html = (self._base_dir() / "my_site" / "templates" / "index.html").read_text(encoding="utf-8")
-        self.assertNotIn("fonts.googleapis.com/css2?family=Lobster&display=swap", index_html)
+        index_html = (
+            self._base_dir() / "my_site" / "templates" / "index.html"
+        ).read_text(encoding="utf-8")
+        self.assertNotIn(
+            "fonts.googleapis.com/css2?family=Lobster&display=swap", index_html
+        )
         self.assertIn('font-family: Georgia, "Times New Roman", serif;', index_html)
         self.assertIn("<title>my_site Portal</title>", index_html)
 
@@ -202,10 +242,11 @@ class IndexPortalTests(SimpleTestCase):
         return Path(__file__).resolve().parent.parent.parent
 
 
-
 class TemplateStructureTests(SimpleTestCase):
     def test_template_dirs_use_project_template_directory(self):
-        base_settings = (self._base_dir() / "my_site" / "settings" / "base.py").read_text(encoding="utf-8")
+        base_settings = (
+            self._base_dir() / "my_site" / "settings" / "base.py"
+        ).read_text(encoding="utf-8")
         self.assertIn('BASE_DIR / "my_site" / "templates"', base_settings)
         self.assertNotIn('"DIRS": [BASE_DIR]', base_settings)
 

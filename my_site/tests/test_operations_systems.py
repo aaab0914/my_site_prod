@@ -2,19 +2,28 @@ from pathlib import Path
 
 from django.test import SimpleTestCase
 
-
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 
 class AuditLoggingContractTests(SimpleTestCase):
     def setUp(self):
-        self.audit_middleware = (BASE_DIR / "my_site" / "audit_middleware.py").read_text(encoding="utf-8")
-        self.base_settings = (BASE_DIR / "my_site" / "settings" / "base.py").read_text(encoding="utf-8")
-        self.delete_guards = (BASE_DIR / "my_site" / "delete_guards.py").read_text(encoding="utf-8")
-        self.runtime_file_guards = (BASE_DIR / "my_site" / "runtime_file_guards.py").read_text(encoding="utf-8")
+        self.audit_middleware = (
+            BASE_DIR / "my_site" / "audit_middleware.py"
+        ).read_text(encoding="utf-8")
+        self.base_settings = (BASE_DIR / "my_site" / "settings" / "base.py").read_text(
+            encoding="utf-8"
+        )
+        self.delete_guards = (BASE_DIR / "my_site" / "delete_guards.py").read_text(
+            encoding="utf-8"
+        )
+        self.runtime_file_guards = (
+            BASE_DIR / "my_site" / "runtime_file_guards.py"
+        ).read_text(encoding="utf-8")
 
     def test_audit_middleware_is_enabled_in_base_settings(self):
-        self.assertIn('"my_site.audit_middleware.AuditLoggingMiddleware"', self.base_settings)
+        self.assertIn(
+            '"my_site.audit_middleware.AuditLoggingMiddleware"', self.base_settings
+        )
 
     def test_audit_middleware_persists_core_request_fields(self):
         self.assertIn("AuditLog.objects.create(", self.audit_middleware)
@@ -28,7 +37,10 @@ class AuditLoggingContractTests(SimpleTestCase):
         self.assertIn("sender=AuditLog", self.delete_guards)
 
     def test_runtime_file_guard_blocks_database_and_log_file_deletes(self):
-        self.assertIn('PROTECTED_RUNTIME_ROOT_NAMES = ("logs", "backups")', self.runtime_file_guards)
+        self.assertIn(
+            'PROTECTED_RUNTIME_ROOT_NAMES = ("logs", "backups")',
+            self.runtime_file_guards,
+        )
         self.assertIn("PROTECTED_DATABASE_PATH_PARTS", self.runtime_file_guards)
         self.assertIn("is_protected_runtime_path", self.runtime_file_guards)
         self.assertIn("ensure_runtime_file_not_protected", self.runtime_file_guards)
@@ -37,11 +49,19 @@ class AuditLoggingContractTests(SimpleTestCase):
 
 class MediaCleanupContractTests(SimpleTestCase):
     def setUp(self):
-        self.cleanup = (BASE_DIR / "my_site" / "media_cleanup.py").read_text(encoding="utf-8")
-        self.signals = (BASE_DIR / "my_site" / "media_signals.py").read_text(encoding="utf-8")
+        self.cleanup = (BASE_DIR / "my_site" / "media_cleanup.py").read_text(
+            encoding="utf-8"
+        )
+        self.signals = (BASE_DIR / "my_site" / "media_signals.py").read_text(
+            encoding="utf-8"
+        )
         self.sync = (BASE_DIR / "my_site" / "media_sync.py").read_text(encoding="utf-8")
-        self.gallery_sync = (BASE_DIR / "images" / "sync.py").read_text(encoding="utf-8")
-        self.request_context = (BASE_DIR / "my_site" / "request_context.py").read_text(encoding="utf-8")
+        self.gallery_sync = (BASE_DIR / "images" / "sync.py").read_text(
+            encoding="utf-8"
+        )
+        self.request_context = (BASE_DIR / "my_site" / "request_context.py").read_text(
+            encoding="utf-8"
+        )
 
     def test_media_cleanup_requires_browser_delete_request_before_trash_move(self):
         self.assertIn("is_browser_delete_request", self.cleanup)
@@ -51,7 +71,10 @@ class MediaCleanupContractTests(SimpleTestCase):
         self.assertIn("shutil.move", self.cleanup)
 
     def test_media_signals_only_move_files_for_browser_triggered_deletes(self):
-        self.assertIn("from .media_cleanup import handle_instance_post_delete, handle_instance_pre_delete", self.signals)
+        self.assertIn(
+            "from .media_cleanup import handle_instance_post_delete, handle_instance_pre_delete",
+            self.signals,
+        )
         self.assertIn("handle_instance_pre_delete(instance)", self.signals)
         self.assertIn("handle_instance_post_delete(instance)", self.signals)
 
@@ -70,14 +93,20 @@ class MediaCleanupContractTests(SimpleTestCase):
 
     def test_request_context_tracks_current_http_request_for_delete_guarding(self):
         self.assertIn("ContextVar", self.request_context)
-        self.assertIn('return request.method in {"POST", "DELETE"}', self.request_context)
+        self.assertIn(
+            'return request.method in {"POST", "DELETE"}', self.request_context
+        )
 
 
 class BackupSystemContractTests(SimpleTestCase):
     def setUp(self):
         self.entrypoint = (BASE_DIR / "entrypoint.sh").read_text(encoding="utf-8")
-        self.dev_compose = (BASE_DIR / "docker-compose.dev.yml").read_text(encoding="utf-8")
-        self.prod_compose = (BASE_DIR / "docker-compose.prod.yml").read_text(encoding="utf-8")
+        self.dev_compose = (BASE_DIR / "docker-compose.dev.yml").read_text(
+            encoding="utf-8"
+        )
+        self.prod_compose = (BASE_DIR / "docker-compose.prod.yml").read_text(
+            encoding="utf-8"
+        )
 
     def test_backup_storage_is_mounted_but_not_started_from_container_entrypoint(self):
         self.assertIn("./backups:/code/backups", self.dev_compose)
@@ -88,11 +117,15 @@ class BackupSystemContractTests(SimpleTestCase):
 class SiteBootstrapContractTests(SimpleTestCase):
     def setUp(self):
         self.blog_app = (BASE_DIR / "blog" / "apps.py").read_text(encoding="utf-8")
-        self.site_bootstrap = (BASE_DIR / "my_site" / "site_bootstrap.py").read_text(encoding="utf-8")
+        self.site_bootstrap = (BASE_DIR / "my_site" / "site_bootstrap.py").read_text(
+            encoding="utf-8"
+        )
 
     def test_startup_ensures_default_django_site_record_exists(self):
         self.assertIn("connect_site_bootstrap()", self.blog_app)
-        self.assertIn("from my_site.site_bootstrap import connect_site_bootstrap", self.blog_app)
+        self.assertIn(
+            "from my_site.site_bootstrap import connect_site_bootstrap", self.blog_app
+        )
         self.assertIn("Site.objects.update_or_create", self.site_bootstrap)
         self.assertIn("settings.SITE_ID", self.site_bootstrap)
         self.assertIn("localhost:8000", self.site_bootstrap)

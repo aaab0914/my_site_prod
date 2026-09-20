@@ -36,7 +36,9 @@ class AdminTest(TestCase):
 
     def test_admin_post_change_accessible(self):
         self.client.login(username="adminuser", password="adminpass123")
-        response = self.client.get(reverse("admin:blog_post_change", args=[self.post.id]))
+        response = self.client.get(
+            reverse("admin:blog_post_change", args=[self.post.id])
+        )
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Admin Test Post")
 

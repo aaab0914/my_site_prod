@@ -5,7 +5,6 @@ from django_elasticsearch_dsl.registries import registry
 
 from .models import Post
 
-
 posts_index = Index("posts")
 posts_index.settings(number_of_shards=1, number_of_replicas=0)
 

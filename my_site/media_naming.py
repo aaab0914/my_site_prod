@@ -26,6 +26,7 @@ class DatedMediaUploadTo:
             return f"{self.prefix}/{created:%Y/%m/%d}/{_sanitize_filename(filename)}"
         return f"{self.prefix}/%Y/%m/%d/{_sanitize_filename(filename)}"
 
+
 def dated_media_upload_to(prefix: str):
     return DatedMediaUploadTo(prefix)
 
@@ -37,6 +38,7 @@ class StaticMediaUploadTo:
 
     def __call__(self, instance, filename):
         return f"{self.prefix}/{_sanitize_filename(filename)}"
+
 
 def static_media_upload_to(prefix: str):
     return StaticMediaUploadTo(prefix)

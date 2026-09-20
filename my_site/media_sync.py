@@ -1,6 +1,6 @@
-from pathlib import Path
 import threading
 import time
+from pathlib import Path
 
 from django.apps import apps
 from django.conf import settings
@@ -101,7 +101,9 @@ def sync_site_media():
             if _is_protected_media(relative_name):
                 continue
             if relative_name not in referenced_names:
-                blocked_files.append({"from": relative_name, "reason": "script_delete_blocked"})
+                blocked_files.append(
+                    {"from": relative_name, "reason": "script_delete_blocked"}
+                )
 
         for directory in sorted(
             (

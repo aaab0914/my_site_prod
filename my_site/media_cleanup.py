@@ -1,7 +1,7 @@
+import shutil
 from contextlib import contextmanager
 from datetime import datetime
 from pathlib import Path
-import shutil
 
 from django.conf import settings
 from django.db.models import FileField

@@ -1,6 +1,5 @@
 from contextvars import ContextVar
 
-
 _current_request = ContextVar("current_request", default=None)
 
 

@@ -20,23 +20,23 @@
 import hashlib
 
 from django import template
+from django.core.cache import cache
+
 # template: Django's template module for creating custom template tags and filters
 # Provides Library class for registering custom tags
-
 from django.db.models import Count
-from django.core.cache import cache
+
 # Count: Aggregation function for counting related objects
 # Used to count number of comments per post
-
 from django.utils.safestring import mark_safe
-# mark_safe: Marks a string as safe for HTML rendering (prevents auto-escaping)
-# Essential when returning HTML from Markdown conversion
 
-from ..models import Post
 # Relative import of Post model (two levels up)
 # .. means go up one directory (from templatetags/ to blog/)
-
 from my_site.markdown_utils import render_markdown
+
+# mark_safe: Marks a string as safe for HTML rendering (prevents auto-escaping)
+# Essential when returning HTML from Markdown conversion
+from ..models import Post
 
 # markdown: Library for converting Markdown syntax to HTML
 # Converts Markdown text like "# Heading" to "<h1>Heading</h1>"
@@ -59,6 +59,7 @@ MARKDOWN_CACHE_TIMEOUT = 1800
 # =====================
 # SIMPLE TAG: TOTAL POSTS
 # =====================
+
 
 @register.simple_tag
 def total_posts():
@@ -85,7 +86,8 @@ def total_posts():
 # INCLUSION TAG: SHOW LATEST POSTS
 # =====================
 
-@register.inclusion_tag('blog/post/latest_posts.html')
+
+@register.inclusion_tag("blog/post/latest_posts.html")
 def show_latest_posts(count=5):
     """
     Inclusion tag that renders a list of the most recent posts.
@@ -119,18 +121,23 @@ def show_latest_posts(count=5):
     cache_key = f"blog_tags:latest_posts:{count}"
     latest_post_ids = cache.get(cache_key)
     if latest_post_ids is None:
-        latest_post_ids = list(Post.published.order_by('-publish').values_list('id', flat=True)[:count])
+        latest_post_ids = list(
+            Post.published.order_by("-publish").values_list("id", flat=True)[:count]
+        )
         cache.set(cache_key, latest_post_ids, 300)
-    latest_posts = list(Post.published.filter(id__in=latest_post_ids).select_related('author'))
+    latest_posts = list(
+        Post.published.filter(id__in=latest_post_ids).select_related("author")
+    )
     latest_posts.sort(key=lambda item: latest_post_ids.index(item.id))
 
     # Return dict where keys become variables in the inclusion template
-    return {'latest_posts': latest_posts}
+    return {"latest_posts": latest_posts}
 
 
 # =====================
 # SIMPLE TAG: MOST COMMENTED POSTS
 # =====================
+
 
 @register.simple_tag
 def get_most_commented_posts(count=5):
@@ -166,16 +173,13 @@ def get_most_commented_posts(count=5):
     post_ids = cache.get(cache_key)
     if post_ids is None:
         post_ids = list(
-            Post.published.annotate(
-                total_comments=Count('comments')
-            ).filter(
-                total_comments__gt=0
-            ).order_by(
-                '-total_comments'
-            ).values_list('id', flat=True)[:count]
+            Post.published.annotate(total_comments=Count("comments"))
+            .filter(total_comments__gt=0)
+            .order_by("-total_comments")
+            .values_list("id", flat=True)[:count]
         )
         cache.set(cache_key, post_ids, 300)
-    posts = list(Post.published.filter(id__in=post_ids).select_related('author'))
+    posts = list(Post.published.filter(id__in=post_ids).select_related("author"))
     posts.sort(key=lambda item: post_ids.index(item.id))
     return posts
 
@@ -184,7 +188,8 @@ def get_most_commented_posts(count=5):
 # CUSTOM FILTER: MARKDOWN
 # =====================
 
-@register.filter(name='markdown')
+
+@register.filter(name="markdown")
 def markdown_format(text):
     """
     Template filter that converts Markdown text to HTML.
@@ -212,12 +217,15 @@ def markdown_format(text):
     :return: HTML string marked as safe for rendering
     """
     raw_text = text or ""
-    cache_key = "blog_tags:markdown:%s" % hashlib.sha256(raw_text.encode("utf-8")).hexdigest()
+    cache_key = "blog_tags:markdown:{}".format(
+        hashlib.sha256(raw_text.encode("utf-8")).hexdigest()
+    )
     rendered = cache.get(cache_key)
     if rendered is None:
         rendered = render_markdown(raw_text)
         cache.set(cache_key, rendered, MARKDOWN_CACHE_TIMEOUT)
     return mark_safe(rendered)
+
 
 @register.simple_tag
 def user_posts_count(user):
@@ -235,6 +243,8 @@ def user_posts_count(user):
     if user.is_authenticated:
         return Post.objects.filter(author=user).count()
     return 0
+
+
 # =====================
 # TEMPLATE USAGE EXAMPLE
 # =====================

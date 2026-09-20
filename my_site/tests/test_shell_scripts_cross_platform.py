@@ -9,7 +9,6 @@ from textwrap import dedent
 
 from django.test import SimpleTestCase
 
-
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 SH_BIN = shutil.which("sh")
 
@@ -19,7 +18,9 @@ class ShellScriptTestCase(SimpleTestCase):
     def setUpClass(cls):
         super().setUpClass()
         if not SH_BIN:
-            raise unittest.SkipTest("POSIX sh is required to execute shell-script tests")
+            raise unittest.SkipTest(
+                "POSIX sh is required to execute shell-script tests"
+            )
 
     def make_executable(self, path: Path) -> None:
         path.chmod(path.stat().st_mode | stat.S_IEXEC)
@@ -29,7 +30,12 @@ class ShellScriptTestCase(SimpleTestCase):
         path.write_text(content, encoding="utf-8", newline="\n")
         self.make_executable(path)
 
-    def run_script(self, script_path: Path, env: dict[str, str] | None = None, args: list[str] | None = None):
+    def run_script(
+        self,
+        script_path: Path,
+        env: dict[str, str] | None = None,
+        args: list[str] | None = None,
+    ):
         command = [SH_BIN, str(script_path)]
         if args:
             command.extend(args)
@@ -49,12 +55,16 @@ class BackupDbScriptTests(ShellScriptTestCase):
         self.script_path = self.temp_dir / "backup_db.sh"
         shutil.copyfile(BASE_DIR / "backup_db.sh", self.script_path)
         self.make_executable(self.script_path)
-        (self.temp_dir / "docker-compose.prod.yml").write_text("services: {}\n", encoding="utf-8")
+        (self.temp_dir / "docker-compose.prod.yml").write_text(
+            "services: {}\n", encoding="utf-8"
+        )
 
     def tearDown(self):
         shutil.rmtree(self.temp_dir, ignore_errors=True)
 
-    def create_fake_runtime(self, docker_name: str, dump_output: str = "fake-sql;\n", exit_code: int = 0):
+    def create_fake_runtime(
+        self, docker_name: str, dump_output: str = "fake-sql;\n", exit_code: int = 0
+    ):
         bin_dir = self.temp_dir / "bin"
         bin_dir.mkdir(parents=True, exist_ok=True)
         log_file = self.temp_dir / "docker-invocations.log"
@@ -93,7 +103,9 @@ class BackupDbScriptTests(ShellScriptTestCase):
         self.assertIn("-f", invocation)
 
     def test_windows_mode_falls_back_to_docker_exe(self):
-        bin_dir, log_file = self.create_fake_runtime("docker.exe", dump_output="windows-sql;\n")
+        bin_dir, log_file = self.create_fake_runtime(
+            "docker.exe", dump_output="windows-sql;\n"
+        )
         env = os.environ.copy()
         env["PATH"] = f"{bin_dir}{os.pathsep}{env.get('PATH', '')}"
 
@@ -111,7 +123,9 @@ class BackupDbScriptTests(ShellScriptTestCase):
         backup_dir = self.temp_dir / "backups" / "db"
         backup_dir.mkdir(parents=True, exist_ok=True)
         for index in range(1, 9):
-            (backup_dir / f"my_site_db_2026010{index}_000000.sql").write_text(str(index), encoding="utf-8")
+            (backup_dir / f"my_site_db_2026010{index}_000000.sql").write_text(
+                str(index), encoding="utf-8"
+            )
 
         env = os.environ.copy()
         env["PATH"] = f"{bin_dir}{os.pathsep}{env.get('PATH', '')}"
@@ -149,7 +163,9 @@ class EntrypointScriptTests(ShellScriptTestCase):
         # entrypoint.sh delegates to ensure_daily_logs.sh; mirror the real
         # container layout by placing that dependency in the fake tree too.
         self.daily_logs_path = self.code_dir / "ensure_daily_logs.sh"
-        daily_logs_text = (BASE_DIR / "ensure_daily_logs.sh").read_text(encoding="utf-8")
+        daily_logs_text = (BASE_DIR / "ensure_daily_logs.sh").read_text(
+            encoding="utf-8"
+        )
         daily_logs_text = daily_logs_text.replace("/code", self.code_dir.as_posix())
         self.daily_logs_path.write_text(daily_logs_text, encoding="utf-8", newline="\n")
         self.make_executable(self.daily_logs_path)
@@ -248,7 +264,10 @@ class EntrypointScriptTests(ShellScriptTestCase):
         self.assertIn("python manage.py check", log_text)
         self.assertIn("python manage.py collectstatic --noinput", log_text)
         self.assertNotIn("validate_prod_env.py", log_text)
-        self.assertIn("gunicorn --workers 4 --timeout 300 --graceful-timeout 30 --bind 0.0.0.0:8000", log_text)
+        self.assertIn(
+            "gunicorn --workers 4 --timeout 300 --graceful-timeout 30 --bind 0.0.0.0:8000",
+            log_text,
+        )
         self.assertTrue((self.code_dir / "logs" / "django" / "2026-07").exists())
 
     def test_macos_prod_mode_runs_prod_validation_before_start(self):
@@ -259,7 +278,9 @@ class EntrypointScriptTests(ShellScriptTestCase):
 
         self.assertEqual(result.returncode, 0, result.stderr)
         log_text = call_log.read_text(encoding="utf-8")
-        self.assertIn(f"python {self.code_dir.as_posix()}/validate_prod_env.py", log_text)
+        self.assertIn(
+            f"python {self.code_dir.as_posix()}/validate_prod_env.py", log_text
+        )
         self.assertIn("python manage.py check --deploy", log_text)
         self.assertIn("python manage.py check", log_text)
 
@@ -277,7 +298,9 @@ class EntrypointScriptTests(ShellScriptTestCase):
         )
         env = self.build_env(bin_dir, "my_site.settings.dev")
 
-        result = self.run_script(self.script_path, env=env, args=["echo", "hello-from-windows"])
+        result = self.run_script(
+            self.script_path, env=env, args=["echo", "hello-from-windows"]
+        )
 
         self.assertEqual(result.returncode, 0, result.stderr)
         log_text = call_log.read_text(encoding="utf-8")

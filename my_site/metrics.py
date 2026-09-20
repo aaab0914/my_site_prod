@@ -1,5 +1,5 @@
-from prometheus_client import CONTENT_TYPE_LATEST, REGISTRY, generate_latest
 from django.http import HttpResponse
+from prometheus_client import CONTENT_TYPE_LATEST, REGISTRY, generate_latest
 
 
 def metrics_view(request):

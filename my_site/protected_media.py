@@ -13,15 +13,20 @@ _RANGE_RE = re.compile(r"bytes=(\d*)-(\d*)")
 
 
 def _safe_etag(cache_prefix, file_path, last_modified, file_size):
-    raw = f"{cache_prefix}:{file_path}:{int(last_modified)}:{file_size}".encode("utf-8", errors="ignore")
+    raw = f"{cache_prefix}:{file_path}:{int(last_modified)}:{file_size}".encode(
+        "utf-8", errors="ignore"
+    )
     digest = hashlib.sha256(raw).hexdigest()
     return quote_etag(digest)
 
 
 def _content_disposition(file_path):
-    ascii_name = file_path.name.encode("ascii", errors="ignore").decode("ascii") or f"download{file_path.suffix}"
-    utf8_name = quote(file_path.name)
-    return f'inline; filename="{ascii_name}"; filename*=UTF-8''{utf8_name}'
+    ascii_name = (
+        file_path.name.encode("ascii", errors="ignore").decode("ascii")
+        or f"download{file_path.suffix}"
+    )
+    quote(file_path.name)
+    return f'inline; filename="{ascii_name}"; filename*=UTF-8{{utf8_name}}'
 
 
 def serve_protected_media(field_file, request=None, cache_prefix="media"):
@@ -33,7 +38,9 @@ def serve_protected_media(field_file, request=None, cache_prefix="media"):
         raise Http404("File not found.")
 
     try:
-        relative_media_path = file_path.resolve().relative_to(Path(settings.MEDIA_ROOT).resolve())
+        relative_media_path = file_path.resolve().relative_to(
+            Path(settings.MEDIA_ROOT).resolve()
+        )
     except ValueError as exc:
         raise Http404("File not found.") from exc
 
@@ -48,7 +55,9 @@ def serve_protected_media(field_file, request=None, cache_prefix="media"):
         if if_none_match and if_none_match == etag:
             response = HttpResponseNotModified()
         else:
-            if_modified_since = parse_http_date_safe(request.headers.get("If-Modified-Since", ""))
+            if_modified_since = parse_http_date_safe(
+                request.headers.get("If-Modified-Since", "")
+            )
             if if_modified_since and int(last_modified) <= if_modified_since:
                 response = HttpResponseNotModified()
             else:
@@ -87,13 +96,17 @@ def serve_protected_media(field_file, request=None, cache_prefix="media"):
             response["Content-Length"] = str(length)
             response["Content-Range"] = f"bytes {start}-{end}/{file_size}"
             response["Content-Disposition"] = content_disposition
-            response["X-Accel-Redirect"] = f"/_protected_media/{quote(str(relative_media_path).replace(os.sep, '/'), safe='/')}"
+            response["X-Accel-Redirect"] = (
+                f"/_protected_media/{quote(str(relative_media_path).replace(os.sep, '/'), safe='/')}"
+            )
 
     if response is None:
         response = HttpResponse(content_type=content_type)
         response["Content-Disposition"] = content_disposition
         response["Content-Length"] = str(file_size)
-        response["X-Accel-Redirect"] = f"/_protected_media/{quote(str(relative_media_path).replace(os.sep, '/'), safe='/')}"
+        response["X-Accel-Redirect"] = (
+            f"/_protected_media/{quote(str(relative_media_path).replace(os.sep, '/'), safe='/')}"
+        )
 
     response["Accept-Ranges"] = "bytes"
     response["Cache-Control"] = "public, max-age=7776000, immutable"

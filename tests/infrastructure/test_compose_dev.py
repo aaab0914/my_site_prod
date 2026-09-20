@@ -1,9 +1,8 @@
 import os
-from pathlib import Path
 import shutil
 import subprocess
 import unittest
-
+from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 COMPOSE_FILE = BASE_DIR / "docker-compose.dev.yml"
@@ -17,7 +16,9 @@ class DevComposeFileExistenceTests(unittest.TestCase):
         self.assertTrue(COMPOSE_FILE.exists(), "docker-compose.dev.yml 不存在")
 
     def test_compose_dev_file_not_empty(self):
-        self.assertGreater(COMPOSE_FILE.stat().st_size, 0, "docker-compose.dev.yml 是空文件")
+        self.assertGreater(
+            COMPOSE_FILE.stat().st_size, 0, "docker-compose.dev.yml 是空文件"
+        )
 
 
 class DevComposeServiceStructureTests(unittest.TestCase):
@@ -80,14 +81,17 @@ class DevComposeWebServiceConfigTests(unittest.TestCase):
         self.assertIn("./backups:/code/backups", self.text)
 
     def test_exposes_port_8000(self):
-        self.assertIn('${DEV_WEB_PORT:-8001}:8000', self.text)
+        self.assertIn("${DEV_WEB_PORT:-8001}:8000", self.text)
 
     def test_db_depends_on_healthcheck(self):
         self.assertIn("db:", self.text)
         self.assertIn("condition: service_healthy", self.text)
 
 
-@unittest.skipUnless(ENV_FILE.exists(), ".env.dev.example is not present in the web image (excluded by .dockerignore)")
+@unittest.skipUnless(
+    ENV_FILE.exists(),
+    ".env.dev.example is not present in the web image (excluded by .dockerignore)",
+)
 class DevEnvFileTests(unittest.TestCase):
     """验证 .env.dev 文件包含必要的环境变量（原 compose environment 中的变量已移入此处）"""
 
@@ -134,7 +138,7 @@ class DevComposeDatabaseConfigTests(unittest.TestCase):
         self.assertIn("pg_isready -U $$DB_USER -d $$DB_NAME", self.text)
 
     def test_db_service_exposes_port_5432(self):
-        self.assertIn('${DEV_DB_PORT:-5433}:5432', self.text)
+        self.assertIn("${DEV_DB_PORT:-5433}:5432", self.text)
 
 
 class DevComposeRedisConfigTests(unittest.TestCase):
@@ -210,24 +214,26 @@ class DevComposeConfigValidationTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.env = os.environ.copy()
-        cls.env.update({
-            "DB_NAME": "test_db",
-            "DB_USER": "test_user",
-            "DB_PASSWORD": "TestPass123!",
-            "DB_HOST": "db",
-            "DB_PORT": "5432",
-            "SECRET_KEY": "test-secret-key-not-for-production",
-            "DEBUG": "True",
-            "ALLOWED_HOSTS": "localhost,127.0.0.1",
-            "REDIS_URL": "redis://redis:6379/0",
-            "CELERY_BROKER_URL": "redis://redis:6379/0",
-            "CELERY_RESULT_BACKEND": "redis://redis:6379/0",
-            "ELASTICSEARCH_URL": "http://elasticsearch:9200",
-            "SENTRY_DSN": "",
-            "SENTRY_TRACES_SAMPLE_RATE": "0",
-            "SENTRY_PROFILES_SAMPLE_RATE": "0",
-            "RUNNING_IN_DOCKER": "true",
-        })
+        cls.env.update(
+            {
+                "DB_NAME": "test_db",
+                "DB_USER": "test_user",
+                "DB_PASSWORD": "TestPass123!",
+                "DB_HOST": "db",
+                "DB_PORT": "5432",
+                "SECRET_KEY": "test-secret-key-not-for-production",
+                "DEBUG": "True",
+                "ALLOWED_HOSTS": "localhost,127.0.0.1",
+                "REDIS_URL": "redis://redis:6379/0",
+                "CELERY_BROKER_URL": "redis://redis:6379/0",
+                "CELERY_RESULT_BACKEND": "redis://redis:6379/0",
+                "ELASTICSEARCH_URL": "http://elasticsearch:9200",
+                "SENTRY_DSN": "",
+                "SENTRY_TRACES_SAMPLE_RATE": "0",
+                "SENTRY_PROFILES_SAMPLE_RATE": "0",
+                "RUNNING_IN_DOCKER": "true",
+            }
+        )
 
     def test_compose_config_is_valid(self):
         result = subprocess.run(

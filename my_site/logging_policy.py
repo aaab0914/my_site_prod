@@ -1,8 +1,8 @@
+import re
+import shutil
 from dataclasses import dataclass
 from datetime import timedelta
 from pathlib import Path
-import shutil
-import re
 
 from django.utils import timezone
 
@@ -45,7 +45,7 @@ def is_managed_runtime_log(file_path, log_root):
 
     if len(relative_path.parts) != 3:
         return False
-    category, month_dir, filename = relative_path.parts
+    category, month_dir, _filename = relative_path.parts
     if not MANAGED_MONTH_DIR_RE.fullmatch(month_dir):
         return False
     if file_path.suffix != ".log":
@@ -58,7 +58,7 @@ def is_managed_runtime_log(file_path, log_root):
         prefix = f"{target.prefix}-"
         if not stem.startswith(prefix):
             continue
-        date_part = stem[len(prefix):]
+        date_part = stem[len(prefix) :]
         return bool(MANAGED_DATE_RE.fullmatch(date_part))
     return False
 
@@ -72,7 +72,10 @@ def ensure_runtime_log_heartbeats(log_root, when=None):
         created = not path.exists() or path.stat().st_size == 0
         if created:
             timestamp = current.strftime("%Y-%m-%d %H:%M:%S")
-            path.write_text(f"[{timestamp}] heartbeat: no new {target.label} log entries yet.\n", encoding="utf-8")
+            path.write_text(
+                f"[{timestamp}] heartbeat: no new {target.label} log entries yet.\n",
+                encoding="utf-8",
+            )
         results.append({"key": target.key, "path": str(path), "created": created})
     return results
 
@@ -86,13 +89,20 @@ def purge_runtime_logs(log_root, retention_days=RUNTIME_LOG_RETENTION_DAYS, when
     deleted_dirs = 0
 
     if not log_root.exists():
-        return {"trashed_files": 0, "deleted_dirs": 0, "log_root": str(log_root), "trash_root": str(trash_root)}
+        return {
+            "trashed_files": 0,
+            "deleted_dirs": 0,
+            "log_root": str(log_root),
+            "trash_root": str(trash_root),
+        }
 
     for file_path in log_root.rglob("*.log"):
         if not is_managed_runtime_log(file_path, log_root):
             continue
         try:
-            modified = timezone.datetime.fromtimestamp(file_path.stat().st_mtime, tz=timezone.get_current_timezone())
+            modified = timezone.datetime.fromtimestamp(
+                file_path.stat().st_mtime, tz=timezone.get_current_timezone()
+            )
         except FileNotFoundError:
             continue
         if modified >= cutoff:
@@ -106,7 +116,9 @@ def purge_runtime_logs(log_root, retention_days=RUNTIME_LOG_RETENTION_DAYS, when
         shutil.move(str(file_path), str(target_path))
         trashed_files += 1
 
-    for directory in sorted((path for path in log_root.rglob("*") if path.is_dir()), reverse=True):
+    for directory in sorted(
+        (path for path in log_root.rglob("*") if path.is_dir()), reverse=True
+    ):
         try:
             next(directory.iterdir())
         except StopIteration:
@@ -115,4 +127,9 @@ def purge_runtime_logs(log_root, retention_days=RUNTIME_LOG_RETENTION_DAYS, when
         except FileNotFoundError:
             continue
 
-    return {"trashed_files": trashed_files, "deleted_dirs": deleted_dirs, "log_root": str(log_root), "trash_root": str(trash_root)}
+    return {
+        "trashed_files": trashed_files,
+        "deleted_dirs": deleted_dirs,
+        "log_root": str(log_root),
+        "trash_root": str(trash_root),
+    }

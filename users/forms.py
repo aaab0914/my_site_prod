@@ -9,22 +9,39 @@ from django.contrib.auth.models import User
 class UserRegisterForm(UserCreationForm):
     email = forms.EmailField(
         required=False,
-        widget=forms.EmailInput(attrs={"class": "form-control", "placeholder": "Email (Optional)"}),
+        widget=forms.EmailInput(
+            attrs={"class": "form-control", "placeholder": "Email (Optional)"}
+        ),
     )
 
     class Meta:
         model = User
         fields = ("username", "email", "password1", "password2")
         widgets = {
-            "username": forms.TextInput(attrs={"class": "form-control", "placeholder": "Username"}),
-            "password1": forms.PasswordInput(attrs={"class": "form-control", "placeholder": "Password"}),
-            "password2": forms.PasswordInput(attrs={"class": "form-control", "placeholder": "Confirm Password"}),
+            "username": forms.TextInput(
+                attrs={"class": "form-control", "placeholder": "Username"}
+            ),
+            "password1": forms.PasswordInput(
+                attrs={"class": "form-control", "placeholder": "Password"}
+            ),
+            "password2": forms.PasswordInput(
+                attrs={"class": "form-control", "placeholder": "Confirm Password"}
+            ),
         }
 
 
 class UserLoginForm(AuthenticationForm):
-    username = forms.CharField(widget=forms.TextInput(attrs={"class": "form-control", "placeholder": "Username"}))
-    password = forms.CharField(widget=forms.PasswordInput(attrs={"class": "form-control", "placeholder": "Password"}))
+    username = forms.CharField(
+        widget=forms.TextInput(
+            attrs={"class": "form-control", "placeholder": "Username"}
+        )
+    )
+    password = forms.CharField(
+        widget=forms.PasswordInput(
+            attrs={"class": "form-control", "placeholder": "Password"}
+        )
+    )
+
 
 # --- users/forms/account.py ---
 from django import forms
@@ -41,7 +58,9 @@ class UserProfileForm(forms.ModelForm):
         widgets = {
             "bio": forms.Textarea(attrs={"class": "form-control", "rows": 4}),
             "location": forms.TextInput(attrs={"class": "form-control"}),
-            "birth_date": forms.DateInput(attrs={"class": "form-control", "type": "date"}),
+            "birth_date": forms.DateInput(
+                attrs={"class": "form-control", "type": "date"}
+            ),
             "avatar": forms.FileInput(attrs={"class": "form-control"}),
         }
 
@@ -75,6 +94,10 @@ class UsernameChangeForm(forms.ModelForm):
         username = self.cleaned_data["username"].strip()
         if not username:
             raise ValidationError("Username cannot be empty.")
-        if User.objects.filter(username__iexact=username).exclude(pk=self.instance.pk).exists():
+        if (
+            User.objects.filter(username__iexact=username)
+            .exclude(pk=self.instance.pk)
+            .exists()
+        ):
             raise ValidationError("Username already exists.")
         return username

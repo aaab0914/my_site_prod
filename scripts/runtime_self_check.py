@@ -6,7 +6,6 @@ import subprocess
 import sys
 from pathlib import Path
 
-
 PROJECT_DIR = Path(__file__).resolve().parent.parent
 COMPOSE_FILE = PROJECT_DIR / "docker-compose.dev.yml"
 PROD_COMPOSE_FILE = PROJECT_DIR / "docker-compose.prod.yml"
@@ -22,11 +21,17 @@ def run_command(command: list[str]) -> tuple[int, str, str]:
         errors="replace",
         timeout=120,
     )
-    return result.returncode, (result.stdout or "").strip(), (result.stderr or "").strip()
+    return (
+        result.returncode,
+        (result.stdout or "").strip(),
+        (result.stderr or "").strip(),
+    )
 
 
 def check_compose(docker_bin: str, compose_file: Path) -> dict[str, object]:
-    code, stdout, stderr = run_command([docker_bin, "compose", "-f", str(compose_file), "config"])
+    code, stdout, stderr = run_command(
+        [docker_bin, "compose", "-f", str(compose_file), "config"]
+    )
     return {
         "compose_file": compose_file.name,
         "ok": code == 0,
@@ -36,7 +41,9 @@ def check_compose(docker_bin: str, compose_file: Path) -> dict[str, object]:
 
 
 def check_containers(docker_bin: str) -> dict[str, object]:
-    code, stdout, stderr = run_command([docker_bin, "compose", "ps", "--format", "json"])
+    code, stdout, stderr = run_command(
+        [docker_bin, "compose", "ps", "--format", "json"]
+    )
     if code != 0:
         return {"ok": False, "stderr": stderr, "services": []}
 

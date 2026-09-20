@@ -4,13 +4,18 @@ from django.contrib import admin
 from django.contrib.sitemaps.views import sitemap
 from django.urls import include, path
 from django.views.generic import TemplateView
-
-from blog.sitemaps import PostSitemap
 from markdownx import urls as markdownx_urls
 
-from .metrics import metrics_view
-from .site_views import api_endpoints, api_guide, api_python_guide, operation_success, search_status
+from blog.sitemaps import PostSitemap
 
+from .metrics import metrics_view
+from .site_views import (
+    api_endpoints,
+    api_guide,
+    api_python_guide,
+    operation_success,
+    search_status,
+)
 
 sitemaps = {
     "posts": PostSitemap,

@@ -5,18 +5,18 @@ import tempfile
 from io import BytesIO
 from pathlib import Path
 
-from PIL import Image
 from django.conf import settings
 from django.contrib import admin
 from django.contrib.auth.models import User
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase, override_settings
 from django.urls import reverse
+from PIL import Image
 
-from images.forms import AlbumEditForm, GalleryUploadForm
-from images.admin import ImageAdmin
-from images.models import Album, AlbumImage, ImagePost
 from blog.models import Post
+from images.admin import ImageAdmin
+from images.forms import GalleryUploadForm
+from images.models import Album, AlbumImage, ImagePost
 from images.sync import sync_gallery_media
 
 
@@ -40,7 +40,9 @@ class GalleryUploadTests(TestCase):
         )
         self.settings.enable()
         self.user = User.objects.create_user(username="tester", password="secret123")
-        self.other_user = User.objects.create_user(username="other", password="secret123")
+        self.other_user = User.objects.create_user(
+            username="other", password="secret123"
+        )
         self.superuser = User.objects.create_superuser(
             username="admin",
             email="admin@example.com",
@@ -54,7 +56,9 @@ class GalleryUploadTests(TestCase):
 
     def test_form_accepts_pasted_image_data_only(self):
         upload = make_test_image()
-        data_url = "data:image/png;base64," + base64.b64encode(upload.read()).decode("ascii")
+        data_url = "data:image/png;base64," + base64.b64encode(upload.read()).decode(
+            "ascii"
+        )
 
         form = GalleryUploadForm(
             data={
@@ -81,7 +85,9 @@ class GalleryUploadTests(TestCase):
 
     def test_view_accepts_pasted_image_data_only(self):
         upload = make_test_image()
-        data_url = "data:image/png;base64," + base64.b64encode(upload.read()).decode("ascii")
+        data_url = "data:image/png;base64," + base64.b64encode(upload.read()).decode(
+            "ascii"
+        )
 
         response = self.client.post(
             reverse("blog:images:gallery_upload"),
@@ -99,10 +105,13 @@ class GalleryUploadTests(TestCase):
         second = make_test_image(name="second.png", color=(0, 255, 0))
         pasted_images_data = []
         for upload in (first, second):
-            pasted_images_data.append({
-                "name": upload.name,
-                "data_url": "data:image/png;base64," + base64.b64encode(upload.read()).decode("ascii"),
-            })
+            pasted_images_data.append(
+                {
+                    "name": upload.name,
+                    "data_url": "data:image/png;base64,"
+                    + base64.b64encode(upload.read()).decode("ascii"),
+                }
+            )
 
         response = self.client.post(
             reverse("blog:images:album_upload"),
@@ -118,7 +127,9 @@ class GalleryUploadTests(TestCase):
         self.assertEqual(AlbumImage.objects.filter(album=album).count(), 2)
 
     def test_album_owner_can_edit_title_and_description(self):
-        album = Album.objects.create(title="Before", description="Old", uploaded_by=self.user)
+        album = Album.objects.create(
+            title="Before", description="Old", uploaded_by=self.user
+        )
 
         response = self.client.post(
             reverse("blog:images:album_edit", args=[album.id]),
@@ -144,7 +155,6 @@ class GalleryUploadTests(TestCase):
         self.assertEqual(response.status_code, 302)
         album.refresh_from_db()
         self.assertEqual(album.title, "Protected")
-
 
     def test_post_create_with_cover_image_creates_matching_gallery_image(self):
         response = self.client.post(
@@ -175,7 +185,9 @@ class GalleryUploadTests(TestCase):
             uploaded_by=self.user,
         )
 
-        response = self.client.get(reverse("blog:images:gallery_detail", args=[image.id]))
+        response = self.client.get(
+            reverse("blog:images:gallery_detail", args=[image.id])
+        )
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, image.title)
@@ -215,7 +227,9 @@ class GalleryUploadTests(TestCase):
             uploaded_by=self.user,
         )
 
-        response = self.client.post(reverse("blog:images:gallery_delete", args=[image.id]))
+        response = self.client.post(
+            reverse("blog:images:gallery_delete", args=[image.id])
+        )
 
         self.assertEqual(response.status_code, 302)
         self.assertFalse(ImagePost.objects.filter(id=image.id).exists())
@@ -238,7 +252,9 @@ class GalleryUploadTests(TestCase):
         self.assertEqual(image.title, "after-edit")
         self.assertEqual(image.description, "after")
 
-        detail_response = self.client.get(reverse("blog:images:gallery_detail", args=[image.id]))
+        detail_response = self.client.get(
+            reverse("blog:images:gallery_detail", args=[image.id])
+        )
         self.assertContains(detail_response, "after-edit")
         self.assertContains(detail_response, "after")
 
@@ -250,7 +266,9 @@ class GalleryUploadTests(TestCase):
         )
         self.client.force_login(self.other_user)
 
-        response = self.client.post(reverse("blog:images:gallery_delete", args=[image.id]))
+        response = self.client.post(
+            reverse("blog:images:gallery_delete", args=[image.id])
+        )
 
         self.assertEqual(response.status_code, 302)
         self.assertTrue(ImagePost.objects.filter(id=image.id).exists())
@@ -282,7 +300,9 @@ class GalleryUploadTests(TestCase):
         )
         self.client.force_login(self.superuser)
 
-        response = self.client.post(reverse("blog:images:gallery_delete", args=[image.id]))
+        response = self.client.post(
+            reverse("blog:images:gallery_delete", args=[image.id])
+        )
 
         self.assertEqual(response.status_code, 302)
         self.assertFalse(ImagePost.objects.filter(id=image.id).exists())
@@ -312,7 +332,9 @@ class GalleryUploadTests(TestCase):
 
     def test_form_accepts_pasted_image_data_when_base64_has_spaces(self):
         upload = make_test_image()
-        data_url = "data:image/png;base64," + base64.b64encode(upload.read()).decode("ascii")
+        data_url = "data:image/png;base64," + base64.b64encode(upload.read()).decode(
+            "ascii"
+        )
         broken_data_url = data_url.replace("+", " ")
 
         form = GalleryUploadForm(
@@ -364,11 +386,15 @@ class GalleryUploadTests(TestCase):
         trash_root = Path(settings.BASE_DIR) / ".trash"
 
         self.assertTrue(file_path.exists())
-        response = self.client.post(reverse("blog:images:gallery_delete", args=[image.id]))
+        response = self.client.post(
+            reverse("blog:images:gallery_delete", args=[image.id])
+        )
 
         self.assertEqual(response.status_code, 302)
         self.assertFalse(file_path.exists())
-        self.assertTrue(any(path.is_file() for path in trash_root.rglob("delete-file*.png")))
+        self.assertTrue(
+            any(path.is_file() for path in trash_root.rglob("delete-file*.png"))
+        )
 
     def test_gallery_list_sync_does_not_mutate_files_when_disabled(self):
         stale_image = ImagePost.objects.create(

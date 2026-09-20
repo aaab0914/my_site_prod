@@ -4,7 +4,6 @@ from django.core.cache import caches
 from django.template.loaders.app_directories import Loader as AppDirectoriesLoader
 from django.template.loaders.filesystem import Loader as FilesystemLoader
 
-
 TEMPLATE_CACHE_TIMEOUT = 60 * 60 * 24 * 30
 TEMPLATE_CACHE_PREFIX = "template_html"
 TARGET_TEMPLATE_DIRS = (

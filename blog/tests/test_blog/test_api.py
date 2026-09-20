@@ -72,7 +72,9 @@ class BlogApiPermissionTests(TestCase):
 
     def test_comment_detail_api_allows_author_delete(self):
         self.client.force_authenticate(user=self.author)
-        response = self.client.delete(reverse("blog:api_comment_detail", kwargs={"pk": self.comment.pk}))
+        response = self.client.delete(
+            reverse("blog:api_comment_detail", kwargs={"pk": self.comment.pk})
+        )
         self.assertEqual(response.status_code, 204)
         self.assertFalse(Comment.objects.filter(pk=self.comment.pk).exists())
 
@@ -81,7 +83,9 @@ class BlogApiPermissionTests(TestCase):
         self.assertEqual(response.status_code, 200)
 
     def test_comment_detail_api_allows_anonymous_retrieve(self):
-        response = self.client.get(reverse("blog:api_comment_detail", kwargs={"pk": self.comment.pk}))
+        response = self.client.get(
+            reverse("blog:api_comment_detail", kwargs={"pk": self.comment.pk})
+        )
         self.assertEqual(response.status_code, 200)
 
     def test_comment_list_api_requires_login_for_create(self):

@@ -5,11 +5,10 @@ This module extends Django's logging system with a custom handler that
 automatically organizes log files into monthly directories and daily files.
 """
 
+import re
 from datetime import datetime
 from logging import FileHandler
 from pathlib import Path
-import re
-
 
 NOISY_404_PATTERNS = [
     re.compile(pattern, re.IGNORECASE)
@@ -54,9 +53,9 @@ NOISY_404_PATTERNS = [
 class SkipNoisy404Filter:
     def filter(self, record):
         message = record.getMessage()
-        if 'Not Found:' not in message:
+        if "Not Found:" not in message:
             return True
-        path = message.split('Not Found:', 1)[1].strip()
+        path = message.split("Not Found:", 1)[1].strip()
         return not any(pattern.match(path) for pattern in NOISY_404_PATTERNS)
 
 
@@ -105,7 +104,12 @@ class DailyMonthlyFileHandler(FileHandler):
 class MaxLevelFilter:
     def __init__(self, level):
         import logging
-        self.levelno = getattr(logging, str(level).upper()) if isinstance(level, str) else int(level)
+
+        self.levelno = (
+            getattr(logging, str(level).upper())
+            if isinstance(level, str)
+            else int(level)
+        )
 
     def filter(self, record):
         return record.levelno < self.levelno

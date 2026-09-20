@@ -1,13 +1,13 @@
 import shutil
-from datetime import timedelta, timezone as dt_timezone
+from datetime import timedelta
+from datetime import timezone as dt_timezone
 from pathlib import Path
 
-from django.conf import settings
 from celery import shared_task
+from django.conf import settings
 from django.utils import timezone
 
 from blog.models import AuditLog
-
 
 LOG_FILE_PREFIXES = {
     "django": "django",
@@ -39,7 +39,10 @@ def ensure_daily_runtime_logs():
     return {
         "log_root": str(log_root),
         "created": created,
-        "ensured": [str((log_root / log_type / month_dir / f"{prefix}-{day}.log")) for log_type, prefix in LOG_FILE_PREFIXES.items()],
+        "ensured": [
+            str(log_root / log_type / month_dir / f"{prefix}-{day}.log")
+            for log_type, prefix in LOG_FILE_PREFIXES.items()
+        ],
     }
 
 
@@ -65,13 +68,20 @@ def purge_old_runtime_logs_task(days=30):
         return {"trashed_files": 0, "deleted_dirs": 0, "log_root": str(log_root)}
 
     cutoff = timezone.now() - timedelta(days=days)
-    trash_root = log_root.parent / ".trash" / "logs" / timezone.localtime().strftime("%Y%m%d_%H%M%S")
+    trash_root = (
+        log_root.parent
+        / ".trash"
+        / "logs"
+        / timezone.localtime().strftime("%Y%m%d_%H%M%S")
+    )
     trashed_files = 0
     deleted_dirs = 0
 
     for file_path in log_root.rglob("*.log"):
         try:
-            modified = timezone.datetime.fromtimestamp(file_path.stat().st_mtime, tz=dt_timezone.utc)
+            modified = timezone.datetime.fromtimestamp(
+                file_path.stat().st_mtime, tz=dt_timezone.utc
+            )
         except FileNotFoundError:
             continue
         if modified >= cutoff:
@@ -85,7 +95,9 @@ def purge_old_runtime_logs_task(days=30):
         shutil.move(str(file_path), str(target_path))
         trashed_files += 1
 
-    month_dirs = sorted((path for path in log_root.rglob("*") if path.is_dir()), reverse=True)
+    month_dirs = sorted(
+        (path for path in log_root.rglob("*") if path.is_dir()), reverse=True
+    )
     for directory in month_dirs:
         try:
             next(directory.iterdir())

@@ -5,13 +5,18 @@ from django.dispatch import receiver
 from blog.models import AuditLog
 
 from .request_context import is_browser_delete_request
-from .runtime_file_guards import ensure_runtime_file_not_protected, is_protected_runtime_path
+from .runtime_file_guards import (
+    ensure_runtime_file_not_protected,
+    is_protected_runtime_path,
+)
 
 
 def enforce_browser_delete_only(label):
     if is_browser_delete_request():
         return
-    raise PermissionDenied(f"{label} deletion is only allowed from a browser-triggered request.")
+    raise PermissionDenied(
+        f"{label} deletion is only allowed from a browser-triggered request."
+    )
 
 
 @receiver(pre_delete, sender=AuditLog)

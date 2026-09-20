@@ -1,0 +1,28 @@
+exclude = [
+    ".bash",
+    "backups",
+    "media",
+    "staticfiles",
+]
+
+[lint]
+select = ["E4", "E7", "E9", "F", "I", "UP", "B", "SIM", "RUF"]
+ignore = [
+    "B018", # Existing no-op compatibility expression in the post email view.
+    "E722", # Legacy broad cleanup handlers; changing them needs behavioral review.
+    "F402", # Django Admin's URL helper is intentionally shadowed by a local path variable.
+    "RUF001",
+    "RUF002",
+    "RUF003",
+    "RUF012", # Django/DRF declarative class attributes are intentional.
+    "SIM105", # Cleanup and optional registration handlers retain explicit exception types.
+]
+
+[lint.per-file-ignores]
+"*/migrations/*.py" = ["RUF012"]
+"my_site/settings.py" = ["F403"]
+"my_site/settings/__init__.py" = ["F403"]
+"my_site/settings/dev.py" = ["F403", "F405"]
+"my_site/settings/prod.py" = ["F403", "F405"]
+"users/forms.py" = ["E402"]
+"users/models.py" = ["E402"]

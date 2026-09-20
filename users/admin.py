@@ -5,7 +5,6 @@ from rest_framework.authtoken.models import Token
 
 from .models import Profile, UserActivity, UserPreference
 
-
 try:
     admin.site.unregister(User)
 except admin.sites.NotRegistered:
@@ -14,8 +13,25 @@ except admin.sites.NotRegistered:
 
 @admin.register(User)
 class UserAdmin(DjangoUserAdmin):
-    list_display = ["username", "email", "first_name", "last_name", "is_staff", "is_superuser", "is_active", "last_login", "date_joined"]
-    list_filter = ["is_staff", "is_superuser", "is_active", "groups", "date_joined", "last_login"]
+    list_display = [
+        "username",
+        "email",
+        "first_name",
+        "last_name",
+        "is_staff",
+        "is_superuser",
+        "is_active",
+        "last_login",
+        "date_joined",
+    ]
+    list_filter = [
+        "is_staff",
+        "is_superuser",
+        "is_active",
+        "groups",
+        "date_joined",
+        "last_login",
+    ]
     search_fields = ["username", "email", "first_name", "last_name"]
     list_editable = ["is_active"]
     ordering = ["-date_joined"]
@@ -61,6 +77,7 @@ class ProfileAdmin(admin.ModelAdmin):
     autocomplete_fields = ["user"]
     list_per_page = 50
 
+
 @admin.register(UserActivity)
 class UserActivityAdmin(admin.ModelAdmin):
     list_display = ["user", "action", "ip_address", "timestamp"]
@@ -70,6 +87,7 @@ class UserActivityAdmin(admin.ModelAdmin):
     date_hierarchy = "timestamp"
     ordering = ["-timestamp"]
     list_per_page = 50
+
 
 @admin.register(UserPreference)
 class UserPreferenceAdmin(admin.ModelAdmin):

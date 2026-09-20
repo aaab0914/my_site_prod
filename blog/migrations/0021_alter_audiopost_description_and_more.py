@@ -6,84 +6,104 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('blog', '0020_note'),
-        ('taggit', '0006_rename_taggeditem_content_type_object_id_taggit_tagg_content_8fc721_idx'),
+        ("blog", "0020_note"),
+        (
+            "taggit",
+            "0006_rename_taggeditem_content_type_object_id_taggit_tagg_content_8fc721_idx",
+        ),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='audiopost',
-            name='description',
+            model_name="audiopost",
+            name="description",
             field=models.TextField(blank=True, max_length=500),
         ),
         migrations.AlterField(
-            model_name='audiopost',
-            name='music_name',
+            model_name="audiopost",
+            name="music_name",
             field=models.CharField(blank=True, max_length=200),
         ),
         migrations.AlterField(
-            model_name='comment',
-            name='body',
+            model_name="comment",
+            name="body",
             field=models.CharField(max_length=500),
         ),
         migrations.AlterField(
-            model_name='note',
-            name='title',
+            model_name="note",
+            name="title",
             field=models.CharField(max_length=50),
         ),
         migrations.AlterField(
-            model_name='post',
-            name='body',
+            model_name="post",
+            name="body",
             field=markdownx.models.MarkdownxField(max_length=500),
         ),
         migrations.AlterField(
-            model_name='post',
-            name='title',
+            model_name="post",
+            name="title",
             field=models.CharField(max_length=50),
         ),
         migrations.AlterField(
-            model_name='videopost',
-            name='description',
+            model_name="videopost",
+            name="description",
             field=models.TextField(blank=True, max_length=500),
         ),
         migrations.AlterField(
-            model_name='videopost',
-            name='title',
+            model_name="videopost",
+            name="title",
             field=models.CharField(blank=True, max_length=50),
         ),
         migrations.AddIndex(
-            model_name='audiopost',
-            index=models.Index(fields=['-created', '-id'], name='blog_audiop_created_e5b0b8_idx'),
+            model_name="audiopost",
+            index=models.Index(
+                fields=["-created", "-id"], name="blog_audiop_created_e5b0b8_idx"
+            ),
         ),
         migrations.AddIndex(
-            model_name='audiopost',
-            index=models.Index(fields=['uploaded_by', '-created'], name='blog_audiop_uploade_f636c4_idx'),
+            model_name="audiopost",
+            index=models.Index(
+                fields=["uploaded_by", "-created"],
+                name="blog_audiop_uploade_f636c4_idx",
+            ),
         ),
         migrations.AddIndex(
-            model_name='post',
-            index=models.Index(fields=['-publish', '-id'], name='blog_post_publish_595161_idx'),
+            model_name="post",
+            index=models.Index(
+                fields=["-publish", "-id"], name="blog_post_publish_595161_idx"
+            ),
         ),
         migrations.AddIndex(
-            model_name='post',
-            index=models.Index(fields=['slug', 'publish'], name='blog_post_slug_c84a29_idx'),
+            model_name="post",
+            index=models.Index(
+                fields=["slug", "publish"], name="blog_post_slug_c84a29_idx"
+            ),
         ),
         migrations.AddIndex(
-            model_name='post',
-            index=models.Index(fields=['author', '-publish'], name='blog_post_author__23a237_idx'),
+            model_name="post",
+            index=models.Index(
+                fields=["author", "-publish"], name="blog_post_author__23a237_idx"
+            ),
         ),
         migrations.AddIndex(
-            model_name='post',
-            index=models.Index(fields=['status', '-publish'], name='blog_post_status_bb6f7a_idx'),
+            model_name="post",
+            index=models.Index(
+                fields=["status", "-publish"], name="blog_post_status_bb6f7a_idx"
+            ),
         ),
         migrations.AddIndex(
-            model_name='videopost',
-            index=models.Index(fields=['-created', '-id'], name='blog_videop_created_c2806a_idx'),
+            model_name="videopost",
+            index=models.Index(
+                fields=["-created", "-id"], name="blog_videop_created_c2806a_idx"
+            ),
         ),
         migrations.AddIndex(
-            model_name='videopost',
-            index=models.Index(fields=['uploaded_by', '-created'], name='blog_videop_uploade_eacb99_idx'),
+            model_name="videopost",
+            index=models.Index(
+                fields=["uploaded_by", "-created"],
+                name="blog_videop_uploade_eacb99_idx",
+            ),
         ),
     ]

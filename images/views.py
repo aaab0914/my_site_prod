@@ -1,19 +1,24 @@
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
 from django.core.files.storage import default_storage
-from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse_lazy
 
 from blog.models import Post
-
-from .forms import AlbumEditForm, AlbumUploadForm, GalleryImageEditForm, GalleryUploadForm
-from .models import Album, AlbumImage, ImagePost
 from my_site.media_sync import maybe_sync_site_media
 from my_site.protected_media import serve_protected_media
 from my_site.site_views import queue_operation_success
+
+from .forms import (
+    AlbumEditForm,
+    AlbumUploadForm,
+    GalleryImageEditForm,
+    GalleryUploadForm,
+)
+from .models import Album, AlbumImage, ImagePost
 
 
 def _is_post_request(request):
@@ -54,7 +59,6 @@ def _build_sort_options(current_sort):
     ]
 
 
-
 def gallery_list(request):
     maybe_sync_site_media()
     sort = request.GET.get("sort", "newest")
@@ -67,7 +71,9 @@ def gallery_list(request):
         "author": ["uploaded_by__username", "title", "id"],
     }
     current_sort = sort if sort in sort_map else "newest"
-    queryset = ImagePost.objects.select_related("uploaded_by").order_by(*sort_map[current_sort])
+    queryset = ImagePost.objects.select_related("uploaded_by").order_by(
+        *sort_map[current_sort]
+    )
     paginator = Paginator(queryset, 20)
     page_obj = paginator.get_page(request.GET.get("page"))
     images = [image for image in page_obj.object_list if _has_image_file(image.image)]
@@ -86,7 +92,9 @@ def gallery_list(request):
 
 def gallery_detail(request, image_id):
     maybe_sync_site_media()
-    image = get_object_or_404(ImagePost.objects.select_related("uploaded_by"), pk=image_id)
+    image = get_object_or_404(
+        ImagePost.objects.select_related("uploaded_by"), pk=image_id
+    )
     if not _has_image_file(image.image):
         messages.error(request, "Image file is missing.")
         return redirect("blog:images:gallery_list")
@@ -185,17 +193,23 @@ def gallery_edit(request, image_id):
             title="Gallery Image Updated",
             message=f'"{image.title}" has been updated successfully.',
             primary_label="View Image",
-            primary_url=reverse_lazy("blog:images:gallery_detail", kwargs={"image_id": image.id}),
+            primary_url=reverse_lazy(
+                "blog:images:gallery_detail", kwargs={"image_id": image.id}
+            ),
             secondary_label="Open Gallery",
             secondary_url=reverse_lazy("blog:images:gallery_list"),
         )
 
-    response = render(request, "images/gallery_edit.html", {"form": form, "image": image})
+    response = render(
+        request, "images/gallery_edit.html", {"form": form, "image": image}
+    )
     return _disable_page_cache(response)
 
 
 def gallery_media(request, image_id):
-    image = get_object_or_404(ImagePost.objects.select_related("uploaded_by"), pk=image_id)
+    image = get_object_or_404(
+        ImagePost.objects.select_related("uploaded_by"), pk=image_id
+    )
     if not image.image:
         raise Http404("Image file is missing.")
     return serve_protected_media(
@@ -203,6 +217,7 @@ def gallery_media(request, image_id):
         request=request,
         cache_prefix="gallery-image",
     )
+
 
 def album_list(request):
     maybe_sync_site_media()
@@ -216,7 +231,11 @@ def album_list(request):
         "author": ["uploaded_by__username", "title", "id"],
     }
     current_sort = sort if sort in sort_map else "newest"
-    albums = Album.objects.select_related("uploaded_by").prefetch_related("images").order_by(*sort_map[current_sort])
+    albums = (
+        Album.objects.select_related("uploaded_by")
+        .prefetch_related("images")
+        .order_by(*sort_map[current_sort])
+    )
     paginator = Paginator(albums, 20)
     page_obj = paginator.get_page(request.GET.get("page"))
     response = render(
@@ -235,7 +254,12 @@ def album_list(request):
 
 def album_detail(request, image_id):
     maybe_sync_site_media()
-    album = get_object_or_404(Album.objects.select_related("uploaded_by").prefetch_related("images__uploaded_by"), pk=image_id)
+    album = get_object_or_404(
+        Album.objects.select_related("uploaded_by").prefetch_related(
+            "images__uploaded_by"
+        ),
+        pk=image_id,
+    )
     images = [image for image in album.images.all() if _has_image_file(image.image)]
     can_manage = request.user.is_authenticated and (
         album.uploaded_by_id == request.user.id or request.user.is_superuser
@@ -270,7 +294,9 @@ def album_upload(request):
             title="Album Created",
             message=f'"{album.title}" has been created successfully.',
             primary_label="View Album",
-            primary_url=reverse_lazy("blog:images:album_detail", kwargs={"image_id": album.id}),
+            primary_url=reverse_lazy(
+                "blog:images:album_detail", kwargs={"image_id": album.id}
+            ),
             secondary_label="Open Albums",
             secondary_url=reverse_lazy("blog:images:album_list"),
         )
@@ -318,7 +344,9 @@ def album_edit(request, image_id):
             title="Album Updated",
             message=f'"{album.title}" has been updated successfully.',
             primary_label="View Album",
-            primary_url=reverse_lazy("blog:images:album_detail", kwargs={"image_id": album.id}),
+            primary_url=reverse_lazy(
+                "blog:images:album_detail", kwargs={"image_id": album.id}
+            ),
             secondary_label="Open Albums",
             secondary_url=reverse_lazy("blog:images:album_list"),
         )
@@ -328,7 +356,9 @@ def album_edit(request, image_id):
 
 
 def album_media(request, image_id):
-    image = get_object_or_404(AlbumImage.objects.select_related("uploaded_by", "album"), pk=image_id)
+    image = get_object_or_404(
+        AlbumImage.objects.select_related("uploaded_by", "album"), pk=image_id
+    )
     if not image.image:
         raise Http404("Image file is missing.")
     return serve_protected_media(

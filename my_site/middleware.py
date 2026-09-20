@@ -1,6 +1,4 @@
 # my_site/middleware.py
-from django.shortcuts import redirect
-from django.urls import reverse
 
 
 class LoginRequiredMiddleware:

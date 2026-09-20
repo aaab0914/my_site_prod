@@ -9,14 +9,21 @@ from django.shortcuts import get_object_or_404, redirect
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, generics, permissions
 from rest_framework.decorators import api_view
-from rest_framework.response import Response
 from rest_framework.pagination import PageNumberPagination
+from rest_framework.response import Response
 from taggit.models import Tag
 
-from .models import Post, Comment
-from .search import comment_search_result_ids, search_result_ids
-from .serializers import PostCreateSerializer, PostSerializer, CommentSerializer, CommentWriteSerializer, TagSerializer
 from my_site.media_helpers import invalidate_cache_keys, invalidate_public_view_caches
+
+from .models import Comment, Post
+from .search import comment_search_result_ids, search_result_ids
+from .serializers import (
+    CommentSerializer,
+    CommentWriteSerializer,
+    PostCreateSerializer,
+    PostSerializer,
+    TagSerializer,
+)
 
 
 def _invalidate_blog_public_views():
@@ -38,13 +45,15 @@ class IsAuthorOrAdminOrReadOnly(permissions.BasePermission):
     def has_object_permission(self, request, view, obj):
         if request.method in permissions.SAFE_METHODS:
             return True
-        owner = getattr(obj, 'author', None)
-        return request.user.is_authenticated and (owner == request.user or request.user.is_staff)
+        owner = getattr(obj, "author", None)
+        return request.user.is_authenticated and (
+            owner == request.user or request.user.is_staff
+        )
 
 
 class StandardResultsSetPagination(PageNumberPagination):
     page_size = 10
-    page_size_query_param = 'page_size'
+    page_size_query_param = "page_size"
     max_page_size = 50
 
 
@@ -98,13 +107,20 @@ class PostListAPIView(RedirectAnonymousUsersToBlogMixin, generics.ListCreateAPIV
         result_ids, _backend = search_result_ids(search_term)
         if not result_ids:
             return queryset.none()
-        relevance = Case(*[When(pk=pk, then=position) for position, pk in enumerate(result_ids)], output_field=IntegerField())
+        relevance = Case(
+            *[When(pk=pk, then=position) for position, pk in enumerate(result_ids)],
+            output_field=IntegerField(),
+        )
         return queryset.filter(pk__in=result_ids).order_by(relevance)
 
     def filter_queryset(self, queryset):
         search_term = (self.request.GET.get("search") or "").strip()
         for backend in list(self.filter_backends):
-            if search_term and backend is filters.OrderingFilter and not self.request.GET.get("ordering"):
+            if (
+                search_term
+                and backend is filters.OrderingFilter
+                and not self.request.GET.get("ordering")
+            ):
                 continue
             queryset = backend().filter_queryset(self.request, queryset, self)
         return queryset
@@ -120,7 +136,9 @@ class PostListAPIView(RedirectAnonymousUsersToBlogMixin, generics.ListCreateAPIV
         _invalidate_blog_public_views()
         for tag in post.tags.all():
             if tag.slug:
-                invalidate_cache_keys(f"post_list:page:1:tag:{tag.slug}", f"post_list:ids:tag:{tag.slug}")
+                invalidate_cache_keys(
+                    f"post_list:page:1:tag:{tag.slug}", f"post_list:ids:tag:{tag.slug}"
+                )
                 invalidate_public_view_caches(
                     f"view:post_list:1:{tag.slug}:newest",
                     f"view:post_list:1:{tag.slug}:oldest",
@@ -129,17 +147,24 @@ class PostListAPIView(RedirectAnonymousUsersToBlogMixin, generics.ListCreateAPIV
                 )
 
 
-class PostDetailAPIView(RedirectAnonymousUsersToBlogMixin, generics.RetrieveUpdateDestroyAPIView):
+class PostDetailAPIView(
+    RedirectAnonymousUsersToBlogMixin, generics.RetrieveUpdateDestroyAPIView
+):
     queryset = Post.published.all()
     serializer_class = PostSerializer
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsAuthorOrAdminOrReadOnly]
+    permission_classes = [
+        permissions.IsAuthenticatedOrReadOnly,
+        IsAuthorOrAdminOrReadOnly,
+    ]
 
     def _invalidate_post_caches(self, post):
         invalidate_cache_keys("post_list:page:1:tag:all", "post_list:ids:tag:all")
         _invalidate_blog_public_views()
         for tag in post.tags.all():
             if tag.slug:
-                invalidate_cache_keys(f"post_list:page:1:tag:{tag.slug}", f"post_list:ids:tag:{tag.slug}")
+                invalidate_cache_keys(
+                    f"post_list:page:1:tag:{tag.slug}", f"post_list:ids:tag:{tag.slug}"
+                )
                 invalidate_public_view_caches(
                     f"view:post_list:1:{tag.slug}:newest",
                     f"view:post_list:1:{tag.slug}:oldest",
@@ -158,7 +183,9 @@ class PostDetailAPIView(RedirectAnonymousUsersToBlogMixin, generics.RetrieveUpda
         _invalidate_blog_public_views()
         for tag in tags:
             if tag.slug:
-                invalidate_cache_keys(f"post_list:page:1:tag:{tag.slug}", f"post_list:ids:tag:{tag.slug}")
+                invalidate_cache_keys(
+                    f"post_list:page:1:tag:{tag.slug}", f"post_list:ids:tag:{tag.slug}"
+                )
                 invalidate_public_view_caches(
                     f"view:post_list:1:{tag.slug}:newest",
                     f"view:post_list:1:{tag.slug}:oldest",
@@ -169,7 +196,7 @@ class PostDetailAPIView(RedirectAnonymousUsersToBlogMixin, generics.RetrieveUpda
 
 class CommentListAPIView(RedirectAnonymousUsersToBlogMixin, generics.ListCreateAPIView):
     pagination_class = StandardResultsSetPagination
-    queryset = Comment.objects.filter(active=True).select_related('post', 'author')
+    queryset = Comment.objects.filter(active=True).select_related("post", "author")
     serializer_class = CommentSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
@@ -185,19 +212,26 @@ class CommentListAPIView(RedirectAnonymousUsersToBlogMixin, generics.ListCreateA
         result_ids = comment_search_result_ids(search_term)
         if not result_ids:
             return queryset.none()
-        relevance = Case(*[When(pk=pk, then=position) for position, pk in enumerate(result_ids)], output_field=IntegerField())
+        relevance = Case(
+            *[When(pk=pk, then=position) for position, pk in enumerate(result_ids)],
+            output_field=IntegerField(),
+        )
         return queryset.filter(pk__in=result_ids).order_by(relevance)
 
     def filter_queryset(self, queryset):
         search_term = (self.request.GET.get("search") or "").strip()
         for backend in list(self.filter_backends):
-            if search_term and backend is filters.OrderingFilter and not self.request.GET.get("ordering"):
+            if (
+                search_term
+                and backend is filters.OrderingFilter
+                and not self.request.GET.get("ordering")
+            ):
                 continue
             queryset = backend().filter_queryset(self.request, queryset, self)
         return queryset
 
     def get_serializer_class(self):
-        if self.request.method == 'POST':
+        if self.request.method == "POST":
             return CommentWriteSerializer
         return CommentSerializer
 
@@ -205,10 +239,15 @@ class CommentListAPIView(RedirectAnonymousUsersToBlogMixin, generics.ListCreateA
         serializer.save()
 
 
-class CommentDetailAPIView(RedirectAnonymousUsersToBlogMixin, generics.RetrieveUpdateDestroyAPIView):
-    queryset = Comment.objects.filter(active=True).select_related('post', 'author')
+class CommentDetailAPIView(
+    RedirectAnonymousUsersToBlogMixin, generics.RetrieveUpdateDestroyAPIView
+):
+    queryset = Comment.objects.filter(active=True).select_related("post", "author")
     serializer_class = CommentSerializer
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsAuthorOrAdminOrReadOnly]
+    permission_classes = [
+        permissions.IsAuthenticatedOrReadOnly,
+        IsAuthorOrAdminOrReadOnly,
+    ]
 
     def get_serializer_class(self):
         if self.request.method in {"PUT", "PATCH"}:

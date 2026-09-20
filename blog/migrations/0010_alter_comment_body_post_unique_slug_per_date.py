@@ -5,21 +5,25 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('blog', '0009_post_cover_image'),
-        ('taggit', '0006_rename_taggeditem_content_type_object_id_taggit_tagg_content_8fc721_idx'),
+        ("blog", "0009_post_cover_image"),
+        (
+            "taggit",
+            "0006_rename_taggeditem_content_type_object_id_taggit_tagg_content_8fc721_idx",
+        ),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='comment',
-            name='body',
+            model_name="comment",
+            name="body",
             field=models.TextField(max_length=200),
         ),
         migrations.AddConstraint(
-            model_name='post',
-            constraint=models.UniqueConstraint(fields=('slug', 'publish'), name='unique_slug_per_date'),
+            model_name="post",
+            constraint=models.UniqueConstraint(
+                fields=("slug", "publish"), name="unique_slug_per_date"
+            ),
         ),
     ]

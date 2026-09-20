@@ -1,10 +1,9 @@
-from pathlib import Path
 import shutil
 import subprocess
 import unittest
+from pathlib import Path
 
 from django.test import SimpleTestCase
-
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 DEV_ENV_PATH = BASE_DIR / ".env.dev.example"
@@ -15,7 +14,11 @@ class DevDockerComposeFileTests(SimpleTestCase):
         self.compose_path = BASE_DIR / "docker-compose.dev.yml"
         self.compose_text = self.compose_path.read_text(encoding="utf-8")
         self.dev_env_path = DEV_ENV_PATH
-        self.dev_env_text = self.dev_env_path.read_text(encoding="utf-8") if self.dev_env_path.exists() else ""
+        self.dev_env_text = (
+            self.dev_env_path.read_text(encoding="utf-8")
+            if self.dev_env_path.exists()
+            else ""
+        )
 
     def test_dev_compose_targets_dev_layout(self):
         """Dockerfile 使用 Dockerfile.dev"""
@@ -48,8 +51,12 @@ class DevDockerComposeFileTests(SimpleTestCase):
 
     def test_dev_web_service_uses_local_wheel_contexts(self):
         self.assertIn("additional_contexts:", self.compose_text)
-        self.assertIn("linux_wheels: G:/Projects/Linux_Python_Packages", self.compose_text)
-        self.assertNotIn("docker_packages: G:/Projects/Docker_Packages", self.compose_text)
+        self.assertIn(
+            "linux_wheels: G:/Projects/Linux_Python_Packages", self.compose_text
+        )
+        self.assertNotIn(
+            "docker_packages: G:/Projects/Docker_Packages", self.compose_text
+        )
 
     def test_dev_web_service_uses_env_file_for_settings(self):
         """环境变量通过 .env.dev 注入，而非写在 compose 的 environment 块中"""
@@ -70,7 +77,9 @@ class DevDockerComposeFileTests(SimpleTestCase):
         self.assertIn("- ./backups:/code/backups", self.compose_text)
 
     def test_dev_web_service_has_healthcheck(self):
-        self.assertIn("urllib.request.Request('http://127.0.0.1:8000/health/'", self.compose_text)
+        self.assertIn(
+            "urllib.request.Request('http://127.0.0.1:8000/health/'", self.compose_text
+        )
         self.assertIn("exit(0 if r.status == 200 else 1)", self.compose_text)
         self.assertIn("'X-Forwarded-Proto': 'https'", self.compose_text)
 

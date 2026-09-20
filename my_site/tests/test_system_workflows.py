@@ -9,13 +9,16 @@ from django.core.files.base import ContentFile
 from django.test import SimpleTestCase, TestCase, override_settings
 
 from images.models import ImagePost
+from my_site.logging_policy import (
+    RUNTIME_LOG_TARGETS,
+    ensure_runtime_log_heartbeats,
+    purge_runtime_logs,
+)
 from my_site.logging_utils import DailyMonthlyFileHandler
-from my_site.logging_policy import RUNTIME_LOG_TARGETS, ensure_runtime_log_heartbeats, purge_runtime_logs
 from my_site.media_cleanup import move_media_file_to_trash
 from my_site.media_sync import sync_site_media
 from my_site.request_context import reset_current_request, set_current_request
 from my_site.tasks import purge_old_runtime_logs_task, sync_site_media_task
-
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
@@ -28,13 +31,15 @@ class DatabaseBackupSystemTests(SimpleTestCase):
         self.assertIn('LOG_DIR="$PROJECT_DIR/logs/backup/$MONTH_DIR"', script)
         self.assertIn('LOG_FILE="$LOG_DIR/backup-$DAY.log"', script)
         self.assertIn('BACKUP_DIR="$PROJECT_DIR/backups/db"', script)
-        self.assertIn('command -v docker || command -v docker.exe', script)
+        self.assertIn("command -v docker || command -v docker.exe", script)
         self.assertNotIn("backup_loop.sh", script)
 
 
 class LoggingSystemTests(SimpleTestCase):
     def test_daily_monthly_log_handler_writes_into_single_logs_tree(self):
-        handler = DailyMonthlyFileHandler(log_dir=BASE_DIR / "logs", filename_prefix="django", delay=True)
+        handler = DailyMonthlyFileHandler(
+            log_dir=BASE_DIR / "logs", filename_prefix="django", delay=True
+        )
         target_path = Path(handler.baseFilename)
 
         self.assertEqual(target_path.parents[2], BASE_DIR / "logs")
@@ -48,12 +53,16 @@ class LoggingSystemTests(SimpleTestCase):
         self.assertTrue((BASE_DIR / "scripts" / "long_run_check.py").exists())
 
     def test_runtime_self_check_script_references_both_compose_files(self):
-        script = (BASE_DIR / "scripts" / "runtime_self_check.py").read_text(encoding="utf-8")
+        script = (BASE_DIR / "scripts" / "runtime_self_check.py").read_text(
+            encoding="utf-8"
+        )
         self.assertIn("docker-compose.dev.yml", script)
         self.assertIn("docker-compose.prod.yml", script)
 
     def test_long_run_check_script_reports_json(self):
-        script = (BASE_DIR / "scripts" / "long_run_check.py").read_text(encoding="utf-8")
+        script = (BASE_DIR / "scripts" / "long_run_check.py").read_text(
+            encoding="utf-8"
+        )
         self.assertIn("json.dumps(report", script)
 
     def test_purge_old_runtime_logs_task_trashes_old_runtime_logs(self):
@@ -79,9 +88,16 @@ class LoggingSystemTests(SimpleTestCase):
             managed_log = log_root / "django" / "1999-01" / "django-1999-01-01.log"
             backup_log = log_root / "backup.log"
             nginx_access_log = log_root / "nginx-access" / "access.log"
-            unmanaged_error_log = log_root / "django-error" / "1999-01" / "django-error-custom.log"
+            unmanaged_error_log = (
+                log_root / "django-error" / "1999-01" / "django-error-custom.log"
+            )
 
-            for path in [managed_log, backup_log, nginx_access_log, unmanaged_error_log]:
+            for path in [
+                managed_log,
+                backup_log,
+                nginx_access_log,
+                unmanaged_error_log,
+            ]:
                 path.parent.mkdir(parents=True, exist_ok=True)
                 path.write_text("old", encoding="utf-8")
                 os.utime(path, (946684800, 946684800))
@@ -106,7 +122,9 @@ class LoggingSystemTests(SimpleTestCase):
                 self.assertRegex(path.parent.name, r"^\d{4}-\d{2}$")
                 self.assertIn("heartbeat: no new", path.read_text(encoding="utf-8"))
 
-    def test_purge_old_runtime_logs_task_reports_deletion_summary_without_heartbeats(self):
+    def test_purge_old_runtime_logs_task_reports_deletion_summary_without_heartbeats(
+        self,
+    ):
         with tempfile.TemporaryDirectory(prefix="runtime-log-task-") as temp_dir:
             with override_settings(BASE_DIR=Path(temp_dir)):
                 result = purge_old_runtime_logs_task(days=2)
@@ -122,7 +140,9 @@ class MediaSyncSystemTests(TestCase):
         self.media_root = tempfile.mkdtemp(prefix="media-sync-workflow-")
         self.override = override_settings(MEDIA_ROOT=self.media_root)
         self.override.enable()
-        self.user = get_user_model().objects.create_user(username="media-workflow-user", password="secret123")
+        self.user = get_user_model().objects.create_user(
+            username="media-workflow-user", password="secret123"
+        )
 
     def tearDown(self):
         self.override.disable()
@@ -162,7 +182,9 @@ class MediaSyncSystemTests(TestCase):
         self.assertFalse(file_path.exists())
         self.assertTrue((Path(settings.BASE_DIR) / trashed_to).exists())
 
-    def test_model_delete_moves_media_file_to_trash_via_signal_for_browser_requests(self):
+    def test_model_delete_moves_media_file_to_trash_via_signal_for_browser_requests(
+        self,
+    ):
         image = ImagePost.objects.create(title="signal-delete", uploaded_by=self.user)
         image.image.save("signal-delete.png", ContentFile(b"image-bytes"), save=True)
 
@@ -176,5 +198,7 @@ class MediaSyncSystemTests(TestCase):
             reset_current_request(token)
 
         self.assertFalse(original_path.exists())
-        moved_files = list((Path(settings.BASE_DIR) / ".trash").rglob("signal-delete.png"))
+        moved_files = list(
+            (Path(settings.BASE_DIR) / ".trash").rglob("signal-delete.png")
+        )
         self.assertTrue(moved_files)

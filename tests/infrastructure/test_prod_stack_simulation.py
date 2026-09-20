@@ -1,16 +1,17 @@
 import os
-from pathlib import Path
 import shutil
 import subprocess
 import unittest
-
+from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 
 class ProdStackSimulationTests(unittest.TestCase):
     def setUp(self):
-        self.compose = (BASE_DIR / "docker-compose.prod.yml").read_text(encoding="utf-8")
+        self.compose = (BASE_DIR / "docker-compose.prod.yml").read_text(
+            encoding="utf-8"
+        )
         self.dockerfile = (BASE_DIR / "Dockerfile.prod").read_text(encoding="utf-8")
         self.entrypoint = (BASE_DIR / "entrypoint.sh").read_text(encoding="utf-8")
         self.nginx = (BASE_DIR / "nginx.prod.conf").read_text(encoding="utf-8")
@@ -44,7 +45,15 @@ class ProdStackSimulationTests(unittest.TestCase):
         )
 
         result = subprocess.run(
-            [docker, "compose", "-f", "docker-compose.prod.yml", "--profile", "optional", "config"],
+            [
+                docker,
+                "compose",
+                "-f",
+                "docker-compose.prod.yml",
+                "--profile",
+                "optional",
+                "config",
+            ],
             cwd=BASE_DIR,
             capture_output=True,
             text=True,
@@ -60,8 +69,12 @@ class ProdStackSimulationTests(unittest.TestCase):
 
     def test_prod_dockerfile_and_entrypoint_use_gunicorn_not_runserver(self):
         self.assertIn("DJANGO_SETTINGS_MODULE=my_site.settings.prod", self.dockerfile)
-        self.assertIn("COPY entrypoint.sh /usr/local/bin/entrypoint.sh", self.dockerfile)
-        self.assertIn('ENTRYPOINT ["sh", "/usr/local/bin/entrypoint.sh"]', self.dockerfile)
+        self.assertIn(
+            "COPY entrypoint.sh /usr/local/bin/entrypoint.sh", self.dockerfile
+        )
+        self.assertIn(
+            'ENTRYPOINT ["sh", "/usr/local/bin/entrypoint.sh"]', self.dockerfile
+        )
         self.assertIn("python /code/validate_prod_env.py", self.entrypoint)
         self.assertIn("python manage.py check --deploy", self.entrypoint)
         self.assertIn("python manage.py collectstatic --noinput", self.entrypoint)

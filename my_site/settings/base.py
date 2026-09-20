@@ -8,13 +8,18 @@
 
 import os  # Provides operating system independent functionality, used to read environment variables
 import sys
-from pathlib import Path  # Object-oriented filesystem path handling (modern replacement for os.path)
+from pathlib import (
+    Path,
+)  # Object-oriented filesystem path handling (modern replacement for os.path)
 
-# django-decouple: Used to manage settings via environment variables, keeping secrets out of version control
-from decouple import Csv, \
-    config  # Csv: casts environment variables to lists; config: reads env variables with type casting
 import sentry_sdk
 from celery.schedules import crontab
+
+# django-decouple: Used to manage settings via environment variables, keeping secrets out of version control
+from decouple import (
+    Csv,
+    config,
+)  # Csv: casts environment variables to lists; config: reads env variables with type casting
 from sentry_sdk.integrations.celery import CeleryIntegration
 from sentry_sdk.integrations.django import DjangoIntegration
 
@@ -72,18 +77,15 @@ INSTALLED_APPS = [
     "django.contrib.sessions",  # Session management for tracking users
     "django.contrib.messages",  # One-time notification framework
     "django.contrib.staticfiles",  # Static file management (CSS, JS, images)
-
     # Django contrib features:
     "django.contrib.sites",  # Multi-site management framework (used for sitemaps)
     "django.contrib.sitemaps",  # XML sitemap generation for SEO
     "django.contrib.postgres",  # PostgreSQL-specific features (full-text search, etc.)
-
     # Third-party packages:
     "django_extensions",  # Additional management commands and tools for development
     "rest_framework",  # Django REST Framework for building Web APIs
     "django_filters",  # Advanced queryset filtering for REST APIs
     "rest_framework.authtoken",  # Token-based authentication for REST API
-
     # Custom project apps (defined with AppConfig for more control):
     "blog.apps.BlogConfig",  # Blog application with posts, tags, and audio features
     "images.apps.ImagesConfig",  # Image upload and management application
@@ -149,7 +151,9 @@ ROOT_URLCONF = "my_site.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",  # Django template engine
-        "DIRS": [str(BASE_DIR / "my_site" / "templates")],  # Project-level templates such as the public homepage
+        "DIRS": [
+            str(BASE_DIR / "my_site" / "templates")
+        ],  # Project-level templates such as the public homepage
         "APP_DIRS": True,  # Whether to look for templates inside each app's 'templates/' directory
         "OPTIONS": {
             "context_processors": [  # Functions that add variables to every template context
@@ -182,9 +186,13 @@ DATABASES = {
         "ENGINE": "django.db.backends.postgresql",  # PostgreSQL backend
         "NAME": os.environ.get("DB_NAME"),  # Database name (from environment)
         "USER": os.environ.get("DB_USER"),  # Database user (from environment)
-        "PASSWORD": os.environ.get("DB_PASSWORD"),  # Database password (from environment)
+        "PASSWORD": os.environ.get(
+            "DB_PASSWORD"
+        ),  # Database password (from environment)
         # HOST: If running in Docker, use 'db' (service name); else use 'localhost'
-        "HOST": os.environ.get("DB_HOST", "db" if os.environ.get("RUNNING_IN_DOCKER") else "localhost"),
+        "HOST": os.environ.get(
+            "DB_HOST", "db" if os.environ.get("RUNNING_IN_DOCKER") else "localhost"
+        ),
         "PORT": os.environ.get("DB_PORT", "5432"),  # PostgreSQL default port
         "CONN_MAX_AGE": config("DB_CONN_MAX_AGE", default=60, cast=int),
         "CONN_HEALTH_CHECKS": True,
@@ -230,9 +238,15 @@ CELERY_TIMEZONE = "UTC"
 CELERY_ENABLE_UTC = True
 CELERY_TASK_TRACK_STARTED = True
 CELERY_TASK_TIME_LIMIT = config("CELERY_TASK_TIME_LIMIT", default=30 * 60, cast=int)
-CELERY_TASK_SOFT_TIME_LIMIT = config("CELERY_TASK_SOFT_TIME_LIMIT", default=25 * 60, cast=int)
-CELERY_WORKER_SEND_TASK_EVENTS = config("CELERY_WORKER_SEND_TASK_EVENTS", default=True, cast=bool)
-CELERY_TASK_SEND_SENT_EVENT = config("CELERY_TASK_SEND_SENT_EVENT", default=True, cast=bool)
+CELERY_TASK_SOFT_TIME_LIMIT = config(
+    "CELERY_TASK_SOFT_TIME_LIMIT", default=25 * 60, cast=int
+)
+CELERY_WORKER_SEND_TASK_EVENTS = config(
+    "CELERY_WORKER_SEND_TASK_EVENTS", default=True, cast=bool
+)
+CELERY_TASK_SEND_SENT_EVENT = config(
+    "CELERY_TASK_SEND_SENT_EVENT", default=True, cast=bool
+)
 CELERY_RESULT_EXTENDED = config("CELERY_RESULT_EXTENDED", default=True, cast=bool)
 MEDIA_SYNC_BEAT_MINUTES = config("MEDIA_SYNC_BEAT_MINUTES", default=5, cast=int)
 LOG_RETENTION_DAYS = config("LOG_RETENTION_DAYS", default=120, cast=int)
@@ -258,7 +272,9 @@ CELERY_BEAT_SCHEDULE = {
     },
 }
 
-ELASTICSEARCH_DSL_SIGNAL_PROCESSOR = "my_site.elasticsearch_signals.ResilientCelerySignalProcessor"
+ELASTICSEARCH_DSL_SIGNAL_PROCESSOR = (
+    "my_site.elasticsearch_signals.ResilientCelerySignalProcessor"
+)
 
 ELASTICSEARCH_DSL = {
     "default": {
@@ -278,11 +294,19 @@ if TESTING:
     ]
 
 AUTH_PASSWORD_VALIDATORS = [
-    {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
+    {
+        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"
+    },
     # Password can't be similar to user info
-    {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},  # Minimum length requirement
-    {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},  # Can't be commonly used password
-    {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},  # Can't be entirely numeric
+    {
+        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"
+    },  # Minimum length requirement
+    {
+        "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"
+    },  # Can't be commonly used password
+    {
+        "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"
+    },  # Can't be entirely numeric
 ]
 
 # ============================================================================
@@ -313,7 +337,9 @@ STATIC_ROOT = config("STATIC_ROOT", default=BASE_DIR / "staticfiles")
 MEDIA_URL = "/media/"
 # MEDIA_ROOT: Filesystem path for storing user-uploaded files
 MEDIA_ROOT = BASE_DIR / "media"
-MEDIA_SYNC_INTERVAL_SECONDS = config("MEDIA_SYNC_INTERVAL_SECONDS", default=10, cast=int)
+MEDIA_SYNC_INTERVAL_SECONDS = config(
+    "MEDIA_SYNC_INTERVAL_SECONDS", default=10, cast=int
+)
 MEDIA_SYNC_ENABLED = config("MEDIA_SYNC_ENABLED", default=(not TESTING), cast=bool)
 
 # ============================================================================
@@ -347,19 +373,39 @@ LOGGING = {
         },
     },
     "loggers": {  # Configure specific loggers
-        "django": {"handlers": ["console"], "level": "INFO", "propagate": False},  # Core Django logs
-        "django.request": {"handlers": ["console"], "level": "WARNING", "propagate": False},  # Request/response logs
-        "blog": {"handlers": ["console"], "level": "INFO", "propagate": False},  # Blog app logs
-        "users": {"handlers": ["console"], "level": "INFO", "propagate": False},  # Users app logs
+        "django": {
+            "handlers": ["console"],
+            "level": "INFO",
+            "propagate": False,
+        },  # Core Django logs
+        "django.request": {
+            "handlers": ["console"],
+            "level": "WARNING",
+            "propagate": False,
+        },  # Request/response logs
+        "blog": {
+            "handlers": ["console"],
+            "level": "INFO",
+            "propagate": False,
+        },  # Blog app logs
+        "users": {
+            "handlers": ["console"],
+            "level": "INFO",
+            "propagate": False,
+        },  # Users app logs
         "celery": {"handlers": ["console"], "level": "INFO", "propagate": False},
     },
 }
 
 SENTRY_DSN = config("SENTRY_DSN", default="")
-SENTRY_ENVIRONMENT = config("SENTRY_ENVIRONMENT", default="development" if DEBUG else "production")
+SENTRY_ENVIRONMENT = config(
+    "SENTRY_ENVIRONMENT", default="development" if DEBUG else "production"
+)
 SENTRY_RELEASE = config("SENTRY_RELEASE", default="")
 SENTRY_TRACES_SAMPLE_RATE = config("SENTRY_TRACES_SAMPLE_RATE", default=0.0, cast=float)
-SENTRY_PROFILES_SAMPLE_RATE = config("SENTRY_PROFILES_SAMPLE_RATE", default=0.0, cast=float)
+SENTRY_PROFILES_SAMPLE_RATE = config(
+    "SENTRY_PROFILES_SAMPLE_RATE", default=0.0, cast=float
+)
 
 if SENTRY_DSN:
     sentry_options = {
@@ -397,7 +443,9 @@ CSRF_COOKIE_SECURE = config("CSRF_COOKIE_SECURE", default=False, cast=bool)
 SECURE_HSTS_SECONDS = config("SECURE_HSTS_SECONDS", default=0, cast=int)
 
 # SECURE_HSTS_INCLUDE_SUBDOMAINS: Whether HSTS policy applies to subdomains
-SECURE_HSTS_INCLUDE_SUBDOMAINS = config("SECURE_HSTS_INCLUDE_SUBDOMAINS", default=False, cast=bool)
+SECURE_HSTS_INCLUDE_SUBDOMAINS = config(
+    "SECURE_HSTS_INCLUDE_SUBDOMAINS", default=False, cast=bool
+)
 
 # SECURE_HSTS_PRELOAD: Whether to opt-in to HSTS preload list (submitted to browsers)
 SECURE_HSTS_PRELOAD = config("SECURE_HSTS_PRELOAD", default=False, cast=bool)
@@ -413,7 +461,9 @@ X_FRAME_OPTIONS = "DENY"
 # ============================================================================
 
 # UPLOAD_MAX_MEMORY_SIZE: Shared upper bound for request and file uploads.
-UPLOAD_MAX_MEMORY_SIZE = config("UPLOAD_MAX_MEMORY_SIZE", default=120 * 1024 * 1024, cast=int)  # 120MB
+UPLOAD_MAX_MEMORY_SIZE = config(
+    "UPLOAD_MAX_MEMORY_SIZE", default=120 * 1024 * 1024, cast=int
+)  # 120MB
 
 # DATA_UPLOAD_MAX_MEMORY_SIZE: Maximum size of POST data (in bytes)
 # Prevents large uploads from consuming too much memory

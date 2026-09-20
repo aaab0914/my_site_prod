@@ -5,7 +5,6 @@ import os
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-
 PROJECT_DIR = Path(__file__).resolve().parent.parent
 
 
@@ -50,7 +49,9 @@ def main() -> int:
         "logs": directory_summary(PROJECT_DIR / "logs"),
         "backups": directory_summary(PROJECT_DIR / "backups"),
         "media": directory_summary(PROJECT_DIR / "media"),
-        "stale_logs_older_than_retention": stale_log_files(PROJECT_DIR / "logs", retention_days)[:20],
+        "stale_logs_older_than_retention": stale_log_files(
+            PROJECT_DIR / "logs", retention_days
+        )[:20],
     }
     print(json.dumps(report, ensure_ascii=True, indent=2))
     return 0

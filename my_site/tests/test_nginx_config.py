@@ -1,15 +1,15 @@
-from pathlib import Path
 import shutil
 import subprocess
+from pathlib import Path
 
 from django.test import SimpleTestCase
-
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 
 class NginxConfigFileTests(SimpleTestCase):
     databases = "__all__"
+
     def setUp(self):
         self.nginx_path = BASE_DIR / "nginx.conf"
         self.nginx_text = self.nginx_path.read_text(encoding="utf-8")
@@ -46,7 +46,10 @@ def test_root_path_is_not_overridden_by_static_portal_page(self):
     def test_proxy_headers_are_forwarded(self):
         self.assertIn("proxy_set_header Host $host;", self.nginx_text)
         self.assertIn("proxy_set_header X-Real-IP $remote_addr;", self.nginx_text)
-        self.assertIn("proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;", self.nginx_text)
+        self.assertIn(
+            "proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;",
+            self.nginx_text,
+        )
         self.assertIn("proxy_set_header X-Forwarded-Proto $scheme;", self.nginx_text)
 
     def test_nginx_config_syntax_when_nginx_is_available(self):
