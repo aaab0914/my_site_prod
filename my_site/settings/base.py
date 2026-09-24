@@ -93,7 +93,7 @@ INSTALLED_APPS = [
     "taggit",  # Simple tagging library for Django (used for post tags)
     "markdownx",  # Markdown editing and rendering for blog posts
     "my_site",  # Project package so Celery autodiscover_tasks finds my_site.tasks
-    "django_elasticsearch_dsl",
+    # REMOVED: "django_elasticsearch_dsl"  (replaced by PostgreSQL full-text search)
 ]
 
 # ============================================================================
@@ -137,7 +137,7 @@ MIDDLEWARE = [
     # Custom middleware: Enforces login requirement for protected URLs
     "my_site.middleware.LoginRequiredMiddleware",
     # Custom middleware: Logs user actions and API calls for audit trail
-    "my_site.audit_middleware.AuditLoggingMiddleware",
+    # "my_site.audit_middleware.AuditLoggingMiddleware",
 ]
 
 # ============================================================================
@@ -272,15 +272,25 @@ CELERY_BEAT_SCHEDULE = {
     },
 }
 
-ELASTICSEARCH_DSL_SIGNAL_PROCESSOR = (
-    "my_site.elasticsearch_signals.ResilientCelerySignalProcessor"
-)
+# ============================================================================
+# SEARCH CONFIGURATION (PostgreSQL Full-Text Search)
+# ============================================================================
+# Replaces the previous Elasticsearch-based search.
+# Requires 'django.contrib.postgres' in INSTALLED_APPS and PostgreSQL >= 9.6.
 
-ELASTICSEARCH_DSL = {
-    "default": {
-        "hosts": config("ELASTICSEARCH_URL", default="http://elasticsearch:9200"),
-    },
-}
+# Field weights: A = highest, D = lowest
+SEARCH_TITLE_WEIGHT = config("SEARCH_TITLE_WEIGHT", default="A")
+SEARCH_CONTENT_WEIGHT = config("SEARCH_CONTENT_WEIGHT", default="B")
+SEARCH_TAGS_WEIGHT = config("SEARCH_TAGS_WEIGHT", default="C")
+
+# Minimum rank threshold: results below this are filtered out
+SEARCH_MIN_RANK = config("SEARCH_MIN_RANK", default=0.01, cast=float)
+
+# Pagination size for search results
+SEARCH_PAGE_SIZE = config("SEARCH_PAGE_SIZE", default=20, cast=int)
+
+# Search query type: plain / phrase / raw / websearch
+SEARCH_QUERY_TYPE = config("SEARCH_QUERY_TYPE", default="websearch")
 
 # ============================================================================
 # AUTHENTICATION PASSWORD VALIDATORS
@@ -490,190 +500,3 @@ LOGIN_URL = "/users/login/"
 # DEFAULT_AUTO_FIELD: Default primary key field type for models
 # BigAutoField uses 64-bit integers (vs AutoField's 32-bit) for future scalability
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
-
-# ┌─────────────────────────────────────────────────────────────────────────────────────┐
-# │                              BASE.PY DEPENDENCY & FLOW                              │
-# └─────────────────────────────────────────────────────────────────────────────────────┘
-#
-# ┌─────────────────────────────────────────────────────────────────────────────────────┐
-# │ 1. IMPORTS                                                                          │
-# ├─────────────────────────────────────────────────────────────────────────────────────┤
-# │                                                                                     │
-# │  ┌─────────────┐    ┌─────────────┐    ┌─────────────────────────────────────────┐  │
-# │  │     os      │    │  pathlib    │    │  decouple                               │  │
-# │  │  (env vars) │    │  .Path      │    │  ├── config()  ← reads .env             │  │
-# │  └─────────────┘    └─────────────┘    │  └── Csv()     ← parses CSV strings     │  │
-# │                                         └─────────────────────────────────────────┘  │
-# └─────────────────────────────────────────────────────────────────────────────────────┘
-#                                        │
-#                                        ▼
-# ┌─────────────────────────────────────────────────────────────────────────────────────┐
-# │ 2. BASE_DIR & PATH SETUP                                                           │
-# ├─────────────────────────────────────────────────────────────────────────────────────┤
-# │                                                                                     │
-# │  ┌─────────────────────────────────────────────────────────────────────────────┐    │
-# │  │  BASE_DIR = Path(__file__).resolve().parent.parent.parent                   │    │
-# │  │  (Project root: /var/www/my_site_prod_repo)                                │    │
-# │  └─────────────────────────────────────────────────────────────────────────────┘    │
-# │                                       │                                             │
-# │          ┌────────────────────────────┼────────────────────────────┐               │
-# │          │                            │                            │               │
-# │          ▼                            ▼                            ▼               │
-# │  ┌───────────────┐           ┌───────────────┐           ┌───────────────┐        │
-# │  │ STATIC_ROOT   │           │  MEDIA_ROOT   │           │   LOG_DIR     │        │
-# │  │ BASE_DIR/     │           │  BASE_DIR/    │           │  BASE_DIR/    │        │
-# │  │ staticfiles   │           │  media        │           │  logs         │        │
-# │  └───────────────┘           └───────────────┘           └───────────────┘        │
-# └─────────────────────────────────────────────────────────────────────────────────────┘
-#                                        │
-#                                        ▼
-# ┌─────────────────────────────────────────────────────────────────────────────────────┐
-# │ 3. CORE SETTINGS (from environment variables via decouple)                         │
-# ├─────────────────────────────────────────────────────────────────────────────────────┤
-# │                                                                                     │
-# │  ┌─────────────────────────────────────────────────────────────────────────────┐    │
-# │  │  SECRET_KEY      = config("SECRET_KEY")          [REQUIRED]                 │    │
-# │  │  DEBUG           = config("DEBUG", cast=bool)    [default: False]           │    │
-# │  │  ALLOWED_HOSTS   = config("ALLOWED_HOSTS", cast=Csv())   [comma-separated] │    │
-# │  │  CSRF_TRUSTED_ORIGINS = config("CSRF_TRUSTED_ORIGINS", cast=Csv())          │    │
-# │  └─────────────────────────────────────────────────────────────────────────────┘    │
-# └─────────────────────────────────────────────────────────────────────────────────────┘
-#                                        │
-#                                        ▼
-# ┌─────────────────────────────────────────────────────────────────────────────────────┐
-# │ 4. INSTALLED_APPS                                                                   │
-# ├─────────────────────────────────────────────────────────────────────────────────────┤
-# │                                                                                     │
-# │  ┌─────────────────────────────────────────────────────────────────────────────┐    │
-# │  │  Django Built-in (8):        Third-party (4):      Custom (6):              │    │
-# │  │  ├── admin                   ├── django_extensions  ├── blog.apps.BlogConfig│    │
-# │  │  ├── auth                    ├── rest_framework    ├── images.apps.Images   │    │
-# │  │  ├── contenttypes            ├── django_filters    ├── users.apps.Users     │    │
-# │  │  ├── sessions                ├── rest_framework.   ├── taggit               │    │
-# │  │  ├── messages                   authtoken          ├── markdownx            │    │
-# │  │  ├── staticfiles              └── (API Auth)       └── (Blog Extensions)    │    │
-# │  │  ├── sites                                                                  │    │
-# │  │  ├── sitemaps                                                               │    │
-# │  │  └── postgres                                                               │    │
-# │  └─────────────────────────────────────────────────────────────────────────────┘    │
-# └─────────────────────────────────────────────────────────────────────────────────────┘
-#                                        │
-#                                        ▼
-# ┌─────────────────────────────────────────────────────────────────────────────────────┐
-# │ 5. REST_FRAMEWORK CONFIG                                                           │
-# ├─────────────────────────────────────────────────────────────────────────────────────┤
-# │                                                                                     │
-# │  ┌─────────────────────────────────────────────────────────────────────────────┐    │
-# │  │  DEFAULT_AUTHENTICATION_CLASSES:                                            │    │
-# │  │  ├── TokenAuthentication      ← for API clients (mobile/SPA)               │    │
-# │  │  └── SessionAuthentication    ← for browser API browsing                   │    │
-# │  │                                                                             │    │
-# │  │  DEFAULT_PERMISSION_CLASSES:                                                │    │
-# │  │  └── IsAuthenticatedOrReadOnly  ← read-only for anonymous, write for auth'd│    │
-# │  └─────────────────────────────────────────────────────────────────────────────┘    │
-# └─────────────────────────────────────────────────────────────────────────────────────┘
-#                                        │
-#                                        ▼
-# ┌─────────────────────────────────────────────────────────────────────────────────────┐
-# │ 6. MIDDLEWARE (Ordered: Top → Bottom on Request, Bottom → Top on Response)         │
-# ├─────────────────────────────────────────────────────────────────────────────────────┤
-# │                                                                                     │
-# │  ┌─────────────────────────────────────────────────────────────────────────────┐    │
-# │  │  Request →                                                               → │    │
-# │  │  1. SecurityMiddleware        ← HTTPS, HSTS enforcement                    │    │
-# │  │  2. SessionMiddleware         ← User session management                    │    │
-# │  │  3. CommonMiddleware          ← URL rewriting, broken links                │    │
-# │  │  4. CsrfViewMiddleware        ← CSRF protection for POST forms             │    │
-# │  │  5. AuthenticationMiddleware  ← Associates user with request               │    │
-# │  │  6. MessageMiddleware         ← One-time notification framework            │    │
-# │  │  7. XFrameOptionsMiddleware   ← Clickjacking protection (DENY)             │    │
-# │  │  8. LoginRequiredMiddleware   ← Custom: enforces login for protected URLs  │    │
-# │  │  9. AuditLoggingMiddleware    ← Custom: logs user actions                  │    │
-# │  │                                                                          → │    │
-# │  └─────────────────────────────────────────────────────────────────────────────┘    │
-# └─────────────────────────────────────────────────────────────────────────────────────┘
-#                                        │
-#                                        ▼
-# ┌─────────────────────────────────────────────────────────────────────────────────────┐
-# │ 7. DATABASE CONFIGURATION                                                           │
-# ├─────────────────────────────────────────────────────────────────────────────────────┤
-# │                                                                                     │
-# │  ┌─────────────────────────────────────────────────────────────────────────────┐    │
-# │  │  DATABASES = {                                                              │    │
-# │  │    'default': {                                                             │    │
-# │  │      'ENGINE':   'django.db.backends.postgresql'                            │    │
-# │  │      'NAME':     ← os.environ.get('DB_NAME')                                │    │
-# │  │      'USER':     ← os.environ.get('DB_USER')                                │    │
-# │  │      'PASSWORD': ← os.environ.get('DB_PASSWORD')                            │    │
-# │  │      'HOST':     ← os.environ.get('DB_HOST', 'db' if RUNNING_IN_DOCKER ...) │    │
-# │  │      'PORT':     ← os.environ.get('DB_PORT', '5432')                        │    │
-# │  │    }                                                                        │    │
-# │  │  }                                                                          │    │
-# │  └─────────────────────────────────────────────────────────────────────────────┘    │
-# └─────────────────────────────────────────────────────────────────────────────────────┘
-#                                        │
-#                                        ▼
-# ┌─────────────────────────────────────────────────────────────────────────────────────┐
-# │ 8. SECURITY SETTINGS                                                                │
-# ├─────────────────────────────────────────────────────────────────────────────────────┤
-# │                                                                                     │
-# │  ┌─────────────────────────────────────────────────────────────────────────────┐    │
-# │  │  PASSWORD VALIDATORS:                                                        │    │
-# │  │  ├── UserAttributeSimilarityValidator  (no similarity to username/email)    │    │
-# │  │  ├── MinimumLengthValidator            (minimum length requirement)          │    │
-# │  │  ├── CommonPasswordValidator           (not in top 1000 passwords)          │    │
-# │  │  └── NumericPasswordValidator          (not entirely numeric)               │    │
-# │  └─────────────────────────────────────────────────────────────────────────────┘    │
-# │                                                                                     │
-# │  ┌─────────────────────────────────────────────────────────────────────────────┐    │
-# │  │  SSL / HTTPS SETTINGS:                                                       │    │
-# │  │  ├── SECURE_SSL_REDIRECT          ← redirect HTTP → HTTPS                   │    │
-# │  │  ├── SESSION_COOKIE_SECURE        ← session cookies only over HTTPS         │    │
-# │  │  ├── CSRF_COOKIE_SECURE           ← CSRF cookies only over HTTPS            │    │
-# │  │  ├── SECURE_HSTS_SECONDS          ← HSTS duration (31536000 = 1 year)       │    │
-# │  │  ├── SECURE_HSTS_INCLUDE_SUBDOMAINS ← apply HSTS to subdomains              │    │
-# │  │  └── SECURE_HSTS_PRELOAD          ← opt-in to browser preload list          │    │
-# │  └─────────────────────────────────────────────────────────────────────────────┘    │
-# └─────────────────────────────────────────────────────────────────────────────────────┘
-#                                        │
-#                                        ▼
-# ┌─────────────────────────────────────────────────────────────────────────────────────┐
-# │ 9. LOGGING CONFIGURATION                                                            │
-# ├─────────────────────────────────────────────────────────────────────────────────────┤
-# │                                                                                     │
-# │  ┌─────────────────────────────────────────────────────────────────────────────┐    │
-# │  │  LOG_DIR = BASE_DIR / 'logs'                                                │    │
-# │  │                                                                             │    │
-# │  │  LOGGING = {                                                                │    │
-# │  │    handlers: { 'console': StreamHandler (stdout) }                          │    │
-# │  │    loggers: {                                                               │    │
-# │  │      'django'          → INFO level → console                               │    │
-# │  │      'django.request'  → WARNING level → console                            │    │
-# │  │      'blog'            → INFO level → console                               │    │
-# │  │      'users'           → INFO level → console                               │    │
-# │  │    }                                                                        │    │
-# │  │  }                                                                          │    │
-# │  └─────────────────────────────────────────────────────────────────────────────┘    │
-# └─────────────────────────────────────────────────────────────────────────────────────┘
-#                                        │
-#                                        ▼
-# ┌─────────────────────────────────────────────────────────────────────────────────────┐
-# │ 10. KEY RELATIONSHIPS SUMMARY                                                       │
-# ├─────────────────────────────────────────────────────────────────────────────────────┤
-# │                                                                                     │
-# │  ┌─────────────────────────────────────────────────────────────────────────────┐    │
-# │  │                                                                             │    │
-# │  │  .env file ──────► decouple.config() ──────► SECRET_KEY, DEBUG, etc.       │    │
-# │  │                                                                             │    │
-# │  │  BASE_DIR ──────► STATIC_ROOT ──────► collectstatic destination             │    │
-# │  │  BASE_DIR ──────► MEDIA_ROOT  ──────► user uploads storage                 │    │
-# │  │  BASE_DIR ──────► LOG_DIR     ──────► log file storage                     │    │
-# │  │                                                                             │    │
-# │  │  INSTALLED_APPS ──────► MIDDLEWARE ──────► Request/Response processing     │    │
-# │  │                                                                             │    │
-# │  │  DATABASES ──────► PostgreSQL container (db:5432)                          │    │
-# │  │                                                                             │    │
-# │  │  SECURE_* ──────► Nginx SSL termination ──────► HTTPS enforcement          │    │
-# │  │                                                                             │    │
-# │  └─────────────────────────────────────────────────────────────────────────────┘    │
-# └─────────────────────────────────────────────────────────────────────────────────────┘
