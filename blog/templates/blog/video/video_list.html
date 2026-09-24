@@ -52,7 +52,8 @@
                     </div>
                     <div class="video-frame">
                         <video {% if video.cover_image %}poster="{{ video.get_cover_proxy_url }}" {% endif %}controls
-                               preload="none"
+                               preload="metadata"
+                               playsinline
                                class="video-player">
                             <source src="{{ video.get_video_proxy_url }}">
                             Your browser does not support video playback.
@@ -81,4 +82,17 @@
     {% else %}
         <div class="video-empty">No videos have been uploaded yet.</div>
     {% endif %}
+    <script>
+        // Start buffering only for the video the visitor is about to play.
+        document.querySelectorAll('.video-player').forEach((video) => {
+            const startBuffering = () => {
+                if (video.preload !== 'auto') {
+                    video.preload = 'auto';
+                    video.load();
+                }
+            };
+            video.addEventListener('pointerdown', startBuffering, { once: true });
+            video.addEventListener('touchstart', startBuffering, { once: true, passive: true });
+        });
+    </script>
 {% endblock %}
