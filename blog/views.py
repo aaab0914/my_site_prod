@@ -686,7 +686,7 @@ def video_list(request):
     return response
 
 
-@cache_page(60 * 3)  # Cache for 3 minutes
+@never_cache
 def audio_list(request):
     sort_options = {
         "newest": "Newest",
@@ -714,7 +714,7 @@ def audio_list(request):
         request.GET.get("page")
     )  # Optimized: reduced from 10 to 8
 
-    return render(
+    response = render(
         request,
         "blog/audio/audio_list.html",
         {
@@ -723,6 +723,9 @@ def audio_list(request):
             **sort_context,
         },
     )
+    response["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0, private"
+    response["Pragma"] = "no-cache"
+    return response
 
 
 class PostEditView(LoginRequiredMixin, UpdateView):
