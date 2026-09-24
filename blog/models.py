@@ -2,6 +2,8 @@ import os
 from itertools import count
 
 from django.conf import settings
+from django.contrib.postgres.indexes import GinIndex
+from django.contrib.postgres.search import SearchVector
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.urls import reverse
@@ -49,6 +51,30 @@ class Post(models.Model):
             models.Index(fields=["slug", "publish"]),
             models.Index(fields=["author", "-publish"]),
             models.Index(fields=["status", "-publish"]),
+            # ------------------------------------------------------------
+            # PostgreSQL 全文搜索索引
+            # 对应 views.post_search 里的：
+            #   SearchVector("title", weight="A") + SearchVector("body", weight="B")
+            # ------------------------------------------------------------
+            GinIndex(
+                SearchVector("title", weight="A") + SearchVector("body", weight="B"),
+                name="post_search_vector_gin",
+            ),
+            # ------------------------------------------------------------
+            # pg_trgm 模糊匹配索引
+            # 对应 views.post_search / post_detail 里的 TrigramSimilarity
+            # 需要先启用 pg_trgm 扩展（见迁移 TrigramExtension）
+            # ------------------------------------------------------------
+            GinIndex(
+                fields=["title"],
+                name="post_title_trgm_gin",
+                opclasses=["gin_trgm_ops"],
+            ),
+            GinIndex(
+                fields=["body"],
+                name="post_body_trgm_gin",
+                opclasses=["gin_trgm_ops"],
+            ),
         ]
         constraints = [
             models.UniqueConstraint(

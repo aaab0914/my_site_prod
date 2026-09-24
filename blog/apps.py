@@ -11,10 +11,7 @@ class BlogConfig(AppConfig):
 
     def ready(self):
         try:
-            from . import (
-                documents,  # noqa: F401
-                signals,  # noqa: F401
-            )
+            from . import signals  # noqa: F401
         except ImportError as exc:
             logger.warning("Failed to import blog signals: %s", exc)
         try:
