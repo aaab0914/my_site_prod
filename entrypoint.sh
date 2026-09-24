@@ -32,3 +32,19 @@ exec gosu app gunicorn \
   --access-logfile "/code/logs/gunicorn-access/access.log" \
   --error-logfile "/code/logs/gunicorn-error/error.log" \
   my_site.wsgi:application
+
+# entrypoint.sh 末尾
+echo "Warming up template cache..."
+python3 -c "
+import os, django
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'my_site.settings.prod')
+django.setup()
+from django.test import Client
+c = Client(SERVER_NAME='rgavanp.kdns.fr', HTTP_HOST='rgavanp.kdns.fr', secure=True)
+for path in ['/', '/blog/', '/users/login/', '/users/register/']:
+    try:
+        c.get(path, secure=True)
+    except Exception:
+        pass
+print('Warmup done')
+" || true
