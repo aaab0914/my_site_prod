@@ -1,9 +1,10 @@
 from django.core.cache import cache
+from django.db import connection
 from django.http import HttpResponse
 from django.shortcuts import redirect
 from django.template.response import TemplateResponse
 
-from blog.search import elasticsearch_is_available, get_es_client, search_result_ids
+from blog.search import search_result_ids
 
 SITE_HTML_CACHE_TTL = 60 * 60 * 24 * 30
 
@@ -108,27 +109,39 @@ def operation_success(request):
 
 
 def search_status(request):
-    client = get_es_client()
-    ping = bool(client.ping())
-    index_exists = bool(client.indices.exists(index="posts")) if ping else False
-    document_count = client.count(index="posts").get("count", 0) if index_exists else 0
-    health = (
-        client.cluster.health(index="posts").get("status", "down")
-        if index_exists
-        else "down"
-    )
+    """Report PostgreSQL full-text search status.
+
+    Elasticsearch has been removed; this view now only verifies that the
+    PostgreSQL search backend returns results for a sample query.
+    """
+    from blog.models import Post
+
     sample_query = "python"
     sample_ids, sample_backend = search_result_ids(sample_query)
+
+    total_published = Post.published.count()
+
+    index_names = []
+    with connection.cursor() as cursor:
+        cursor.execute(
+            """
+            SELECT indexname
+            FROM pg_indexes
+            WHERE tablename = 'blog_post'
+              AND indexname LIKE 'post_%_gin'
+            ORDER BY indexname;
+            """
+        )
+        index_names = [row[0] for row in cursor.fetchall()]
+
     context = {
-        "ping": ping,
-        "available": elasticsearch_is_available(force=True),
-        "index_exists": index_exists,
-        "document_count": document_count,
-        "health": health,
+        "backend": "postgresql",
+        "total_published": total_published,
         "sample_query": sample_query,
         "sample_backend": sample_backend,
         "sample_ids": sample_ids[:20],
         "sample_count": len(sample_ids),
+        "index_names": index_names,
     }
     return render_public_cached_template(
         request, "view:search_status", "search_status.html", context, timeout=120

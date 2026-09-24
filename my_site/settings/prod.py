@@ -81,6 +81,13 @@ LOGGING["handlers"]["celery_file"] = {
     "filename_prefix": "celery",
     "formatter": "verbose",
 }
+
+LOGGING["loggers"]["django.db.backends"] = {
+    "handlers": ["console"],
+    "level": "DEBUG",
+    "propagate": False,
+}
+
 LOGGING["loggers"]["django"]["handlers"] = ["console", "file", "error_file"]
 LOGGING["loggers"]["django.request"]["handlers"] = ["console", "error_file"]
 LOGGING["loggers"]["blog"]["handlers"] = ["console", "file", "error_file"]
@@ -97,6 +104,17 @@ LOGGING["loggers"]["celery.redirected"] = {
     "propagate": False,
 }
 
+# ============================================================================
+# SEARCH OVERRIDES (Production)
+# ============================================================================
+# PostgreSQL full-text search tuning for production.
+
+# Higher threshold in production to reduce low-relevance results
+SEARCH_MIN_RANK = config("SEARCH_MIN_RANK", default=0.05, cast=float)
+
+# Pagination size
+SEARCH_PAGE_SIZE = config("SEARCH_PAGE_SIZE", default=20, cast=int)
+
 if TESTING:
     CACHES = {
         "default": {
@@ -107,4 +125,16 @@ if TESTING:
 
 MIDDLEWARE = [
     mw for mw in MIDDLEWARE if mw != "my_site.media_sync_middleware.MediaSyncMiddleware"
+]
+
+# ============================================================================
+# PASSWORD HASHING (use Argon2 for speed + security)
+# ============================================================================
+
+PASSWORD_HASHERS = [
+    "django.contrib.auth.hashers.Argon2PasswordHasher",
+    "django.contrib.auth.hashers.PBKDF2PasswordHasher",
+    "django.contrib.auth.hashers.PBKDF2SHA1PasswordHasher",
+    "django.contrib.auth.hashers.BCryptSHA256PasswordHasher",
+    "django.contrib.auth.hashers.ScryptPasswordHasher",
 ]
