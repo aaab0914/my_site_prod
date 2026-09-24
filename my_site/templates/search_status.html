@@ -73,7 +73,7 @@
         <main class="shell">
             <section class="hero">
                 <h1>Search Status</h1>
-                <p>Review Elasticsearch health, indexed document counts, and the current search sample without opening the server console.</p>
+                <p>Review PostgreSQL full-text search backend, GIN indexes, and the current search sample without opening the server console.</p>
             </section>
             <section class="content">
                 <div class="actions">
@@ -84,32 +84,50 @@
                 </div>
                 <div class="grid">
                     <article class="card">
-                        <h2>Cluster</h2>
+                        <h2>Backend</h2>
                         <div class="meta">
-                            <div class="row"><span class="label">Ping</span><span class="value {% if ping %}ok{% else %}warn{% endif %}">{{ ping }}</span></div>
-                            <div class="row"><span class="label">Available Helper</span><span class="value {% if available %}ok{% else %}warn{% endif %}">{{ available }}</span></div>
-                            <div class="row"><span class="label">Index Exists</span><span class="value {% if index_exists %}ok{% else %}warn{% endif %}">{{ index_exists }}</span></div>
-                            <div class="row"><span class="label">Health</span><span class="value {% if health == 'green' or health == 'yellow' %}ok{% else %}warn{% endif %}">{{ health }}</span></div>
-                            <div class="row"><span class="label">Documents</span><span class="value">{{ document_count }}</span></div>
+                            <div class="row"><span class="label">Backend</span><span class="value ok">{{ backend }}</span></div>
+                            <div class="row"><span class="label">Published Posts</span><span class="value">{{ total_published }}</span></div>
                         </div>
                     </article>
                     <article class="card">
-                        <h2>Sample Query</h2>
+                        <h2>GIN Indexes</h2>
+                        {% if index_names %}
+                        <ul class="meta">
+                            {% for name in index_names %}
+                            <li>{{ name }}</li>
+                            {% endfor %}
+                        </ul>
+                        {% else %}
                         <div class="meta">
-                            <div class="row"><span class="label">Query</span><span class="value">{{ sample_query }}</span></div>
-                            <div class="row"><span class="label">Backend</span><span class="value">{{ sample_backend }}</span></div>
-                            <div class="row"><span class="label">Results</span><span class="value">{{ sample_count }}</span></div>
+                            <div class="row"><span class="label">Status</span><span class="value warn">No GIN indexes found. Run migrations.</span></div>
                         </div>
-                        <pre class="code">{{ sample_ids }}</pre>
+                        {% endif %}
                     </article>
                 </div>
                 <article class="card">
+                    <h2>Sample Query</h2>
+                    <div class="meta">
+                        <div class="row"><span class="label">Query</span><span class="value">{{ sample_query }}</span></div>
+                        <div class="row"><span class="label">Backend</span><span class="value">{{ sample_backend }}</span></div>
+                        <div class="row"><span class="label">Results</span><span class="value">{{ sample_count }}</span></div>
+                    </div>
+                    <pre class="code">{{ sample_ids }}</pre>
+                </article>
+                <article class="card">
                     <h2>Server Control</h2>
                     <pre class="code">cd /var/www/my_site_prod_repo_new
-./scripts/search_control.sh status
-./scripts/search_control.sh rebuild
-./scripts/search_control.sh sample --query python
-./scripts/search_control.sh sync-post --post-id 40</pre>
+
+# 应用迁移（创建 GIN 索引）
+docker exec -it my_site_prod_repo_new-web-1 python3 manage.py migrate
+
+# 启用 pg_trgm 扩展（如需模糊匹配）
+docker exec -it my_site_prod_repo_new-db-1 \
+  sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "CREATE EXTENSION IF NOT EXISTS pg_trgm;"'
+
+# 查看索引
+docker exec -it my_site_prod_repo_new-db-1 \
+  sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "\di blog_post*"'</pre>
                 </article>
             </section>
         </main>
