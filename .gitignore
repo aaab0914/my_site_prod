@@ -87,3 +87,4 @@ celerybeat-schedule.local-backup
 server_enable_root_index.py
 *.bak_no_media_*
 *.bak_opt_*
+*.old
