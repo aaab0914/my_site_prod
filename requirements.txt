@@ -78,3 +78,4 @@ vine==5.1.0
 wcwidth==0.7.0
 webencodings==0.6.1
 argon2-cffi>=23.1.0
+better_profanity==0.7.0

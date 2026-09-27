@@ -2,15 +2,23 @@ name: Deploy Production
 
 on:
   workflow_dispatch:
+    inputs:
+      confirm:
+        description: "Type 'deploy' to confirm production deploy"
+        required: true
+        default: ""
 
 jobs:
   deploy:
+    if: github.event.inputs.confirm == 'deploy'
     runs-on: ubuntu-latest
     environment: production
 
     steps:
       - name: Check out code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # 需要 git 历史做 rollback
 
       - name: Set up SSH agent
         uses: webfactory/ssh-agent@v0.9.0
@@ -21,6 +29,14 @@ jobs:
         run: |
           mkdir -p ~/.ssh
           ssh-keyscan -H "${{ secrets.PROD_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Record current deployed version
+        id: prev_version
+        run: |
+          PREV=$(ssh "${{ secrets.PROD_USER }}@${{ secrets.PROD_HOST }}" \
+            "cat '${{ secrets.PROD_PATH }}/.deployed_version' 2>/dev/null || echo 'none'")
+          echo "prev=$PREV" >> $GITHUB_OUTPUT
+          echo "Previous version: $PREV"
 
       - name: Sync repository to server
         run: |
@@ -33,6 +49,7 @@ jobs:
             --exclude 'venv' \
             --exclude '__pycache__' \
             --exclude '.pytest_cache' \
+            --exclude '.ruff_cache' \
             --exclude 'media' \
             --exclude 'staticfiles' \
             --exclude 'logs' \
@@ -41,6 +58,60 @@ jobs:
             ./ "${{ secrets.PROD_USER }}@${{ secrets.PROD_HOST }}:${{ secrets.PROD_PATH }}/"
 
       - name: Run production deploy script
+        id: deploy
         run: |
           ssh "${{ secrets.PROD_USER }}@${{ secrets.PROD_HOST }}" \
             "cd '${{ secrets.PROD_PATH }}' && bash ./deploy-prod.sh"
+
+      - name: Clear template cache
+        run: |
+          ssh "${{ secrets.PROD_USER }}@${{ secrets.PROD_HOST }}" \
+            "docker exec my_site_prod_repo_new-web-1 python manage.py clear_template_cache || true"
+
+      - name: Purge Cloudflare cache
+        run: |
+          curl -sS -X POST "https://api.cloudflare.com/client/v4/zones/${{ secrets.CF_ZONE_ID }}/purge_cache" \
+            -H "Authorization: Bearer ${{ secrets.CF_API_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            --data '{"purge_everything":true}'
+
+      - name: Verify deployment
+        run: |
+          for i in {1..12}; do
+            if curl -sf "https://rgavanp.kdns.fr/blog/" -o /dev/null; then
+              echo "✅ Deployment verified"
+              exit 0
+            fi
+            echo "Waiting... attempt $i/12"
+            sleep 5
+          done
+          echo "❌ Deployment verification failed"
+          exit 1
+
+      - name: Record new deployed version
+        if: success()
+        run: |
+          ssh "${{ secrets.PROD_USER }}@${{ secrets.PROD_HOST }}" \
+            "cd '${{ secrets.PROD_PATH }}' && echo '${{ github.sha }}' > .deployed_version"
+
+      - name: Rollback on failure
+        if: failure() && steps.prev_version.outputs.prev != 'none'
+        run: |
+          echo "⚠️ Deployment failed, rolling back to ${{ steps.prev_version.outputs.prev }}"
+          ssh "${{ secrets.PROD_USER }}@${{ secrets.PROD_HOST }}" \
+            "cd '${{ secrets.PROD_PATH }}' && \
+             git fetch --all && \
+             git checkout ${{ steps.prev_version.outputs.prev }} && \
+             bash ./deploy-prod.sh"
+
+      - name: Notify success
+        if: success()
+        run: |
+          echo "✅ Production deployment succeeded"
+          # 可选：加 Slack / Discord webhook
+
+      - name: Notify failure
+        if: failure()
+        run: |
+          echo "❌ Production deployment failed"
+          # 可选：加 Slack / Discord webhook

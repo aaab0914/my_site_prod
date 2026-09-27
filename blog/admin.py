@@ -1,3 +1,4 @@
+from contextlib import suppress
 from datetime import datetime
 from pathlib import Path
 
@@ -45,84 +46,11 @@ def _human_size(size: int) -> str:
     return f"{size} B"
 
 
-def _template_inventory():
-    base_dir = Path(settings.BASE_DIR)
-    roots = [
-        base_dir / "blog" / "templates",
-        base_dir / "images" / "templates",
-        base_dir / "my_site" / "templates",
-    ]
-    frontend_map = {
-        "blog/templates/blog/audio/audio_list.html": "/blog/audio/list/",
-        "blog/templates/blog/audio/audio_post_delete.html": "/blog/audio/list/",
-        "blog/templates/blog/audio/audio_post_delete_success.html": "/blog/audio/delete/success/",
-        "blog/templates/blog/audio/audio_post_edit.html": "/blog/audio/list/",
-        "blog/templates/blog/audio/upload_audio.html": "/blog/audio/upload/",
-        "blog/templates/blog/base.html": "/blog/",
-        "blog/templates/blog/comment/add_comment.html": "/blog/",
-        "blog/templates/blog/comment/add_comment_success.html": "/blog/",
-        "blog/templates/blog/comment/add_picture_to_comment.html": "/blog/",
-        "blog/templates/blog/comment/delete_comment.html": "/blog/",
-        "blog/templates/blog/comment/delete_comment_success.html": "/blog/",
-        "blog/templates/blog/comment/edit_comment.html": "/blog/",
-        "blog/templates/blog/hero_base.html": "/blog/",
-        "blog/templates/blog/pagination.html": "/blog/",
-        "blog/templates/blog/post/all_posts_list.html": "/blog/",
-        "blog/templates/blog/post/create_post.html": "/blog/create/",
-        "blog/templates/blog/post/create_post_success.html": "/blog/create/",
-        "blog/templates/blog/post/latest_posts.html": "/blog/",
-        "blog/templates/blog/post/post_delete.html": "/blog/",
-        "blog/templates/blog/post/post_delete_success.html": "/blog/post_delete_success/",
-        "blog/templates/blog/post/post_detail.html": "/blog/",
-        "blog/templates/blog/post/post_edit.html": "/blog/",
-        "blog/templates/blog/post/search_post.html": "/blog/search/",
-        "blog/templates/blog/video/upload_video.html": "/blog/video/upload/",
-        "blog/templates/blog/video/video_delete.html": "/blog/video/list/",
-        "blog/templates/blog/video/video_detail.html": "/blog/video/list/",
-        "blog/templates/blog/video/video_edit.html": "/blog/video/list/",
-        "blog/templates/blog/video/video_list.html": "/blog/video/list/",
-        "images/templates/images/album_delete_confirm.html": "/blog/album/",
-        "images/templates/images/album_detail.html": "/blog/album/",
-        "images/templates/images/album_edit.html": "/blog/album/",
-        "images/templates/images/album_list.html": "/blog/album/",
-        "images/templates/images/album_upload.html": "/blog/album/upload/",
-        "images/templates/images/gallery_delete_confirm.html": "/blog/gallery/",
-        "images/templates/images/gallery_detail.html": "/blog/gallery/",
-        "images/templates/images/gallery_edit.html": "/blog/gallery/",
-        "images/templates/images/gallery_list.html": "/blog/gallery/",
-        "images/templates/images/gallery_upload.html": "/blog/gallery/upload/",
-        "my_site/templates/index.html": "/",
-        "blog/templates/admin/base_site.html": "/secure-console-7f9a2c-admin/",
-        "blog/templates/admin/blog/post/change_form.html": "/secure-console-7f9a2c-admin/blog/post/",
-        "blog/templates/admin/custom_index.html": "/secure-console-7f9a2c-admin/",
-        "blog/templates/admin/index.html": "/secure-console-7f9a2c-admin/",
-        "blog/templates/admin/system_status.html": "/secure-console-7f9a2c-admin/system-status/",
-    }
-    items = []
-    index = 1
-    for root in roots:
-        if not root.exists():
-            continue
-        for path in sorted(root.rglob("*.html")):
-            rel = path.relative_to(base_dir)
-            items.append(
-                {
-                    "id": index,
-                    "name": path.name,
-                    "relative_path": rel.as_posix(),
-                    "frontend_path": frontend_map.get(rel.as_posix(), ""),
-                }
-            )
-            index += 1
-    return items
-
-
 def _resolve_log_path(logs_dir: Path, family: str, date_string: str) -> Path:
     structured = logs_dir / family / date_string[:7] / f"{family}-{date_string}.log"
     if structured.exists():
         return structured
-    legacy = logs_dir / date_string[:7] / f"{family}-{date_string}.log"
-    return structured if structured.exists() else legacy
+    return logs_dir / date_string[:7] / f"{family}-{date_string}.log"
 
 
 def admin_system_status_view(request):
@@ -131,6 +59,7 @@ def admin_system_status_view(request):
     backups_dir = base_dir / "backups" / "db"
     today = now()
     date_string = today.strftime("%Y-%m-%d")
+
     log_prefixes = [
         ("django", "Django"),
         ("django-error", "Django Error"),
@@ -140,6 +69,7 @@ def admin_system_status_view(request):
         ("nginx-access", "Nginx Access"),
         ("nginx-error", "Nginx Error"),
     ]
+
     log_statuses = []
     for family, label in log_prefixes:
         path = _resolve_log_path(logs_dir, family, date_string)
@@ -156,6 +86,7 @@ def admin_system_status_view(request):
                 "tail": _tail_lines(path, limit=8),
             }
         )
+
     backup_files = (
         sorted(backups_dir.glob("*.sql"), key=lambda p: p.stat().st_mtime, reverse=True)
         if backups_dir.exists()
@@ -169,12 +100,14 @@ def admin_system_status_view(request):
         if valid_backup_files
         else (backup_files[0] if backup_files else None)
     )
+
     backup_log_path = logs_dir / "backup.log"
     backup_log_tail = _tail_lines(backup_log_path, limit=20)
     latest_backup_success = bool(
         latest_backup and latest_backup.exists() and latest_backup.stat().st_size > 0
     )
     latest_backup_message = "No backup record found."
+
     effective_events = []
     for line in backup_log_tail:
         if (
@@ -185,6 +118,7 @@ def admin_system_status_view(request):
             or "Backup failed" in line
         ):
             effective_events.append(line)
+
     if effective_events:
         latest_backup_message = effective_events[-1]
         latest_backup_success = (
@@ -194,6 +128,7 @@ def admin_system_status_view(request):
         )
     elif latest_backup_success and latest_backup:
         latest_backup_message = f"Latest backup file looks valid: {latest_backup.name}"
+
     backup_file_rows = [
         {
             "name": item.name,
@@ -203,9 +138,11 @@ def admin_system_status_view(request):
         }
         for item in backup_files[:10]
     ]
+
     recent_audit_count = AuditLog.objects.filter(
         timestamp__gte=today.replace(minute=0, second=0, microsecond=0)
     ).count()
+
     context = {
         **admin.site.each_context(request),
         "title": "System Status",
@@ -224,7 +161,10 @@ def admin_system_status_view(request):
         "latest_backup_message": latest_backup_message,
         "backup_count": len(backup_files),
         "backup_files": backup_file_rows,
-        "audit_rate_limit_summary": "Repeated safe requests are deduplicated to at most one audit row per hour per IP/path/method/status.",
+        "audit_rate_limit_summary": (
+            "Repeated safe requests are deduplicated to at most one audit row "
+            "per hour per IP/path/method/status."
+        ),
         "recent_audit_count": recent_audit_count,
     }
     return TemplateResponse(request, "admin/system_status.html", context)
@@ -247,20 +187,16 @@ def _custom_admin_get_urls():
 admin.site.get_urls = _custom_admin_get_urls
 admin.site.index_template = "admin/custom_index.html"
 
-try:
+with suppress(admin.sites.NotRegistered):
     admin.site.unregister(Tag)
-except admin.sites.NotRegistered:
-    pass
 
-try:
+with suppress(admin.sites.NotRegistered):
     admin.site.unregister(Site)
-except admin.sites.NotRegistered:
-    pass
 
 
 class PostAdminForm(forms.ModelForm):
     body = forms.CharField(
-        max_length=500,
+        max_length=5000,
         widget=forms.Textarea(
             attrs={
                 "rows": 16,
@@ -319,7 +255,8 @@ class AudioPostAdmin(admin.ModelAdmin):
         if not obj.audio_file:
             return "-"
         return format_html(
-            '<audio controls preload="none" style="width:220px;"><source src="{}"></audio>',
+            '<audio controls preload="none" style="width:220px;">'
+            '<source src="{}"></audio>',
             obj.get_audio_proxy_url(),
         )
 
@@ -328,7 +265,8 @@ class AudioPostAdmin(admin.ModelAdmin):
         if not obj.cover_image:
             return "-"
         return format_html(
-            '<img src="{}" alt="cover" style="width:56px;height:56px;object-fit:cover;border-radius:6px;">',
+            '<img src="{}" alt="cover" '
+            'style="width:56px;height:56px;object-fit:cover;border-radius:6px;">',
             obj.get_cover_image_proxy_url(),
         )
 
@@ -347,6 +285,7 @@ class VideoPostAdmin(admin.ModelAdmin):
         if not obj.video_file:
             return "-"
         return format_html(
-            '<video controls preload="none" style="width:180px;max-height:110px;"><source src="{}"></video>',
+            '<video controls preload="none" style="width:180px;max-height:110px;">'
+            '<source src="{}"></video>',
             obj.get_video_proxy_url(),
         )

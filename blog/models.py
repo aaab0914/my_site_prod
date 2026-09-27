@@ -1,4 +1,6 @@
 import os
+import re
+
 from itertools import count
 
 from django.conf import settings
@@ -9,12 +11,71 @@ from django.db import models
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.text import slugify
+from django.core.validators import (
+    # MinLengthValidator,
+    RegexValidator,
+    MaxLengthValidator,
+)
+
 from markdownx.models import MarkdownxField
 from taggit.managers import TaggableManager
+from better_profanity import profanity
 
 from my_site.markdown_utils import render_markdown
 from my_site.media_naming import dated_media_upload_to, media_display_name
 
+def validate_no_profanity(value):
+    """Validator to check for profanity."""
+    if profanity.contains_profanity(value):
+        raise ValidationError(
+            "Content contains inappropriate or offensive language.",
+            code="profanity",
+        )
+
+
+def validate_stripped_length(value):
+    if len(value.strip()) < 5:
+        raise ValidationError(
+            "Content must be at least 5 characters after trimming.",
+            code="min_length",
+        )
+
+
+def validate_meaningful_content(value):
+    """Reject content that is only numbers or only symbols."""
+    stripped = value.strip()
+    if not stripped:
+        return
+    if stripped.isdigit():
+        raise ValidationError("Content cannot be only numbers.", code="only_numbers")
+    if not re.search(r"[a-zA-Z\u4e00-\u9fff]", stripped):
+        raise ValidationError("Content must contain at least one letter.", code="no_letters")
+
+text_validator = RegexValidator(
+    regex=r"^[a-zA-Z0-9\u4e00-\u9fff\s\.\,\!\?\-\'\"\(\)\:\/\n\r]+$",
+    message="Only letters (including Chinese), numbers, spaces, and basic punctuation are allowed.",
+)
+
+def validate_no_excessive_whitespace(value):
+    if re.search(r'\s{5,}', value):
+        raise ValidationError(
+            'Content contains excessive whitespace.',
+            code='excessive_whitespace',
+        )
+
+def validate_no_repeated_chars(value):
+    if re.search(r'(.)\1{4,}', value):
+        raise ValidationError(
+            'Content contains too many repeated characters.',
+            code='repeated_chars',
+        )
+
+def validate_no_html(value):
+    if re.search(r'<[^>]+>', value):
+        raise ValidationError(
+            'HTML tags are not allowed.',
+            code='html_not_allowed',
+        )
 
 class PublishedManager(models.Manager):
     def get_queryset(self):
@@ -26,7 +87,15 @@ class Post(models.Model):
         DRAFT = "DF", "Draft"
         PUBLISHED = "PB", "Published"
 
-    title = models.CharField(max_length=50)
+    title = models.CharField(
+        max_length=200,
+        validators=[
+            validate_stripped_length,
+            validate_meaningful_content,
+            text_validator,
+            validate_no_profanity,
+        ]
+        )
     cover_image = models.ImageField(
         upload_to=dated_media_upload_to("posts"), blank=True, null=True
     )
@@ -34,7 +103,15 @@ class Post(models.Model):
     author = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="blog_posts"
     )
-    body = MarkdownxField(max_length=50000)
+    body = MarkdownxField(
+        max_length=5000,
+        validators=[
+            validate_stripped_length,
+            validate_meaningful_content,
+            text_validator,
+            validate_no_profanity,
+    ]
+)
     publish = models.DateTimeField(default=timezone.now)
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
@@ -51,20 +128,11 @@ class Post(models.Model):
             models.Index(fields=["slug", "publish"]),
             models.Index(fields=["author", "-publish"]),
             models.Index(fields=["status", "-publish"]),
-            # ------------------------------------------------------------
-            # PostgreSQL 全文搜索索引
-            # 对应 views.post_search 里的：
-            #   SearchVector("title", weight="A") + SearchVector("body", weight="B")
-            # ------------------------------------------------------------
+
             GinIndex(
                 SearchVector("title", weight="A") + SearchVector("body", weight="B"),
                 name="post_search_vector_gin",
             ),
-            # ------------------------------------------------------------
-            # pg_trgm 模糊匹配索引
-            # 对应 views.post_search / post_detail 里的 TrigramSimilarity
-            # 需要先启用 pg_trgm 扩展（见迁移 TrigramExtension）
-            # ------------------------------------------------------------
             GinIndex(
                 fields=["title"],
                 name="post_title_trgm_gin",
@@ -112,7 +180,7 @@ class Post(models.Model):
 
     def clean(self):
         if self.pk and self.status == self.Status.PUBLISHED and not self.tags.exists():
-            raise ValidationError("发布的文章必须包含至少一个标签(tag)。")
+            raise ValidationError("The published article must contain at least one {tag) 。")
 
     def save(self, *args, **kwargs):
         if not self.slug:
@@ -135,7 +203,17 @@ class Comment(models.Model):
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="blog_comments"
     )
     email = models.EmailField()
-    body = models.CharField(max_length=500)
+    body = models.CharField(
+        max_length=5000,
+        validators=[
+            # MinLengthValidator(5, message='Title must be at least 5 characters long.'),
+            MaxLengthValidator(5000, message='Body must no exceed 5000 characters.'),
+            validate_stripped_length,
+            validate_meaningful_content,
+            text_validator,
+            validate_no_profanity
+        ]
+        )
     image = models.ImageField(
         upload_to=dated_media_upload_to("comments"), blank=True, null=True
     )
@@ -174,7 +252,18 @@ class AudioPost(models.Model):
     cover_image = models.ImageField(
         upload_to=dated_media_upload_to("audio/covers"), blank=True, null=True
     )
-    description = models.TextField(max_length=500, blank=True)
+    description = models.TextField(
+        max_length=500, 
+        blank=True,
+        validators=[
+            # MinLengthValidator(5, message='Title must be at least 5 characters long.'),
+            MaxLengthValidator(500, message='Description must no exceed 500 characters.'),
+            validate_stripped_length,
+            validate_meaningful_content,
+            text_validator,
+            validate_no_profanity
+        ]
+        )
     uploaded_by = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="audio_posts"
     )
@@ -235,8 +324,30 @@ class VideoPost(models.Model):
     cover_image = models.ImageField(
         upload_to=dated_media_upload_to("videos"), blank=True, null=True
     )
-    title = models.CharField(max_length=50, blank=True)
-    description = models.TextField(max_length=500, blank=True)
+    title = models.CharField(
+        max_length=200,
+        blank=True,
+        validators=[
+            # MinLengthValidator(5, message='Title must be at least 5 characters long.'),
+            MaxLengthValidator(200, message='Title must no exceed 200 characters.'),
+            validate_stripped_length,
+            validate_meaningful_content,
+            text_validator,
+            validate_no_profanity
+        ]
+        )
+    description = models.TextField(
+        max_length=500, 
+        blank=True,
+        validators=[
+            # MinLengthValidator(5, message='Title must be at least 5 characters long.'),
+            MaxLengthValidator(500, message='Description must no exceed 500 characters.'),
+            validate_stripped_length,
+            validate_meaningful_content,
+            text_validator,
+            validate_no_profanity
+        ]
+        )
     uploaded_by = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="video_posts"
     )
@@ -308,7 +419,16 @@ class Note(models.Model):
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="notes"
     )
-    title = models.CharField(max_length=50)
+    title = models.CharField(
+        # max_length=200,
+        # validators=[
+        #     MaxLengthValidator(200, message='Title must no exceed 500 characters.'),
+        #     validate_stripped_length,
+        #     validate_meaningful_content,
+        #     text_validator,
+        #     validate_no_profanity
+        # ]
+    )
     content = models.TextField()
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)

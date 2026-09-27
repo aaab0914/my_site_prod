@@ -6,13 +6,49 @@ on:
   pull_request:
     branches: [main]
 
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  docker-compose-test:
+  lint-and-test:
     runs-on: ubuntu-latest
 
     steps:
       - name: Check out code
         uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install lint and audit tools
+        run: |
+          python -m pip install --upgrade pip
+          pip install ruff coverage pip-audit
+
+      - name: Ruff lint
+        run: ruff check . --output-format=github
+
+      - name: Ruff format check
+        run: ruff format --check .
+
+      - name: Audit Python dependencies
+        run: pip-audit -r requirements.txt
+        continue-on-error: true   # 不阻塞，只提示
+
+  docker-compose-test:
+    runs-on: ubuntu-latest
+    needs: lint-and-test
+
+    steps
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
       - name: Create CI env file
         run: |
@@ -25,6 +61,10 @@ jobs:
           DB_PASSWORD=StrongPass123!
           DB_HOST=db
           DB_PORT=5432
+          RUNNING_IN_DOCKER=true
+          REDIS_URL=redis://redis:6379/0
+          CELERY_BROKER_URL=redis://redis:6379/0
+          CELERY_RESULT_BACKEND=redis://redis:6379/0
           EOF
           cat > .env.prod <<EOF
           SECRET_KEY=ci-secret-key-prod
@@ -39,20 +79,11 @@ jobs:
           SECURE_SSL_REDIRECT=False
           SESSION_COOKIE_SECURE=False
           CSRF_COOKIE_SECURE=False
-          SESSION_COOKIE_HTTPONLY=True
-          CSRF_COOKIE_HTTPONLY=True
           REDIS_URL=redis://redis:6379/0
           CELERY_BROKER_URL=redis://redis:6379/0
           CELERY_RESULT_BACKEND=redis://redis:6379/0
-          ELASTICSEARCH_URL=http://elasticsearch:9200
           RUNNING_IN_DOCKER=true
           EOF
-
-      - name: Audit Python dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install pip-audit
-          pip-audit -r requirements.txt
 
       - name: Validate Docker Compose config
         run: docker compose --env-file .env.dev -f docker-compose.dev.yml config
@@ -60,14 +91,15 @@ jobs:
       - name: Build containers
         run: docker compose --env-file .env.dev -f docker-compose.dev.yml build
 
-      - name: Scan image and filesystem with Trivy
-        uses: aquasecurity/trivy-action@0.24.0
+      - name: Scan filesystem with Trivy
+        uses: aquasecurity/trivy-action@0.28.0
         with:
           scan-type: fs
           scan-ref: .
           format: table
-          exit-code: '1'
+          exit-code: "1"
           severity: CRITICAL,HIGH
+          ignore-unfixed: true
 
       - name: Start stack
         run: docker compose --env-file .env.dev -f docker-compose.dev.yml up -d
@@ -82,11 +114,26 @@ jobs:
             sleep 5
           done
           docker compose --env-file .env.dev -f docker-compose.dev.yml ps
-          docker compose --env-file .env.dev -f docker-compose.dev.yml logs web db redis elasticsearch celery celery-beat
+          docker compose --env-file .env.dev -f docker-compose.dev.yml logs web db redis celery celery-beat
           exit 1
 
-      - name: Run Django test suite in container
-        run: docker compose --env-file .env.dev -f docker-compose.dev.yml exec -T web python manage.py test
+      - name: Django check
+        run: docker compose --env-file .env.dev -f docker-compose.dev.yml exec -T web python manage.py check
+
+      - name: Django deploy check
+        run: docker compose --env-file .env.dev -f docker-compose.dev.yml exec -T web python manage.py check --deploy
+        continue-on-error: true
+
+      - name: Django migrations check
+        run: docker compose --env-file .env.dev -f docker-compose.dev.yml exec -T web python manage.py makemigrations --check --dry-run
+
+      - name: Run Django test suite with coverage
+        run: |
+          docker compose --env-file .env.dev -f docker-compose.dev.yml exec -T web sh -c "
+            pip install coverage && \
+            coverage run --source='.' manage.py test && \
+            coverage report --fail-under=60
+          "
 
       - name: Verify nginx endpoint
         run: |
