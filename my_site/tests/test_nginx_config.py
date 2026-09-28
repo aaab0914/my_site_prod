@@ -40,8 +40,8 @@ class NginxConfigFileTests(SimpleTestCase):
 
 
     def test_root_path_is_not_overridden_by_static_portal_page(self):
-    self.assertNotIn("location = / {", self.nginx_text)
-    self.assertNotIn("try_files /port-portal.html =404;", self.nginx_text)
+        self.assertNotIn("location = / {", self.nginx_text)
+        self.assertNotIn("try_files /port-portal.html =404;", self.nginx_text)
 
     def test_proxy_headers_are_forwarded(self):
         self.assertIn("proxy_set_header Host $host;", self.nginx_text)
