@@ -68,7 +68,7 @@ services:
       elasticsearch:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "python -c \"import urllib.request; req = urllib.request.Request('http://127.0.0.1:8000/health/', headers={'X-Forwarded-Proto': 'https', 'Host': 'localhost'}); r = urllib.request.urlopen(req, timeout=10); exit(0 if r.status == 200 else 1)\""]
+      test: ["CMD-SHELL", "python -c \"import urllib.request; req = urllib.request.Request('http://127.0.0.1:8000/users/login/', headers={'X-Forwarded-Proto': 'https', 'Host': 'localhost'}); r = urllib.request.urlopen(req, timeout=10); exit(0 if r.status == 200 else 1)\""]
       interval: 15s
       timeout: 15s
       start_period: 30s

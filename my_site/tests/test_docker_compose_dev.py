@@ -78,7 +78,7 @@ class DevDockerComposeFileTests(SimpleTestCase):
 
     def test_dev_web_service_has_healthcheck(self):
         self.assertIn(
-            "urllib.request.Request('http://127.0.0.1:8000/health/'", self.compose_text
+            "urllib.request.Request('http://127.0.0.1:8000/users/login/'", self.compose_text
         )
         self.assertIn("exit(0 if r.status == 200 else 1)", self.compose_text)
         self.assertIn("'X-Forwarded-Proto': 'https'", self.compose_text)
