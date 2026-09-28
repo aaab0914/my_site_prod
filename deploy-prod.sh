@@ -15,7 +15,7 @@ echo "2. Pulling latest images..."
 docker compose -f docker-compose.prod.yml pull
 
 echo "3. Building and starting core services..."
-docker compose -f docker-compose.prod.yml up -d --build web db redis elasticsearch celery celery-beat
+docker compose -f docker-compose.prod.yml up -d --build web db redis celery celery-beat
 
 echo "4. Running database migrations..."
 docker compose -f docker-compose.prod.yml exec -T web python manage.py migrate --noinput
