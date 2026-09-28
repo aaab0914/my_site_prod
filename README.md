@@ -124,18 +124,12 @@ Core services:
 - `web`
 - `db`
 - `redis`
-- `elasticsearch`
 - `celery`
 - `celery-beat`
 - `nginx`
 
 Operations and observability services:
 - `flower`
-- `prometheus`
-- `grafana`
-- `loki`
-- `promtail`
-- `celery-exporter`
 
 ## Quick Start
 
@@ -183,13 +177,10 @@ Edit `.env.prod` and replace placeholder secrets before startup:
 - `DB_PASSWORD`
 - `ALLOWED_HOSTS`
 - `CSRF_TRUSTED_ORIGINS`
-- `ELASTICSEARCH_URL`
-- `PROMETHEUS_EXTERNAL_URL`
-- `GRAFANA_ROOT_URL`
 
 3. Start the main production services
 ```bash
-docker compose -f docker-compose.prod.yml up -d --build web db redis elasticsearch celery celery-beat nginx
+docker compose -f docker-compose.prod.yml up -d --build web db redis celery celery-beat
 ```
 
 4. Run migrations
@@ -204,7 +195,6 @@ docker compose -f docker-compose.prod.yml exec web python manage.py createsuperu
 
 ### Optional Operations Stack
 ```bash
-docker compose -f docker-compose.prod.yml up -d flower prometheus grafana loki promtail celery-exporter
 ```
 
 ## Useful Commands
@@ -241,9 +231,6 @@ my_site_prod_repo_new/
 |- media/                   # Uploaded files
 |- staticfiles/             # Collected static assets
 |- logs/                    # Runtime logs grouped by service
-|- grafana/                 # Grafana provisioning
-|- loki/                    # Loki configuration
-|- promtail/                # Promtail configuration
 |- backups/                 # Backup files
 |- .env.prod                # Production environment file
 |- docker-compose.prod.yml  # Production stack
