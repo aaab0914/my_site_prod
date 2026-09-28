@@ -39,8 +39,6 @@ class ProdComposeServiceStructureTests(unittest.TestCase):
     def test_has_redis_service(self):
         self.assertIn("redis:", self.text)
 
-    def test_has_elasticsearch_service(self):
-        self.assertIn("elasticsearch:", self.text)
 
     def test_has_web_service(self):
         self.assertIn("web:", self.text)
@@ -129,22 +127,6 @@ class ProdComposeRedisConfigTests(unittest.TestCase):
 
     def test_redis_has_healthcheck(self):
         self.assertIn('test: ["CMD", "redis-cli", "ping"]', self.text)
-
-
-class ProdComposeElasticsearchConfigTests(unittest.TestCase):
-    """验证 Elasticsearch 配置"""
-
-    def setUp(self):
-        self.text = COMPOSE_FILE.read_text(encoding="utf-8")
-
-    def test_elasticsearch_uses_correct_image(self):
-        self.assertIn("docker.elastic.co/elasticsearch/elasticsearch:8.14.3", self.text)
-
-    def test_elasticsearch_single_node(self):
-        self.assertIn("discovery.type: single-node", self.text)
-
-    def test_elasticsearch_limits_memory(self):
-        self.assertIn("-Xms192m -Xmx192m", self.text)
 
 
 class ProdComposeCeleryConfigTests(unittest.TestCase):

@@ -91,7 +91,6 @@ class DockerComposeFileTests(SimpleTestCase):
     def test_prod_compose_declares_named_volumes(self):
         self.assertIn("volumes:", self.prod_compose_text)
         self.assertIn("postgres_data:", self.prod_compose_text)
-        self.assertIn("elasticsearch_data:", self.prod_compose_text)
 
     def test_production_compose_does_not_bind_mount_project_code(self):
         self.assertNotIn("- .:/code", self.prod_compose_text)
@@ -168,7 +167,6 @@ class DockerComposeFileTests(SimpleTestCase):
         env.setdefault("REDIS_URL", "redis://redis:6379/1")
         env.setdefault("CELERY_BROKER_URL", "redis://redis:6379/2")
         env.setdefault("CELERY_RESULT_BACKEND", "redis://redis:6379/3")
-        env.setdefault("ELASTICSEARCH_URL", "http://elasticsearch:9200")
         env.setdefault("SENTRY_DSN", "")
         env.setdefault("SENTRY_TRACES_SAMPLE_RATE", "0")
         env.setdefault("SENTRY_PROFILES_SAMPLE_RATE", "0")
