@@ -28,5 +28,3 @@ sleep 5
 docker compose -f docker-compose.prod.yml ps
 
 echo "=== Deployment complete ==="
-echo "Optional: start monitoring stack with:"
-echo "  docker compose -f docker-compose.prod.yml --profile optional up -d nginx flower prometheus grafana loki promtail celery-exporter"

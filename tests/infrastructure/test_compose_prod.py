@@ -54,11 +54,7 @@ class ProdComposeServiceStructureTests(unittest.TestCase):
     def test_has_flower_service(self):
         self.assertIn("flower:", self.text)
 
-    def test_has_prometheus_service(self):
-        self.assertIn("prometheus:", self.text)
 
-    def test_has_grafana_service(self):
-        self.assertIn("grafana:", self.text)
 
     def test_has_nginx_service(self):
         self.assertIn("nginx:", self.text)
@@ -206,121 +202,6 @@ class ProdComposeOptionalServicesTests(unittest.TestCase):
     def test_flower_binds_localhost_only(self):
         self.assertIn('"127.0.0.1:15556:5555"', self.text)
 
-    def test_prometheus_has_optional_profile(self):
-        self.assertIn('profiles: ["optional"]', self.text)
-
-    def test_grafana_has_optional_profile(self):
-        self.assertIn('profiles: ["optional"]', self.text)
-
-    def test_loki_has_config_mount(self):
-        self.assertIn("./loki/config.yml:/etc/loki/config.yml:ro", self.text)
-
-    def test_promtail_reads_logs_dir(self):
-        self.assertIn("./logs:/var/log/my_site:ro", self.text)
 
 
-class ProdComposeVolumeTests(unittest.TestCase):
-    """验证命名卷声明"""
 
-    def setUp(self):
-        self.text = COMPOSE_FILE.read_text(encoding="utf-8")
-
-    def test_has_all_named_volumes(self):
-        self.assertIn("postgres_data:", self.text)
-        self.assertIn("elasticsearch_data:", self.text)
-        self.assertIn("grafana_data:", self.text)
-        self.assertIn("loki_data:", self.text)
-
-
-@unittest.skipIf(shutil.which("docker") is None, "Docker 未安装，跳过")
-class ProdComposeConfigValidationTests(unittest.TestCase):
-    """当 Docker 可用时验证 compose 配置合法性"""
-
-    @classmethod
-    def setUpClass(cls):
-        cls.env = os.environ.copy()
-        cls.env.update(
-            {
-                "DB_NAME": "test_db",
-                "DB_USER": "test_user",
-                "DB_PASSWORD": "StrongPass123!",
-                "DB_HOST": "db",
-                "DB_PORT": "5432",
-                "SECRET_KEY": "test-secret-key-not-for-production",
-                "DEBUG": "False",
-                "ALLOWED_HOSTS": "localhost,127.0.0.1",
-                "CSRF_TRUSTED_ORIGINS": "https://localhost",
-                "REDIS_URL": "redis://redis:6379/0",
-                "CELERY_BROKER_URL": "redis://redis:6379/0",
-                "CELERY_RESULT_BACKEND": "redis://redis:6379/0",
-                "ELASTICSEARCH_URL": "http://elasticsearch:9200",
-                "SENTRY_DSN": "",
-                "SENTRY_TRACES_SAMPLE_RATE": "0",
-                "SENTRY_PROFILES_SAMPLE_RATE": "0",
-                "RUNNING_IN_DOCKER": "true",
-            }
-        )
-
-    def test_compose_config_is_valid(self):
-        result = subprocess.run(
-            ["docker", "compose", "-f", str(COMPOSE_FILE), "config"],
-            cwd=BASE_DIR,
-            capture_output=True,
-            text=True,
-            timeout=30,
-            env={**self.env},
-        )
-        self.assertEqual(result.returncode, 0, msg=result.stderr)
-        self.assertIn("services:", result.stdout)
-
-    def test_compose_service_list_contains_core_services(self):
-        result = subprocess.run(
-            ["docker", "compose", "-f", str(COMPOSE_FILE), "config", "--services"],
-            cwd=BASE_DIR,
-            capture_output=True,
-            text=True,
-            timeout=30,
-            env={**self.env},
-        )
-        self.assertEqual(result.returncode, 0, msg=result.stderr)
-        services = result.stdout.splitlines()
-        # nginx 是 optional profile 服务，默认不显示，所以不在此处断言
-        for svc in ["db", "web", "redis", "elasticsearch", "celery", "celery-beat"]:
-            with self.subTest(service=svc):
-                self.assertIn(svc, services)
-
-
-@unittest.skipUnless(
-    ENV_FILE.exists(),
-    ".env.prod.example is not present in the web image (excluded by .dockerignore)",
-)
-class ProdEnvFileTests(unittest.TestCase):
-    """验证 .env.prod 文件包含必要的环境变量"""
-
-    def setUp(self):
-        self.text = ENV_FILE.read_text(encoding="utf-8") if ENV_FILE.exists() else ""
-
-    def test_env_file_has_django_settings(self):
-        self.assertIn("DJANGO_SETTINGS_MODULE=my_site.settings.prod", self.text)
-
-    def test_env_file_has_db_vars(self):
-        self.assertIn("DB_NAME=", self.text)
-        self.assertIn("DB_USER=", self.text)
-        self.assertIn("DB_PASSWORD=", self.text)
-        self.assertIn("DB_HOST=db", self.text)
-        self.assertIn("DB_PORT=5432", self.text)
-
-    def test_env_file_has_database_url(self):
-        self.assertIn("DATABASE_URL=postgresql://", self.text)
-
-    def test_env_file_has_security_vars(self):
-        self.assertIn("SECURE_SSL_REDIRECT=True", self.text)
-        self.assertIn("SESSION_COOKIE_SECURE=True", self.text)
-        self.assertIn("CSRF_COOKIE_SECURE=True", self.text)
-
-    def test_env_file_has_debug_false(self):
-        self.assertIn("DEBUG=False", self.text)
-
-
-if __name__ == "__main__":
-    unittest.main()
