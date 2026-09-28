@@ -37,4 +37,6 @@ tzdata==2025.3
 urllib3==2.7.0
 vine==5.1.0
 argon2-cffi>=23.1.0
+bleach==6.1.0
 better_profanity==0.7.0
+prometheus-client==0.23.1
