@@ -46,8 +46,6 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.dev
-      additional_contexts:
-        linux_wheels: G:/Projects/Linux_Python_Packages
     restart: always
     env_file:
       - .env.dev
@@ -78,8 +76,6 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.dev
-      additional_contexts:
-        linux_wheels: G:/Projects/Linux_Python_Packages
     restart: always
     env_file:
       - .env.dev
@@ -100,8 +96,6 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.dev
-      additional_contexts:
-        linux_wheels: G:/Projects/Linux_Python_Packages
     restart: always
     env_file:
       - .env.dev
