@@ -39,7 +39,7 @@ class NginxConfigFileTests(SimpleTestCase):
         self.assertIn("proxy_pass $django_upstream;", self.nginx_text)
 
 
-def test_root_path_is_not_overridden_by_static_portal_page(self):
+    def test_root_path_is_not_overridden_by_static_portal_page(self):
     self.assertNotIn("location = / {", self.nginx_text)
     self.assertNotIn("try_files /port-portal.html =404;", self.nginx_text)
 
