@@ -137,7 +137,7 @@ jobs:
 
       - name: Verify nginx endpoint
         run: |
-          curl --fail --retry 10 --retry-delay 3 http://127.0.0.1/blog/
+          curl --fail --retry 10 --retry-delay 3 http://127.0.0.1:8001/blog/
 
       - name: Run health monitor probe
         run: docker compose --env-file .env.dev -f docker-compose.dev.yml exec -T web python /code/monitor_health.py
