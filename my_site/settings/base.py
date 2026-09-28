@@ -82,7 +82,6 @@ INSTALLED_APPS = [
     "django.contrib.sitemaps",  # XML sitemap generation for SEO
     "django.contrib.postgres",  # PostgreSQL-specific features (full-text search, etc.)
     # Third-party packages:
-    "django_extensions",  # Additional management commands and tools for development
     "rest_framework",  # Django REST Framework for building Web APIs
     "django_filters",  # Advanced queryset filtering for REST APIs
     "rest_framework.authtoken",  # Token-based authentication for REST API
