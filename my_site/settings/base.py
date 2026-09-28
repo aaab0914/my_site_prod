@@ -84,6 +84,7 @@ INSTALLED_APPS = [
     # Third-party packages:
     "rest_framework",  # Django REST Framework for building Web APIs
     "django_filters",  # Advanced queryset filtering for REST APIs
+    "django_extensions",  # Additional management commands and development tools
     "rest_framework.authtoken",  # Token-based authentication for REST API
     # Custom project apps (defined with AppConfig for more control):
     "blog.apps.BlogConfig",  # Blog application with posts, tags, and audio features
