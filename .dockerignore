@@ -33,13 +33,6 @@ backups/
 ssl/
 celerybeat-schedule
 
-loki/
-loki_data/
-grafana/
-grafana_data/
-promtail/
-prometheus.yml
-prometheus_data/
 
 docker_wheels/
 Dockerfile*
