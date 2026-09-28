@@ -59,11 +59,11 @@ echo "  健康容器数: $(docker ps --format '{{.Status}}' | grep -c healthy)"
 echo "============================================================"
 echo "7/7 验证"
 for p in "/" "/blog/" "/blog/gallery/"; do
-    code=$(curl -s -L -o /dev/null -w "%{http_code}" "http://127.0.0.1:8080$p")
+    code=$(curl -s -L -o /dev/null -w "%{http_code}" "http://127.0.0.1:8000$p")
     if [ "$code" = "200" ]; then mark="[OK]"; else mark="[FAIL]"; fi
     echo "  $mark $p -> $code"
 done
 echo "--- 图片缓存头 ---"
-curl -s -I "http://127.0.0.1:8080/blog/gallery/87/media/" | grep -iE "cache-control|http/|etag|last-modified" || echo "  (未找到缓存头)"
+curl -s -I "http://127.0.0.1:8000/blog/gallery/87/media/" | grep -iE "cache-control|http/|etag|last-modified" || echo "  (未找到缓存头)"
 echo "============================================================"
 echo "完成！"
