@@ -1,6 +1,5 @@
 import shutil
-from datetime import timedelta
-from datetime import timezone as dt_timezone
+from datetime import UTC, timedelta
 from pathlib import Path
 
 from celery import shared_task
@@ -80,7 +79,7 @@ def purge_old_runtime_logs_task(days=30):
     for file_path in log_root.rglob("*.log"):
         try:
             modified = timezone.datetime.fromtimestamp(
-                file_path.stat().st_mtime, tz=dt_timezone.utc
+                file_path.stat().st_mtime, tz=UTC
             )
         except FileNotFoundError:
             continue

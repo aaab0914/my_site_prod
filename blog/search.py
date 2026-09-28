@@ -6,6 +6,7 @@ Elasticsearch has been removed in favor of PostgreSQL full-text search
 matching.
 """
 
+import contextlib
 import logging
 
 from django.contrib.postgres.search import (
@@ -102,10 +103,8 @@ def ordered_posts_from_ids(post_ids, queryset=None):
 
 def invalidate_search_caches():
     """Clear search result cache."""
-    try:
+    with contextlib.suppress(AttributeError):
         cache.delete_pattern("post_search:*")
-    except AttributeError:
-        pass
 
 
 def comment_search_result_ids(query, limit=SEARCH_RESULT_LIMIT):

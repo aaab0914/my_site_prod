@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 import os
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 PROJECT_DIR = Path(__file__).resolve().parent.parent
@@ -19,7 +19,7 @@ def directory_summary(path: Path) -> dict[str, object]:
             stat = item.stat()
             total_size += stat.st_size
             file_count += 1
-            modified = datetime.fromtimestamp(stat.st_mtime, tz=timezone.utc)
+            modified = datetime.fromtimestamp(stat.st_mtime, tz=UTC)
             if latest_mtime is None or modified > latest_mtime:
                 latest_mtime = modified
     return {
@@ -33,10 +33,10 @@ def directory_summary(path: Path) -> dict[str, object]:
 def stale_log_files(path: Path, days: int) -> list[str]:
     if not path.exists():
         return []
-    cutoff = datetime.now(tz=timezone.utc) - timedelta(days=days)
+    cutoff = datetime.now(tz=UTC) - timedelta(days=days)
     stale = []
     for item in path.rglob("*.log"):
-        modified = datetime.fromtimestamp(item.stat().st_mtime, tz=timezone.utc)
+        modified = datetime.fromtimestamp(item.stat().st_mtime, tz=UTC)
         if modified < cutoff:
             stale.append(str(item.relative_to(PROJECT_DIR)).replace("\\", "/"))
     return sorted(stale)
@@ -45,7 +45,7 @@ def stale_log_files(path: Path, days: int) -> list[str]:
 def main() -> int:
     retention_days = int(os.environ.get("LOG_RETENTION_DAYS", "120"))
     report = {
-        "generated_at_utc": datetime.now(tz=timezone.utc).isoformat(),
+        "generated_at_utc": datetime.now(tz=UTC).isoformat(),
         "logs": directory_summary(PROJECT_DIR / "logs"),
         "backups": directory_summary(PROJECT_DIR / "backups"),
         "media": directory_summary(PROJECT_DIR / "media"),

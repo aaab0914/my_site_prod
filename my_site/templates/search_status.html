@@ -93,15 +93,15 @@
                     <article class="card">
                         <h2>GIN Indexes</h2>
                         {% if index_names %}
-                        <ul class="meta">
-                            {% for name in index_names %}
-                            <li>{{ name }}</li>
-                            {% endfor %}
-                        </ul>
+                            <ul class="meta">
+                                {% for name in index_names %}
+                                    <li>{{ name }}</li>
+                                {% endfor %}
+                            </ul>
                         {% else %}
-                        <div class="meta">
-                            <div class="row"><span class="label">Status</span><span class="value warn">No GIN indexes found. Run migrations.</span></div>
-                        </div>
+                            <div class="meta">
+                                <div class="row"><span class="label">Status</span><span class="value warn">No GIN indexes found. Run migrations.</span></div>
+                            </div>
                         {% endif %}
                     </article>
                 </div>

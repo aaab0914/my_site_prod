@@ -15,7 +15,7 @@ from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse_lazy
 from django.utils.cache import patch_cache_control
-from django.views.decorators.cache import cache_page, never_cache
+from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_POST
 from django.views.generic.edit import DeleteView, UpdateView
 from taggit.models import Tag
@@ -104,7 +104,7 @@ def post_share(request, post_id):
     if _is_post_request(request):
         form = EmailPostForm(request.POST)
         if form.is_valid():
-            form.cleaned_data
+            pass
     else:
         form = EmailPostForm()
     return render(request, "blog/post/share.html", {"post": post, "form": form})
@@ -723,7 +723,9 @@ def audio_list(request):
             **sort_context,
         },
     )
-    response["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0, private"
+    response["Cache-Control"] = (
+        "no-store, no-cache, must-revalidate, max-age=0, private"
+    )
     response["Pragma"] = "no-cache"
     return response
 

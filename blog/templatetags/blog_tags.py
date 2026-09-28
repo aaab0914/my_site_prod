@@ -1,3 +1,4 @@
+# ruff: noqa: S308
 # blog/templatetags/blog_tags.py
 # =====================
 # FILE LOCATION REQUIREMENT

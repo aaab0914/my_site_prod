@@ -1,3 +1,4 @@
+import contextlib
 import os
 import subprocess
 import tempfile
@@ -14,7 +15,8 @@ def extract_video_thumbnail(video_file, seek_time=0):
                 temp_video.write(chunk)
             temp_video_path = temp_video.name
         video_file.seek(0)
-        temp_thumb_path = tempfile.mktemp(suffix=".jpg")
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".jpg") as temp_thumb:
+            temp_thumb_path = temp_thumb.name
         command = [
             "ffmpeg",
             "-ss",
@@ -31,17 +33,13 @@ def extract_video_thumbnail(video_file, seek_time=0):
             temp_thumb_path,
         ]
         result = subprocess.run(command, capture_output=True, timeout=30)
-        try:
+        with contextlib.suppress(BaseException):
             os.unlink(temp_video_path)
-        except:
-            pass
         if result.returncode == 0 and os.path.exists(temp_thumb_path):
             with open(temp_thumb_path, "rb") as f:
                 thumbnail_data = f.read()
-            try:
+            with contextlib.suppress(BaseException):
                 os.unlink(temp_thumb_path)
-            except:
-                pass
             try:
                 img = Image.open(BytesIO(thumbnail_data))
                 if img.mode in ("RGBA", "LA", "P"):
@@ -68,12 +66,12 @@ def extract_video_thumbnail(video_file, seek_time=0):
         try:
             if "temp_video_path" in locals():
                 os.unlink(temp_video_path)
-        except:
+        except OSError:
             pass
         try:
             if "temp_thumb_path" in locals() and os.path.exists(temp_thumb_path):
                 os.unlink(temp_thumb_path)
-        except:
+        except OSError:
             pass
 
 

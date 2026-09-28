@@ -1,3 +1,5 @@
+import contextlib
+
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as DjangoUserAdmin
 from django.contrib.auth.models import User
@@ -5,10 +7,8 @@ from rest_framework.authtoken.models import Token
 
 from .models import Profile, UserActivity, UserPreference
 
-try:
+with contextlib.suppress(admin.sites.NotRegistered):
     admin.site.unregister(User)
-except admin.sites.NotRegistered:
-    pass
 
 
 @admin.register(User)
@@ -47,10 +47,8 @@ class UserAdmin(DjangoUserAdmin):
         queryset.update(is_active=False)
 
 
-try:
+with contextlib.suppress(admin.sites.NotRegistered):
     admin.site.unregister(Token)
-except admin.sites.NotRegistered:
-    pass
 
 
 @admin.register(Token)

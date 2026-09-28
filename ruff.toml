@@ -53,6 +53,8 @@ ignore = [
     "RUF002", # docstring 里的 unicode
     "RUF003", # 注释里的 unicode
     "T201",   # print 语句（Django management command 允许）
+    "RUF012", # Django admin/forms/DRF class declarations intentionally use class attributes
+    "E402",   # legacy split-module compatibility files keep section-local imports
 ]
 
 [lint.per-file-ignores]

@@ -265,21 +265,20 @@
                 {% endif %}
             {% else %}
                 <div class="sidebar-guest">
-                <p class="sidebar-nav-row sidebar-nav-row-3">
-                    <a href="{% url 'users:login' %}"><span class="sidebar-inline-icon">🔐</span>Log In</a><span class="sidebar-separator">|</span>
-                    <a href="{% url 'users:register' %}"><span class="sidebar-inline-icon">📝</span>Register</a>
-                </p>
-                <p class="sidebar-nav-row sidebar-nav-row-3">
-                    <a href="{% url 'blog:audio_list' %}"><span class="sidebar-nav-icon"
-      aria-hidden="true">♫</span>Audio List</a><span class="sidebar-separator">|</span>
-                    <a href="{% url 'blog:video_list' %}"><span class="sidebar-nav-icon" aria-hidden="true">▶</span>Video List</a><span class="sidebar-separator">|</span>
-                    <a href="{% url 'blog:note_list' %}"><span class="sidebar-nav-icon"
+                    <p class="sidebar-nav-row sidebar-nav-row-3">
+                        <a href="{% url 'users:login' %}"><span class="sidebar-inline-icon">🔐</span>Log In</a><span class="sidebar-separator">|</span>
+                        <a href="{% url 'users:register' %}"><span class="sidebar-inline-icon">📝</span>Register</a>
+                    </p>
+                    <p class="sidebar-nav-row sidebar-nav-row-3">
+                        <a href="{% url 'blog:audio_list' %}"><span class="sidebar-nav-icon" aria-hidden="true">♫</span>Audio List</a><span class="sidebar-separator">|</span>
+                        <a href="{% url 'blog:video_list' %}"><span class="sidebar-nav-icon" aria-hidden="true">▶</span>Video List</a><span class="sidebar-separator">|</span>
+                        <a href="{% url 'blog:note_list' %}"><span class="sidebar-nav-icon"
       aria-hidden="true">▤</span>My Notes</a>
-                </p>
-                <p class="sidebar-nav-row sidebar-nav-row-3">
-                    <a href="{% url 'blog:images:gallery_list' %}"><span class="sidebar-inline-icon">🖼️</span>Gallery</a><span class="sidebar-separator">|</span>
-                    <a href="{% url 'blog:images:album_list' %}"><span class="sidebar-inline-icon">🗂️</span>Album</a>
-                </p>
+                    </p>
+                    <p class="sidebar-nav-row sidebar-nav-row-3">
+                        <a href="{% url 'blog:images:gallery_list' %}"><span class="sidebar-inline-icon">🖼️</span>Gallery</a><span class="sidebar-separator">|</span>
+                        <a href="{% url 'blog:images:album_list' %}"><span class="sidebar-inline-icon">🗂️</span>Album</a>
+                    </p>
                 </div>
             {% endif %}
         </div>

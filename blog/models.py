@@ -1,28 +1,27 @@
 import os
 import re
-
 from itertools import count
 
+from better_profanity import profanity
 from django.conf import settings
 from django.contrib.postgres.indexes import GinIndex
 from django.contrib.postgres.search import SearchVector
 from django.core.exceptions import ValidationError
+from django.core.validators import (
+    MaxLengthValidator,
+    # MinLengthValidator,
+    RegexValidator,
+)
 from django.db import models
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.text import slugify
-from django.core.validators import (
-    # MinLengthValidator,
-    RegexValidator,
-    MaxLengthValidator,
-)
-
 from markdownx.models import MarkdownxField
 from taggit.managers import TaggableManager
-from better_profanity import profanity
 
 from my_site.markdown_utils import render_markdown
 from my_site.media_naming import dated_media_upload_to, media_display_name
+
 
 def validate_no_profanity(value):
     """Validator to check for profanity."""
@@ -49,33 +48,40 @@ def validate_meaningful_content(value):
     if stripped.isdigit():
         raise ValidationError("Content cannot be only numbers.", code="only_numbers")
     if not re.search(r"[a-zA-Z\u4e00-\u9fff]", stripped):
-        raise ValidationError("Content must contain at least one letter.", code="no_letters")
+        raise ValidationError(
+            "Content must contain at least one letter.", code="no_letters"
+        )
+
 
 text_validator = RegexValidator(
     regex=r"^[a-zA-Z0-9\u4e00-\u9fff\s\.\,\!\?\-\'\"\(\)\:\/\n\r]+$",
     message="Only letters (including Chinese), numbers, spaces, and basic punctuation are allowed.",
 )
 
+
 def validate_no_excessive_whitespace(value):
-    if re.search(r'\s{5,}', value):
+    if re.search(r"\s{5,}", value):
         raise ValidationError(
-            'Content contains excessive whitespace.',
-            code='excessive_whitespace',
+            "Content contains excessive whitespace.",
+            code="excessive_whitespace",
         )
+
 
 def validate_no_repeated_chars(value):
-    if re.search(r'(.)\1{4,}', value):
+    if re.search(r"(.)\1{4,}", value):
         raise ValidationError(
-            'Content contains too many repeated characters.',
-            code='repeated_chars',
+            "Content contains too many repeated characters.",
+            code="repeated_chars",
         )
 
+
 def validate_no_html(value):
-    if re.search(r'<[^>]+>', value):
+    if re.search(r"<[^>]+>", value):
         raise ValidationError(
-            'HTML tags are not allowed.',
-            code='html_not_allowed',
+            "HTML tags are not allowed.",
+            code="html_not_allowed",
         )
+
 
 class PublishedManager(models.Manager):
     def get_queryset(self):
@@ -94,8 +100,8 @@ class Post(models.Model):
             validate_meaningful_content,
             text_validator,
             validate_no_profanity,
-        ]
-        )
+        ],
+    )
     cover_image = models.ImageField(
         upload_to=dated_media_upload_to("posts"), blank=True, null=True
     )
@@ -110,8 +116,8 @@ class Post(models.Model):
             validate_meaningful_content,
             text_validator,
             validate_no_profanity,
-    ]
-)
+        ],
+    )
     publish = models.DateTimeField(default=timezone.now)
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
@@ -128,7 +134,6 @@ class Post(models.Model):
             models.Index(fields=["slug", "publish"]),
             models.Index(fields=["author", "-publish"]),
             models.Index(fields=["status", "-publish"]),
-
             GinIndex(
                 SearchVector("title", weight="A") + SearchVector("body", weight="B"),
                 name="post_search_vector_gin",
@@ -152,6 +157,12 @@ class Post(models.Model):
 
     def __str__(self):
         return self.title
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = self.build_slug()
+        self.clean()
+        super().save(*args, **kwargs)
 
     def get_absolute_url(self):
         return reverse(
@@ -180,13 +191,9 @@ class Post(models.Model):
 
     def clean(self):
         if self.pk and self.status == self.Status.PUBLISHED and not self.tags.exists():
-            raise ValidationError("The published article must contain at least one {tag) 。")
-
-    def save(self, *args, **kwargs):
-        if not self.slug:
-            self.slug = self.build_slug()
-        self.clean()
-        super().save(*args, **kwargs)
+            raise ValidationError(
+                "The published article must contain at least one {tag) 。"
+            )
 
     def get_markdown_body(self):
         return render_markdown(self.body)
@@ -207,13 +214,13 @@ class Comment(models.Model):
         max_length=5000,
         validators=[
             # MinLengthValidator(5, message='Title must be at least 5 characters long.'),
-            MaxLengthValidator(5000, message='Body must no exceed 5000 characters.'),
+            MaxLengthValidator(5000, message="Body must no exceed 5000 characters."),
             validate_stripped_length,
             validate_meaningful_content,
             text_validator,
-            validate_no_profanity
-        ]
-        )
+            validate_no_profanity,
+        ],
+    )
     image = models.ImageField(
         upload_to=dated_media_upload_to("comments"), blank=True, null=True
     )
@@ -253,17 +260,19 @@ class AudioPost(models.Model):
         upload_to=dated_media_upload_to("audio/covers"), blank=True, null=True
     )
     description = models.TextField(
-        max_length=500, 
+        max_length=500,
         blank=True,
         validators=[
             # MinLengthValidator(5, message='Title must be at least 5 characters long.'),
-            MaxLengthValidator(500, message='Description must no exceed 500 characters.'),
+            MaxLengthValidator(
+                500, message="Description must no exceed 500 characters."
+            ),
             validate_stripped_length,
             validate_meaningful_content,
             text_validator,
-            validate_no_profanity
-        ]
-        )
+            validate_no_profanity,
+        ],
+    )
     uploaded_by = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="audio_posts"
     )
@@ -329,25 +338,27 @@ class VideoPost(models.Model):
         blank=True,
         validators=[
             # MinLengthValidator(5, message='Title must be at least 5 characters long.'),
-            MaxLengthValidator(200, message='Title must no exceed 200 characters.'),
+            MaxLengthValidator(200, message="Title must no exceed 200 characters."),
             validate_stripped_length,
             validate_meaningful_content,
             text_validator,
-            validate_no_profanity
-        ]
-        )
+            validate_no_profanity,
+        ],
+    )
     description = models.TextField(
-        max_length=500, 
+        max_length=500,
         blank=True,
         validators=[
             # MinLengthValidator(5, message='Title must be at least 5 characters long.'),
-            MaxLengthValidator(500, message='Description must no exceed 500 characters.'),
+            MaxLengthValidator(
+                500, message="Description must no exceed 500 characters."
+            ),
             validate_stripped_length,
             validate_meaningful_content,
             text_validator,
-            validate_no_profanity
-        ]
-        )
+            validate_no_profanity,
+        ],
+    )
     uploaded_by = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="video_posts"
     )
