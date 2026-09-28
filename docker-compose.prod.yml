@@ -196,3 +196,5 @@ services:
 volumes:
   postgres_data:
   redis_data:
+    external: true
+    name: my_site_prod_repo_new_redis_data
