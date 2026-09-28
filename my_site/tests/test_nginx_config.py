@@ -11,7 +11,7 @@ class NginxConfigFileTests(SimpleTestCase):
     databases = "__all__"
 
     def setUp(self):
-        self.nginx_path = BASE_DIR / "nginx.conf"
+        self.nginx_path = BASE_DIR / "nginx.prod.conf"
         self.nginx_text = self.nginx_path.read_text(encoding="utf-8")
 
     def test_nginx_config_file_exists(self):
