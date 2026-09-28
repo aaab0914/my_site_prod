@@ -8,7 +8,6 @@ from markdownx import urls as markdownx_urls
 
 from blog.sitemaps import PostSitemap
 
-from .metrics import metrics_view
 from .site_views import (
     api_endpoints,
     api_guide,
@@ -39,7 +38,6 @@ urlpatterns = [
     ),
     path("markdownx/", include(markdownx_urls)),
     path("users/", include("users.urls", namespace="users")),
-    path("metrics", metrics_view, name="metrics"),
 ]
 
 
